@@ -1,34 +1,39 @@
 import React, { useState, useEffect } from "react";
 import MasterDashboardLayout from "@/components/layouts/MasterDashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, Clock, Briefcase, Users, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button"; // Importar Button
+import { Bot, Clock, Briefcase, Users, TrendingUp, RefreshCcw } from "lucide-react"; // Adicionar RefreshCcw
 import { motion } from "framer-motion";
-import { MOCK_CLIENT_APPOINTMENTS, MOCK_CLIENT_SERVICES } from "@/data/mockData";
+import { useMockData } from "@/context/MockContext"; // Importar useMockData
 
 const generateRandomValue = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
 const AIInsightsPage = () => {
-  const [insights, setInsights] = useState({
+  const { aiInsights, generateNewAIInsights, isLoading } = useMockData();
+  const [localInsights, setLocalInsights] = useState({
     mostBusyTime: "14:00 - 16:00",
     mostBookedService: "Corte de Cabelo Masculino",
     activeClients: generateRandomValue(50, 200),
     avgResponseTime: generateRandomValue(5, 30), // in minutes
   });
 
+  // Update local insights based on mockData's AI insights or random values
   useEffect(() => {
-    // Simulate data fetching/generation
-    const interval = setInterval(() => {
-      setInsights({
-        mostBusyTime: ["10:00 - 12:00", "14:00 - 16:00", "17:00 - 19:00"][generateRandomValue(0, 2)],
-        mostBookedService: MOCK_CLIENT_SERVICES[generateRandomValue(0, MOCK_CLIENT_SERVICES.length - 1)].name,
-        activeClients: generateRandomValue(50, 200),
-        avgResponseTime: generateRandomValue(5, 30),
-      });
-    }, 5000); // Update every 5 seconds for simulation
+    // This effect will run once on mount and whenever aiInsights from context changes
+    // For the purpose of displaying the main metrics, we can keep them somewhat static or update them less frequently
+    // The 'generateNewAIInsights' button will specifically update the list of AI insights.
+    setLocalInsights({
+      mostBusyTime: ["10:00 - 12:00", "14:00 - 16:00", "17:00 - 19:00"][generateRandomValue(0, 2)],
+      mostBookedService: aiInsights[generateRandomValue(0, aiInsights.length - 1)]?.title || "Serviço Mais Agendado",
+      activeClients: generateRandomValue(50, 200),
+      avgResponseTime: generateRandomValue(5, 30),
+    });
+  }, [aiInsights]); // Depend on aiInsights from context
 
-    return () => clearInterval(interval);
-  }, []);
+  const handleGenerateInsights = async () => {
+    await generateNewAIInsights();
+  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -37,8 +42,11 @@ const AIInsightsPage = () => {
 
   return (
     <MasterDashboardLayout>
-      <div className="flex items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold md:text-2xl text-foreground">IA Insights</h1>
+        <Button size="sm" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20 uppercase" onClick={handleGenerateInsights} disabled={isLoading}>
+          <RefreshCcw className="h-4 w-4 mr-2" /> {isLoading ? "Gerando..." : "Atualizar Insights"}
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -49,7 +57,7 @@ const AIInsightsPage = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{insights.mostBusyTime}</div>
+              <div className="text-2xl font-bold text-foreground">{localInsights.mostBusyTime}</div>
               <p className="text-xs text-muted-foreground">Baseado em agendamentos</p>
             </CardContent>
           </Card>
@@ -62,7 +70,7 @@ const AIInsightsPage = () => {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-bold text-foreground">{insights.mostBookedService}</div>
+              <div className="text-lg font-bold text-foreground">{localInsights.mostBookedService}</div>
               <p className="text-xs text-muted-foreground">Popularidade entre clientes</p>
             </CardContent>
           </Card>
@@ -75,7 +83,7 @@ const AIInsightsPage = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{insights.activeClients}</div>
+              <div className="text-2xl font-bold text-foreground">{localInsights.activeClients}</div>
               <p className="text-xs text-muted-foreground">Interações recentes</p>
             </CardContent>
           </Card>
@@ -88,7 +96,7 @@ const AIInsightsPage = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{insights.avgResponseTime} min</div>
+              <div className="text-2xl font-bold text-foreground">{localInsights.avgResponseTime} min</div>
               <p className="text-xs text-muted-foreground">No chat e canais</p>
             </CardContent>
           </Card>
@@ -113,10 +121,11 @@ const AIInsightsPage = () => {
             <div className="border border-border rounded-lg p-4 bg-background">
               <h4 className="font-semibold mb-2 text-foreground">Relatório de IA (Simulado)</h4>
               <ul className="list-disc list-inside text-sm text-muted-foreground">
-                <li>**Sugestão de Otimização:** Clientes que agendam "Corte de Cabelo Masculino" frequentemente também se interessam por "Barba e Bigode". Considere oferecer um pacote combinado.</li>
-                <li>**Tendência de Agendamento:** Aumento de 15% nos agendamentos para serviços de "Estética" nas últimas 4 semanas.</li>
-                <li>**Engajamento:** Clientes que recebem lembretes via WhatsApp têm uma taxa de comparecimento 20% maior.</li>
-                <li>**Oportunidade de Venda:** Identificamos 50 clientes inativos há mais de 3 meses. Sugerimos uma campanha de reengajamento com um desconto especial.</li>
+                {aiInsights.map((insight) => (
+                  <li key={insight.id}>
+                    <strong>{insight.title}:</strong> {insight.description}
+                  </li>
+                ))}
               </ul>
             </div>
           </CardContent>

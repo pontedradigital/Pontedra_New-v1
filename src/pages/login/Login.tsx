@@ -10,17 +10,18 @@ import { motion } from "framer-motion";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const { login, user } = useAuth(); // Get user from useAuth
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      const userRole = JSON.parse(localStorage.getItem("user") || "{}").role;
-      if (userRole === "master") {
+      // After successful login, the user state in AuthContext should be updated.
+      // We can rely on the user object from useAuth directly.
+      if (user?.role === "master") { // Check user role from context
         navigate("/dashboard/master");
-      } else if (userRole === "client") {
+      } else if (user?.role === "client") {
         navigate("/dashboard/cliente");
       } else {
         navigate("/"); // Fallback
