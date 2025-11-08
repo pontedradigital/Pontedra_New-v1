@@ -14,6 +14,11 @@ export default function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Log para depuração da URL da logo
+  useEffect(() => {
+    console.log("URL da logo Pontedra:", "https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp");
+  }, []);
+
   // This useEffect handles scrolling to a section if a hash is present in the URL
   useEffect(() => {
     if (location.hash) {

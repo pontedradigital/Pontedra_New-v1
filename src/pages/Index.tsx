@@ -13,7 +13,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
       <div className="text-center">
-        <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-20 w-auto mx-auto mb-4" />
+        <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra Logo" className="h-20 w-auto mx-auto mb-4" />
         <h1 className="text-4xl font-bold mb-4">Redirecionando...</h1>
         <p className="text-xl text-muted-foreground">Aguarde um momento.</p>
       </div>

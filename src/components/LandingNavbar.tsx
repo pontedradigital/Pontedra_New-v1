@@ -104,7 +104,7 @@ export default function LandingNavbar() {
               
               <div className="relative z-10 flex items-center gap-3">
                 <img
-                  src="/pontedra-logo.webp"
+                  src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp"
                   alt="Pontedra Logo"
                   className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-[0_0_20px_rgba(87,227,137,0.6)] transition-all duration-300"
                 />

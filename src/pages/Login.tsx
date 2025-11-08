@@ -97,26 +97,11 @@ export default function Login() {
           <div className="relative bg-[#111d2e]/90 backdrop-blur-2xl border border-[#1d2c3f] rounded-3xl p-8 md:p-10 shadow-2xl">
             {/* Logo e Badge */}
             <div className="text-center mb-8">
-              <motion.div
-                className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1d3a2f] to-[#0f1f1a] mb-6 relative"
-                animate={{
-                  boxShadow: [
-                    "0 0 20px rgba(87, 227, 137, 0.3)",
-                    "0 0 40px rgba(87, 227, 137, 0.5)",
-                    "0 0 20px rgba(87, 227, 137, 0.3)",
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <span className="text-[#0D1B2A] font-bold text-3xl">P</span>
-                <motion.div
-                  className="absolute -top-2 -right-2"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                >
-                  <Sparkles className="w-6 h-6 text-[#57e389]" />
-                </motion.div>
-              </motion.div>
+              <img
+                src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp"
+                alt="Pontedra Logo"
+                className="h-20 w-auto mx-auto mb-6 drop-shadow-[0_0_20px_rgba(87,227,137,0.6)]"
+              />
 
               <h1 className="text-3xl font-bold text-white mb-2">Login</h1>
               <p className="text-[#9ba8b5]">

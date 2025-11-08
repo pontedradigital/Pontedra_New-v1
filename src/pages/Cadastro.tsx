@@ -75,16 +75,11 @@ export default function Cadastro() {
       <header className="absolute top-0 left-0 right-0 z-50">
         <div className="container mx-auto px-4 md:px-8 py-6">
           <Link to="/" className="inline-flex items-center gap-3 group">
-            <motion.div
-              className="w-12 h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ duration: 0.3 }}
-            >
-              <span className="text-[#0D1B2A] font-bold text-xl">P</span>
-            </motion.div>
-            <span className="text-2xl font-bold text-white group-hover:text-[#57e389] transition-colors">
-              Pontedra
-            </span>
+            <img
+              src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp"
+              alt="Pontedra Logo"
+              className="h-12 w-auto drop-shadow-[0_0_10px_rgba(87,227,137,0.4)]"
+            />
           </Link>
         </div>
       </header>
@@ -100,26 +95,11 @@ export default function Cadastro() {
         
         <div className="relative bg-[#111d2e]/90 backdrop-blur-2xl border border-[#1d2c3f] rounded-3xl p-8 md:p-10 shadow-2xl">
           <div className="text-center mb-8">
-            <motion.div
-              className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1d3a2f] to-[#0f1f1a] mb-6 relative"
-              animate={{
-                boxShadow: [
-                  "0 0 20px rgba(87, 227, 137, 0.3)",
-                  "0 0 40px rgba(87, 227, 137, 0.5)",
-                  "0 0 20px rgba(87, 227, 137, 0.3)",
-                ],
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <span className="text-[#57e389] font-bold text-3xl">P</span>
-              <motion.div
-                className="absolute -top-2 -right-2"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-6 h-6 text-[#57e389]" />
-              </motion.div>
-            </motion.div>
+            <img
+              src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp"
+              alt="Pontedra Logo"
+              className="h-20 w-auto mx-auto mb-6 drop-shadow-[0_0_20px_rgba(87,227,137,0.6)]"
+            />
 
             <h1 className="text-3xl font-bold text-white mb-2">Cadastre-se</h1>
             <p className="text-[#9ba8b5]">

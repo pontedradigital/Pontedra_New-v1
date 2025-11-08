@@ -13,7 +13,7 @@ export default function Footer() {
           <div className="space-y-4 flex flex-col items-center text-center"> {/* Centralizado horizontalmente e texto centralizado */}
             {/* Logotipo da Pontedra com brilho suave */}
             <img 
-              src="/pontedra-logo.webp" 
+              src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" 
               alt="Pontedra Logo" 
               className="h-40 w-auto mb-6 drop-shadow-[0_0_20px_rgba(87,227,137,0.6)]" // Adicionado mb-6 para espaçamento e drop-shadow para brilho
             />
