@@ -14,22 +14,8 @@ const Hero = () => {
     let height = (canvas.height = window.innerHeight);
     const lines: any[] = [];
     const lineCount = 30;
-
-    // Criar um elemento temporário para resolver as variáveis CSS
-    const tempDiv = document.createElement('div');
-    tempDiv.style.display = 'none';
-    document.body.appendChild(tempDiv);
-
-    // Obter as cores resolvidas do Tailwind
-    tempDiv.className = 'text-pontedra-neon-blue';
-    const resolvedColor1 = getComputedStyle(tempDiv).color;
-    tempDiv.className = 'text-pontedra-neon-green';
-    const resolvedColor2 = getComputedStyle(tempDiv).color;
-
-    document.body.removeChild(tempDiv); // Remover o elemento temporário
-
-    const color1 = resolvedColor1 || "#00b4ff"; // Fallback
-    const color2 = resolvedColor2 || "#57e389"; // Fallback
+    const color1 = "#3B82F6"; // azul suave
+    const color2 = "#9333EA"; // roxo vibrante
 
     for (let i = 0; i < lineCount; i++) {
       lines.push({
@@ -94,7 +80,7 @@ const Hero = () => {
 
       {/* Conteúdo principal do HERO */}
       <motion.h1
-        className="text-5xl md:text-7xl font-bold text-foreground drop-shadow-lg"
+        className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
@@ -103,7 +89,7 @@ const Hero = () => {
       </motion.h1>
 
       <motion.p
-        className="text-lg md:text-2xl text-textSecondary mt-4 max-w-2xl"
+        className="text-lg md:text-2xl text-gray-200 mt-4 max-w-2xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 1 }}
@@ -115,7 +101,7 @@ const Hero = () => {
         <a
           href="#solucoes"
           onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
-          className="bg-pontedra-green hover:bg-pontedra-green-hover text-pontedra-dark-text px-6 py-3 rounded-xl font-semibold transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition"
         >
           Ver Soluções
         </a>
@@ -123,24 +109,24 @@ const Hero = () => {
           href="https://www.instagram.com/digitalpontevra/"
           target="_blank"
           rel="noreferrer"
-          className="border border-pontedra-border-light hover:bg-pontedra-green hover:text-pontedra-dark-text text-textPrimary px-6 py-3 rounded-xl font-semibold transition"
+          className="border border-white hover:bg-white hover:text-black text-white px-6 py-3 rounded-xl font-semibold transition"
         >
           Portfólio
         </a>
       </div>
 
       {/* Checklist lateral */}
-      <div className="absolute right-10 bottom-10 flex flex-col text-foreground gap-3">
+      <div className="absolute right-10 bottom-10 flex flex-col text-white gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-pontedra-green font-bold">1.</span>
+          <span className="text-blue-400 font-bold">1.</span>
           <span>Identifique sua dor</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-pontedra-green font-bold">2.</span>
+          <span className="text-purple-400 font-bold">2.</span>
           <span>Nós resolvemos</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-pontedra-green font-bold">3.</span>
+          <span className="text-green-400 font-bold">3.</span>
           <span>Transforme em resultados</span>
         </div>
       </div>
