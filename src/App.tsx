@@ -5,21 +5,21 @@ import BlogPostPage from "@/pages/BlogPostPage";
 import PoliticaPrivacidade from "@/pages/PoliticaPrivacidade";
 import TermosUso from "@/pages/TermosUso";
 import LandingPage from "./pages/LandingPage";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register"; // Renamed from Cadastro to Register for consistency
+import Login from "@/pages/Login"; // Importando o novo componente Login
+import Cadastro from "@/pages/Cadastro"; // Importando o novo componente Cadastro
 import NotFound from "./pages/NotFound";
-import ScrollToTopSpecific from "./components/ScrollToTopSpecific"; // Importando o novo componente
+import ScrollToTopSpecific from "./components/ScrollToTopSpecific";
 
 function App() {
   return (
-    <> {/* Usando um fragmento para envolver os componentes */}
-      <ScrollToTopSpecific /> {/* Adicionando o componente aqui para que ele reaja às mudanças de rota */}
+    <>
+      <ScrollToTopSpecific />
       <Routes>
         {/* Rotas Públicas */}
         <Route path="/" element={<Index />} />
         <Route path="/landing" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} /> {/* Nova rota para Login */}
+        <Route path="/cadastro" element={<Cadastro />} /> {/* Nova rota para Cadastro */}
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
