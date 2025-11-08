@@ -29,7 +29,14 @@ const LandingPage = () => {
         className="relative h-[calc(100vh-64px)] flex items-center justify-center text-center overflow-hidden bg-gradient-to-br from-background to-card"
       >
         <ShaderLinesBackground /> {/* Integrar o fundo animado aqui */}
-        <div className="absolute inset-0 bg-radial-gradient from-background via-card to-transparent opacity-70"></div>
+        {/* Gradiente radial como overlay, com z-index ajustado e opacidade reduzida */}
+        <div
+          className="absolute inset-0 z-[-1]"
+          style={{
+            backgroundImage: `radial-gradient(circle at center, hsl(var(--background)) 0%, hsl(var(--card)) 50%, transparent 100%)`,
+            opacity: 0.5, // Opacidade reduzida para as linhas serem mais visíveis
+          }}
+        ></div>
         <div className="relative z-10 max-w-4xl px-4">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
