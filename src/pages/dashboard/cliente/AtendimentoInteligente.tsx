@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Bot as BotIcon, Loader2, Mic, CalendarDays, MessageSquareText, DollarSign, PhoneCall, History, Star } from "lucide-react";
-import { CHATBOT_RESPONSES } from "@/data/chatbotResponses";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -14,19 +13,22 @@ import { toast } from "sonner";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate, useLocation } from "react-router-dom";
-import { AssistantMessage } from "@/components/chat/AssistantMessage"; // Importar o novo componente
+import { AssistantMessage } from "@/components/chat/AssistantMessage";
+import { assistentePontedraBase } from "@/data/assistentePontedraBase"; // Importar a base de conhecimento
+import { registrarInteracao } from "@/utils/registroChat"; // Importar utilitário de registro
+import { registrarAgendamento } from "@/utils/agendamentosFake"; // Importar utilitário de agendamento
 
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "Assistente Pontedra"; // Atualizado para Assistente Pontedra
+  sender: "user" | "Assistente Pontedra";
   timestamp: string;
 }
 
 interface ChatState {
   messages: Message[];
   lastServiceMentioned: string | null;
-  awaitingConfirmation: "service" | "date_time" | null;
+  awaitingConfirmation: "service" | "date_time" | "final_confirm" | null;
   pendingAppointment: { serviceName: string; date: string; time: string } | null;
 }
 
@@ -35,7 +37,8 @@ const LOCAL_STORAGE_KEY_CHAT = "pontedra_ia_chat_history";
 const AtendimentoInteligentePage = () => {
   const { user } = useAuth();
   const { addClientAppointment, clientAppointments } = useMockData();
-  const clientName = user?.email?.split('@')[0] || "Cliente";
+  const clientEmail = user?.email || "cliente@teste.com";
+  const clientName = clientEmail.split('@')[0] || "Cliente";
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,7 +47,6 @@ const AtendimentoInteligentePage = () => {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY_CHAT);
       if (savedState) {
         const parsedState = JSON.parse(savedState);
-        // Ensure timestamps are present for old messages if not already
         const messagesWithTimestamps = parsedState.messages.map((msg: Message) => ({
           ...msg,
           timestamp: msg.timestamp || new Date().toISOString(),
@@ -65,19 +67,18 @@ const AtendimentoInteligentePage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const proactiveTipIntervalRef = useRef<number | null>(null);
 
-  const clientActivity = MOCK_CLIENT_ACTIVITY_SUMMARY; // Mocked client activity
+  const clientActivity = MOCK_CLIENT_ACTIVITY_SUMMARY;
 
   useEffect(() => {
     if (chatState.messages.length === 0) {
       setTimeout(() => {
-        addBotMessage(CHATBOT_RESPONSES.find(r => r.id === 1)?.message || "Olá! Como posso ajudar?");
+        addBotMessage(assistentePontedraBase.saudacao[0]);
       }, 500);
     }
 
     if (location.state && (location.state as { initialMessage?: string }).initialMessage) {
       const initialMsg = (location.state as { initialMessage: string }).initialMessage;
       setInputMessage(initialMsg);
-      // Clear the state so it doesn't re-trigger on subsequent renders
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,9 +96,13 @@ const AtendimentoInteligentePage = () => {
         clearInterval(proactiveTipIntervalRef.current);
       }
       proactiveTipIntervalRef.current = window.setInterval(() => {
-        // Using a random message from the new CHATBOT_RESPONSES for proactive tips
-        const randomMessage = CHATBOT_RESPONSES[Math.floor(Math.random() * CHATBOT_RESPONSES.length)].message;
-        addBotMessage(randomMessage);
+        const tips = [
+          assistentePontedraBase.promocoes,
+          assistentePontedraBase.duvidas.servicos,
+          assistentePontedraBase.duvidas.horario,
+        ];
+        const randomTip = tips[Math.floor(Math.random() * tips.length)];
+        addBotMessage(randomTip);
       }, 60000); // Every 60 seconds
     };
 
@@ -112,35 +117,35 @@ const AtendimentoInteligentePage = () => {
   const addBotMessage = (text: string) => {
     setChatState(prev => ({
       ...prev,
-      messages: [...prev.messages, { id: Date.now(), text, sender: "Assistente Pontedra", timestamp: new Date().toISOString() }], // Atualizado sender
+      messages: [...prev.messages, { id: Date.now(), text, sender: "Assistente Pontedra", timestamp: new Date().toISOString() }],
     }));
   };
 
   const processUserMessage = async (userText: string) => {
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate Assistente Pontedra processing time
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
-    let botResponse = CHATBOT_RESPONSES.find(r => r.id === 4)?.message || "Desculpe, não entendi. 😕"; // Fallback message
+    let botResponse: string = assistentePontedraBase.fallback[Math.floor(Math.random() * assistentePontedraBase.fallback.length)];
     let newLastServiceMentioned = chatState.lastServiceMentioned;
     let newAwaitingConfirmation = chatState.awaitingConfirmation;
     let newPendingAppointment = chatState.pendingAppointment;
 
     const lowerCaseText = userText.toLowerCase();
 
-    // Intent: Scheduling (multi-turn)
+    // --- Lógica de Agendamento Multi-turn ---
     if (chatState.awaitingConfirmation === "service") {
       const service = MOCK_CLIENT_SERVICES.find(s => lowerCaseText.includes(s.name.toLowerCase()));
       if (service) {
         newPendingAppointment = { ...newPendingAppointment!, serviceName: service.name, date: "", time: "" };
         newAwaitingConfirmation = "date_time";
         newLastServiceMentioned = service.name;
-        botResponse = `Ótimo! E qual dia e horário você prefere para o serviço de ${service.name}? Por exemplo: 'amanhã às 10h' ou '25/12 às 14h'. ⏰`;
+        botResponse = assistentePontedraBase.agendamento.prompt_data_hora(service.name);
       } else {
-        botResponse = "Não encontrei este serviço. Por favor, escolha um dos nossos serviços: Corte de Cabelo Masculino, Manicure e Pedicure, Massagem Relaxante, Coloração Feminina ou Limpeza de Pele. 🧐";
+        botResponse = assistentePontedraBase.agendamento.erro_servico_nao_encontrado;
       }
     } else if (chatState.awaitingConfirmation === "date_time" && newPendingAppointment) {
       const dateMatch = lowerCaseText.match(/(hoje|amanhã|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/);
-      const timeMatch = lowerCaseText.match(/(\d{1,2}h(?::\d{2})?)/);
+      const timeMatch = lowerCaseText.match(/(\d{1,2}h(?::\d{2})?|\d{1,2}:\d{2})/);
 
       let parsedDate: Date | null = null;
       if (dateMatch) {
@@ -166,93 +171,102 @@ const AtendimentoInteligentePage = () => {
 
       if (formattedDate && formattedTime && MOCK_AVAILABLE_TIMES.includes(formattedTime)) {
         newPendingAppointment = { ...newPendingAppointment, date: formattedDate, time: formattedTime };
+        newAwaitingConfirmation = "final_confirm";
+        botResponse = assistentePontedraBase.agendamento.confirmacao(
+          newPendingAppointment.serviceName,
+          format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR }),
+          newPendingAppointment.time
+        );
+      } else {
+        botResponse = assistentePontedraBase.agendamento.erro_data_hora_invalida;
+      }
+    } else if (chatState.awaitingConfirmation === "final_confirm" && newPendingAppointment) {
+      if (lowerCaseText.includes("sim") || lowerCaseText.includes("confirmar")) {
         await addClientAppointment({
-          clientEmail: user?.email || "cliente@teste.com",
+          clientEmail: clientEmail,
           serviceName: newPendingAppointment.serviceName,
           date: newPendingAppointment.date,
           time: newPendingAppointment.time,
-          status: "confirmed", // Simulate immediate confirmation
-        }, user?.email || "cliente@teste.com");
+          status: "confirmed",
+        }, clientEmail);
+        
+        registrarAgendamento(
+          newPendingAppointment.serviceName,
+          format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR }),
+          newPendingAppointment.time,
+          clientEmail
+        );
 
-        botResponse = `Perfeito! Seu agendamento para '${newPendingAppointment.serviceName}' foi registrado para ${format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR })} às ${newPendingAppointment.time}. Você receberá uma confirmação em breve. ✅`;
+        botResponse = assistentePontedraBase.agendamento.sucesso(
+          newPendingAppointment.serviceName,
+          format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR }),
+          newPendingAppointment.time
+        );
         newAwaitingConfirmation = null;
         newPendingAppointment = null;
         newLastServiceMentioned = null;
         toast.success("Agendamento criado com sucesso!");
+      } else if (lowerCaseText.includes("não") || lowerCaseText.includes("cancelar")) {
+        botResponse = "Agendamento cancelado. Posso ajudar com outra coisa?";
+        newAwaitingConfirmation = null;
+        newPendingAppointment = null;
+        newLastServiceMentioned = null;
       } else {
-        botResponse = "Não consegui entender a data ou hora. Por favor, tente novamente com um formato como 'amanhã às 14h' ou '25/12 às 10h'. 📅";
+        botResponse = "Por favor, responda 'sim' para confirmar ou 'não' para cancelar.";
       }
     }
-    // Intent: General Services
-    else if (lowerCaseText.includes("serviços") || lowerCaseText.includes("o que vocês oferecem")) {
-      botResponse = "Atualmente oferecemos: \n• Corte de Cabelo Masculino 💇‍♂️\n• Manicure e Pedicure 💅\n• Massagem Relaxante 💆‍♀️\n• Coloração Feminina 🌈\n• Limpeza de Pele ✨\nQual deles você deseja mais informações ou agendar?";
+    // --- Fim da Lógica de Agendamento Multi-turn ---
+
+    // --- Outras Intenções (se não estiver em um fluxo multi-turn) ---
+    else if (lowerCaseText.includes("oi") || lowerCaseText.includes("olá") || lowerCaseText.includes("bom dia") || lowerCaseText.includes("boa tarde") || lowerCaseText.includes("boa noite")) {
+      botResponse = assistentePontedraBase.saudacao[Math.floor(Math.random() * assistentePontedraBase.saudacao.length)];
+    }
+    else if (lowerCaseText.includes("horário") || lowerCaseText.includes("funciona")) {
+      botResponse = assistentePontedraBase.duvidas.horario;
+    }
+    else if (lowerCaseText.includes("serviço") || lowerCaseText.includes("preço") || lowerCaseText.includes("o que vocês oferecem")) {
+      botResponse = assistentePontedraBase.duvidas.servicos;
+    }
+    else if (lowerCaseText.includes("pagamento") || lowerCaseText.includes("formas de pagamento")) {
+      botResponse = assistentePontedraBase.duvidas.pagamento;
+    }
+    else if (lowerCaseText.includes("agendar") || lowerCaseText.includes("marcar")) {
+      botResponse = assistentePontedraBase.agendamento.prompt_servico;
       newAwaitingConfirmation = "service";
     }
-    // Intent: Service Price
-    else if (lowerCaseText.includes("valor") || lowerCaseText.includes("preço") || lowerCaseText.includes("quanto custa")) {
-      if (lowerCaseText.includes("corte")) {
-        botResponse = "O Corte de Cabelo Masculino custa R$55,00 e dura cerca de 45 minutos. Deseja agendar um horário? 🗓️";
-        newLastServiceMentioned = "Corte de Cabelo Masculino";
-      } else if (lowerCaseText.includes("manicure") || lowerCaseText.includes("pedicure")) {
-        botResponse = "O serviço de Manicure e Pedicure custa R$85,00 e dura cerca de 1 hora. Deseja agendar um horário? 💅";
-        newLastServiceMentioned = "Manicure e Pedicure";
-      } else if (lowerCaseText.includes("coloração")) {
-        botResponse = "A Coloração Feminina custa R$180,00 e dura em média 1h30. Deseja agendar um horário? 🎨";
-        newLastServiceMentioned = "Coloração Feminina";
-      } else if (lowerCaseText.includes("limpeza de pele")) {
-        botResponse = "A Limpeza de Pele custa R$100,00 e dura cerca de 1 hora. Deseja agendar um horário? ✨";
-        newLastServiceMentioned = "Limpeza de Pele";
-      } else if (lowerCaseText.includes("massagem")) {
-        botResponse = "A Massagem Relaxante custa R$130,00 e dura cerca de 60 minutos. Deseja agendar um horário? 🧘‍♀️";
-        newLastServiceMentioned = "Massagem Relaxante";
-      } else if (chatState.lastServiceMentioned) {
-        const service = MOCK_CLIENT_SERVICES.find(s => s.name === chatState.lastServiceMentioned);
-        if (service) {
-          botResponse = `O serviço de ${service.name} custa R$${service.price.toFixed(2)}. Deseja agendar? 💰`;
-        }
-      } else {
-        botResponse = "Para qual serviço você gostaria de saber o valor? 💸";
-      }
-    }
-    // Intent: Promotions
     else if (lowerCaseText.includes("promoção") || lowerCaseText.includes("desconto") || lowerCaseText.includes("oferta")) {
-      botResponse = "Sim! 🎉 A Assistente Pontedra identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
+      botResponse = assistentePontedraBase.promocoes;
     }
-    // Intent: Human Assistance
     else if (lowerCaseText.includes("falar com alguém") || lowerCaseText.includes("atendente") || lowerCaseText.includes("suporte")) {
-      botResponse = "Sem problemas! Um de nossos atendentes será notificado para te ajudar. Enquanto isso, posso te ajudar com alguma dúvida sobre serviços? 🧑‍💻";
+      botResponse = assistentePontedraBase.suporte_humano;
     }
-    // Intent: Thank you / Goodbye
     else if (lowerCaseText.includes("obrigado") || lowerCaseText.includes("valeu")) {
-      botResponse = "De nada! 😊 Se precisar de mais alguma coisa, é só chamar.";
+      botResponse = assistentePontedraBase.agradecimento;
     }
     else if (lowerCaseText.includes("tchau") || lowerCaseText.includes("até mais")) {
-      botResponse = "Até mais! 👋 Tenha um ótimo dia.";
+      botResponse = assistentePontedraBase.despedida;
     }
-    // Intent: Scheduling trigger
-    else if (lowerCaseText.includes("agendar") || lowerCaseText.includes("marcar")) {
-      botResponse = "Claro! Para qual serviço você gostaria de agendar? Me diga o nome do serviço. 📝";
-      newAwaitingConfirmation = "service";
-    }
-    // Intent: Cancel/Reschedule (simulated)
     else if (lowerCaseText.includes("cancelar agendamento")) {
-      botResponse = "Para cancelar um agendamento, por favor, acesse a página 'Meus Agendamentos' ou informe o ID do agendamento que deseja cancelar. (Funcionalidade simulada) ❌";
+      botResponse = assistentePontedraBase.cancelar_agendamento_prompt;
     }
     else if (lowerCaseText.includes("reagendar")) {
-      botResponse = "Para reagendar, por favor, acesse a página 'Meus Agendamentos' e selecione a opção de reagendamento. (Funcionalidade simulada) 🔄";
+      botResponse = assistentePontedraBase.reagendar_prompt;
     }
-    // Intent: Check appointment status
     else if (lowerCaseText.includes("status do meu agendamento") || lowerCaseText.includes("meu agendamento") || lowerCaseText.includes("próximo agendamento")) {
-      const upcoming = clientAppointments.filter(app => app.clientEmail === user?.email && (app.status === "pending" || app.status === "confirmed"));
+      const upcoming = clientAppointments.filter(app => app.clientEmail === clientEmail && (app.status === "pending" || app.status === "confirmed"));
       if (upcoming.length > 0) {
-        botResponse = `Seu próximo agendamento é para '${upcoming[0].serviceName}' em ${format(parseISO(upcoming[0].date), "dd/MM/yyyy", { locale: ptBR })} às ${upcoming[0].time}. Status: ${upcoming[0].status}. 🗓️`;
+        botResponse = assistentePontedraBase.agendamento_existente(
+          upcoming[0].serviceName,
+          format(parseISO(upcoming[0].date), "dd/MM/yyyy", { locale: ptBR }),
+          upcoming[0].time
+        );
       } else {
-        botResponse = "Você não tem agendamentos futuros registrados. Que tal agendar um novo serviço? 🗓️";
+        botResponse = assistentePontedraBase.sem_agendamento_futuro;
       }
     }
 
-
     addBotMessage(botResponse);
+    registrarInteracao(clientName, userText, botResponse); // Registrar interação
     setChatState(prev => ({
       ...prev,
       lastServiceMentioned: newLastServiceMentioned,
