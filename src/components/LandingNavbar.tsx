@@ -12,15 +12,14 @@ export default function LandingNavbar() {
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50); // Define isScrolled se a página rolar mais de 50px
+      setIsScrolled(scrollPosition > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Chama uma vez para definir o estado inicial
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Bloqueia scroll quando menu mobile está aberto
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -36,14 +35,14 @@ export default function LandingNavbar() {
     });
     setIsMobileMenuOpen(false);
     if (location.pathname !== "/landing") {
-      navigate("/landing"); // Navega para a landing page se não estiver nela
+      navigate("/landing");
     }
   };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const navbarHeight = 80; // Altura fixa da navbar
+      const navbarHeight = 80;
       const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = elementPosition - navbarHeight;
 
@@ -55,28 +54,24 @@ export default function LandingNavbar() {
     setIsMobileMenuOpen(false);
   };
 
-  // Função para detectar se a navegação é interna (âncora) ou externa (rota)
   const handleNavigation = (target: string) => {
     if (target.startsWith("#")) {
-      // Se já estiver na landing page, rola para a seção
       if (location.pathname === "/landing") {
         scrollToSection(target.substring(1));
       } else {
-        // Caso contrário, navega para a landing page com a âncora
         navigate(`/landing${target}`);
       }
     } else {
-      // Navegação para uma rota externa
       navigate(target);
     }
-    setIsMobileMenuOpen(false); // Fecha o menu mobile após a navegação
+    setIsMobileMenuOpen(false);
   };
 
   const menuItems = [
     { label: "Quem Somos", target: "#quem-somos" },
     { label: "Soluções", target: "#solucoes" },
     { label: "Depoimentos", target: "#depoimentos" },
-    { label: "Blog", target: "/blog" }, // Rota externa
+    { label: "Blog", target: "/blog" },
     { label: "Contato", target: "#contato" },
   ];
 
