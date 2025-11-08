@@ -1,37 +1,47 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Menu } from "lucide-react";
 
 export default function LandingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Verifica se a seção "Quem Somos" chegou ao topo
       const quemSomosSection = document.getElementById("quem-somos");
       if (quemSomosSection) {
         const rect = quemSomosSection.getBoundingClientRect();
-        // Ativa o background quando o topo da seção chega a 100px do topo (altura da navbar)
         setIsScrolled(rect.top <= 100);
       }
     };
 
     window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Checa o estado inicial
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Bloqueia scroll quando menu mobile está aberto
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isMobileMenuOpen]);
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
+    setIsMobileMenuOpen(false);
   };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const navbarHeight = 80; // Altura da navbar
+      const navbarHeight = 80;
       const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = elementPosition - navbarHeight;
 
@@ -40,6 +50,7 @@ export default function LandingNavbar() {
         behavior: "smooth",
       });
     }
+    setIsMobileMenuOpen(false);
   };
 
   const menuItems = [
@@ -51,100 +62,152 @@ export default function LandingNavbar() {
   ];
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
-          ? "bg-[#0c1624]/95 backdrop-blur-xl shadow-lg border-b border-[#1d2c3f]/50"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="container mx-auto px-4 md:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo - Clicável para voltar ao topo */}
-          <motion.button
-            onClick={scrollToTop}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative group cursor-pointer"
-          >
-            {/* Glow effect */}
-            <motion.div
-              className="absolute inset-0 bg-[#57e389]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-            
-            {/* Logo placeholder - SUBSTITUA pelo seu logo real */}
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center shadow-lg shadow-[#57e389]/30">
-                <span className="text-[#0D1B2A] font-bold text-xl">P</span>
-              </div>
-              <span className="text-2xl font-bold text-[#e1e8f0] drop-shadow-[0_0_10px_rgba(87,227,137,0.3)]">
-                Pontedra
-              </span>
-            </div>
-          </motion.button>
-
-          {/* Menu Items */}
-          <div className="hidden md:flex items-center gap-8">
-            {menuItems.map((item, index) => (
-              <motion.button
-                key={item.section}
-                onClick={() => scrollToSection(item.section)}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 relative group"
-              >
-                {item.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#57e389] group-hover:w-full transition-all duration-300" />
-              </motion.button>
-            ))}
-          </div>
-
-          {/* CTA Buttons */}
-          <div className="flex items-center gap-4">
-            <Link
-              to="/login"
-              className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 hidden sm:block"
+    <>
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? "bg-[#0c1624]/95 backdrop-blur-xl shadow-lg border-b border-[#1d2c3f]/50"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <motion.button
+              onClick={scrollToTop}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative group cursor-pointer z-50"
             >
-              Entrar
-            </Link>
-            <Link
-              to="/login"
-              className="px-6 py-2.5 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 hover:scale-105 shadow-lg shadow-[#57e389]/30"
-            >
-              Acessar Plataforma
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button className="md:hidden text-[#e1e8f0] hover:text-[#57e389] transition-colors">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
+              <motion.div
+                className="absolute inset-0 bg-[#57e389]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
-            </svg>
-          </button>
+              
+              <div className="relative z-10 flex items-center gap-2">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center shadow-lg shadow-[#57e389]/30">
+                  <span className="text-[#0D1B2A] font-bold text-base md:text-lg">P</span>
+                </div>
+                <span className="text-lg md:text-xl font-bold text-[#e1e8f0] drop-shadow-[0_0_10px_rgba(87,227,137,0.3)]">
+                  Pontedra
+                </span>
+              </div>
+            </motion.button>
+
+            {/* Desktop Menu */}
+            <div className="hidden lg:flex items-center gap-8">
+              {menuItems.map((item, index) => (
+                <motion.button
+                  key={item.section}
+                  onClick={() => scrollToSection(item.section)}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 relative group"
+                >
+                  {item.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#57e389] group-hover:w-full transition-all duration-300" />
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Desktop CTA Buttons */}
+            <div className="hidden lg:flex items-center gap-4">
+              <Link
+                to="/login"
+                className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300"
+              >
+                Entrar
+              </Link>
+              <Link
+                to="/login"
+                className="px-6 py-2.5 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 hover:scale-105 shadow-lg shadow-[#57e389]/30"
+              >
+                Acessar Plataforma
+            </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden text-[#e1e8f0] hover:text-[#57e389] transition-colors z-50 p-2"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-7 h-7" />
+              ) : (
+                <Menu className="w-7 h-7" />
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-    </motion.nav>
+      </motion.nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-[#0c1624]/98 backdrop-blur-xl z-40 lg:hidden"
+          >
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25 }}
+              className="absolute right-0 top-0 h-full w-full sm:w-80 bg-[#0D1B2A] border-l border-[#1d2c3f] shadow-2xl"
+            >
+              <div className="flex flex-col h-full pt-24 px-8">
+                {/* Mobile Menu Items */}
+                <div className="flex flex-col gap-6 mb-8">
+                  {menuItems.map((item, index) => (
+                    <motion.button
+                      key={item.section}
+                      onClick={() => scrollToSection(item.section)}
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="text-left text-[#e1e8f0] hover:text-[#57e389] font-medium text-xl transition-colors duration-300 py-3 border-b border-[#1d2c3f]/50"
+                    >
+                      {item.label}
+                    </motion.button>
+                  ))}
+                </div>
+
+                {/* Mobile CTA Buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col gap-4 mt-auto mb-8"
+                >
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center px-6 py-3 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
+                  >
+                    Entrar
+                  </Link>
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center px-6 py-3 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 shadow-lg shadow-[#57e389]/30"
+                  >
+                    Acessar Plataforma
+                  </Link>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
