@@ -70,20 +70,34 @@ const AppointmentsPage = () => {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-    await addAppointment(newAppointment);
-    setIsAddModalOpen(false);
-    setNewAppointment({
-      clientEmail: "",
-      serviceName: "",
-      date: format(new Date(), "yyyy-MM-dd"),
-      time: "",
-      status: "pending",
-    });
+    try {
+      await addAppointment(newAppointment);
+      setIsAddModalOpen(false);
+      setNewAppointment({
+        clientEmail: "",
+        serviceName: "",
+        date: format(new Date(), "yyyy-MM-dd"),
+        time: "",
+        status: "pending",
+      });
+    } catch (error: any) {
+      // A toast de erro já é exibida pelo MockContext
+      console.error("Erro ao adicionar agendamento:", error.message);
+    }
   };
 
   const getClientName = (email: string) => {
     return clients.find(c => c.email === email)?.name || email;
   };
+
+  const getBookedTimesForNewAppointmentDate = () => {
+    if (!newAppointment.date) return [];
+    return appointments
+      .filter(app => app.date === newAppointment.date)
+      .map(app => app.time);
+  };
+
+  const bookedTimesForNewAppointment = getBookedTimesForNewAppointmentDate();
 
   return (
     <MasterDashboardLayout>
@@ -304,8 +318,13 @@ const AppointmentsPage = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border text-foreground">
                   {MOCK_AVAILABLE_TIMES.map((time) => (
-                    <SelectItem key={time} value={time} className="hover:bg-muted cursor-pointer">
-                      {time}
+                    <SelectItem
+                      key={time}
+                      value={time}
+                      className="hover:bg-muted cursor-pointer"
+                      disabled={bookedTimesForNewAppointment.includes(time)}
+                    >
+                      {time} {bookedTimesForNewAppointment.includes(time) && "(Indisponível)"}
                     </SelectItem>
                   ))}
                 </SelectContent>

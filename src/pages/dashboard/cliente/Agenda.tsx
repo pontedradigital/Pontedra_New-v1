@@ -11,19 +11,26 @@ import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Label } from "@/components/ui/label"; // Importar Label
+import { useMockData } from "@/context/MockContext"; // Importar useMockData
 
 const AgendaPage = () => {
   const { user } = useAuth();
+  const { addClientAppointment, appointments } = useMockData(); // Usar appointments do MockContext
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [selectedService, setSelectedService] = useState<string | undefined>(undefined);
   const [clientAppointments, setClientAppointments] = useState<Appointment[]>(
-    MOCK_CLIENT_APPOINTMENTS.filter(app => app.clientEmail === user?.email)
+    appointments.filter(app => app.clientEmail === user?.email)
   );
+
+  // Atualizar clientAppointments quando 'appointments' do contexto mudar
+  React.useEffect(() => {
+    setClientAppointments(appointments.filter(app => app.clientEmail === user?.email));
+  }, [appointments, user]);
 
   const availableServices = MOCK_CLIENT_SERVICES.filter(service => service.availability === "available");
 
-  const handleScheduleAppointment = () => {
+  const handleScheduleAppointment = async () => {
     if (!selectedDate || !selectedTime || !selectedService || !user?.email) {
       toast.error("Por favor, selecione uma data, hora e serviço.");
       return;
@@ -35,20 +42,33 @@ const AgendaPage = () => {
       return;
     }
 
-    const newAppointment: Appointment = {
-      id: `a${clientAppointments.length + 1}`,
-      clientEmail: user.email,
+    const newAppointmentData: Omit<Appointment, "id" | "clientEmail"> = {
       serviceName: serviceDetails.name,
       date: format(selectedDate, "yyyy-MM-dd"),
       time: selectedTime,
       status: "pending",
     };
 
-    setClientAppointments([...clientAppointments, newAppointment]);
-    toast.success("Agendamento realizado com sucesso!");
-    setSelectedTime(undefined);
-    setSelectedService(undefined);
+    try {
+      await addClientAppointment(newAppointmentData, user.email);
+      // A toast de sucesso já é exibida pelo MockContext
+      setSelectedTime(undefined);
+      setSelectedService(undefined);
+    } catch (error: any) {
+      // A toast de erro já é exibida pelo MockContext
+      console.error("Erro ao agendar:", error.message);
+    }
   };
+
+  const getBookedTimesForSelectedDate = () => {
+    if (!selectedDate) return [];
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return appointments
+      .filter(app => app.date === formattedDate)
+      .map(app => app.time);
+  };
+
+  const bookedTimes = getBookedTimesForSelectedDate();
 
   return (
     <ClientDashboardLayout>
@@ -94,8 +114,13 @@ const AgendaPage = () => {
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border text-foreground">
                     {MOCK_AVAILABLE_TIMES.map((time) => (
-                      <SelectItem key={time} value={time} className="hover:bg-muted cursor-pointer">
-                        {time}
+                      <SelectItem
+                        key={time}
+                        value={time}
+                        className="hover:bg-muted cursor-pointer"
+                        disabled={bookedTimes.includes(time)}
+                      >
+                        {time} {bookedTimes.includes(time) && "(Indisponível)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
