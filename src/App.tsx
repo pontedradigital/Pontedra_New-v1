@@ -9,12 +9,16 @@ import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import MasterDashboardPage from "./pages/dashboard/master/Index";
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
-import UsersPage from "./pages/dashboard/master/Users"; // Nova página
-import ServicesPage from "./pages/dashboard/master/Services"; // Nova página
-import AppointmentsPage from "./pages/dashboard/master/Appointments"; // Nova página
-import CommunicationPage from "./pages/dashboard/master/Communication"; // Nova página
-import AIInsightsPage from "./pages/dashboard/master/AIInsights"; // Nova página
-import SettingsPage from "./pages/dashboard/master/Settings"; // Nova página
+import UsersPage from "./pages/dashboard/master/Users";
+import ServicesPage from "./pages/dashboard/master/Services";
+import AppointmentsPage from "./pages/dashboard/master/Appointments";
+import CommunicationPage from "./pages/dashboard/master/Communication";
+import AIInsightsPage from "./pages/dashboard/master/AIInsights";
+import SettingsPage from "./pages/dashboard/master/Settings";
+import ClientAgendaPage from "./pages/dashboard/cliente/Agenda"; // Nova página
+import ClientChatPage from "./pages/dashboard/cliente/Chat";     // Nova página
+import ClientPerfilPage from "./pages/dashboard/cliente/Perfil"; // Nova página
+import ClientSettingsPage from "./pages/dashboard/cliente/Settings"; // Nova página
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -105,6 +109,38 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["client"]}>
                   <ClientDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/agenda"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <ClientAgendaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/chat"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <ClientChatPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/perfil"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <ClientPerfilPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/settings"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <ClientSettingsPage />
                 </ProtectedRoute>
               }
             />

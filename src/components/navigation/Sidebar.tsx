@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User } from "lucide-react"; // Importar User
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -21,10 +21,11 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
   ];
 
   const clientNavItems = [
-    { name: "Dashboard", href: "/dashboard/cliente", icon: LayoutDashboard },
-    { name: "Meus Agendamentos", href: "/dashboard/cliente/my-appointments", icon: CalendarDays },
-    { name: "Meus Serviços", href: "/dashboard/cliente/my-services", icon: Briefcase },
-    { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
+    { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
+    { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
+    { name: "Chat IA", href: "/dashboard/cliente/chat", icon: Bot },
+    { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
+    { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings }, // Mantendo configurações para o cliente
   ];
 
   const navItems = userRole === "master" ? masterNavItems : clientNavItems;
