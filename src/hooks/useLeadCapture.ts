@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { enviarEmailConfirmacaoLead } from '@/lib/email' // Importação adicionada
 
 interface LeadData {
   nome: string
@@ -61,6 +62,16 @@ export function useLeadCapture() {
       })
 
       if (supabaseError) throw supabaseError
+
+      // Envia e-mails de confirmação
+      await enviarEmailConfirmacaoLead({
+        nome: leadData.nome,
+        email: leadData.email,
+        telefone: leadData.telefone,
+        assunto: leadData.assunto,
+        mensagem: leadData.mensagem,
+        origem: leadData.origem,
+      })
 
       // Marca que o lead foi capturado
       localStorage.setItem('pontedra_lead_captured', 'true')
