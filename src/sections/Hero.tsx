@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, Zap, TrendingUp } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react"; // Updated imports
 
 // Componente de partículas flutuantes
 const FloatingParticles = () => {
@@ -190,33 +190,6 @@ export default function Hero() {
               <button className="px-8 py-4 bg-transparent border-2 border-[#57e389]/50 text-[#e1e8f0] font-bold rounded-full hover:bg-[#57e389]/10 hover:border-[#57e389] transition-all duration-300 hover:scale-105">
                 Ver Portfólio
               </button>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-wrap gap-8 pt-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#57e389]/10 flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-[#57e389]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">100+</p>
-                  <p className="text-[#9ba8b5] text-sm">Projetos</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#00b4ff]/10 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-[#00b4ff]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">98%</p>
-                  <p className="text-[#9ba8b5] text-sm">Satisfação</p>
-                </div>
-              </div>
             </motion.div>
           </div>
 
