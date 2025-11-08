@@ -7,9 +7,17 @@ export default function LandingNavbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      // Verifica se a seção "Quem Somos" chegou ao topo
+      const quemSomosSection = document.getElementById("quem-somos");
+      if (quemSomosSection) {
+        const rect = quemSomosSection.getBoundingClientRect();
+        // Ativa o background quando o topo da seção chega a 100px do topo (altura da navbar)
+        setIsScrolled(rect.top <= 100);
+      }
     };
+
     window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Checa o estado inicial
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -23,7 +31,14 @@ export default function LandingNavbar() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      const navbarHeight = 80; // Altura da navbar
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - navbarHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
     }
   };
 
@@ -40,9 +55,9 @@ export default function LandingNavbar() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
-          ? "bg-[#0c1624]/80 backdrop-blur-xl shadow-lg border-b border-[#1d2c3f]/50"
+          ? "bg-[#0c1624]/95 backdrop-blur-xl shadow-lg border-b border-[#1d2c3f]/50"
           : "bg-transparent"
       }`}
     >
@@ -55,12 +70,28 @@ export default function LandingNavbar() {
             whileTap={{ scale: 0.95 }}
             className="relative group cursor-pointer"
           >
-            <div className="absolute inset-0 bg-[#57e389]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <img
-              src="/pontedra-logo.webp"
-              alt="Pontedra Logo"
-              className="h-16 w-auto relative z-10 drop-shadow-[0_0_15px_rgba(87,227,137,0.5)]"
+            {/* Glow effect */}
+            <motion.div
+              className="absolute inset-0 bg-[#57e389]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              animate={{
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
             />
+            
+            {/* Logo placeholder - SUBSTITUA pelo seu logo real */}
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center shadow-lg shadow-[#57e389]/30">
+                <span className="text-[#0D1B2A] font-bold text-xl">P</span>
+              </div>
+              <span className="text-2xl font-bold text-[#e1e8f0] drop-shadow-[0_0_10px_rgba(87,227,137,0.3)]">
+                Pontedra
+              </span>
+            </div>
           </motion.button>
 
           {/* Menu Items */}
@@ -75,7 +106,7 @@ export default function LandingNavbar() {
                 className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 relative group"
               >
                 {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#57e389] group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#57e389] group-hover:w-full transition-all duration-300" />
               </motion.button>
             ))}
           </div>
@@ -84,7 +115,7 @@ export default function LandingNavbar() {
           <div className="flex items-center gap-4">
             <Link
               to="/login"
-              className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300"
+              className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 hidden sm:block"
             >
               Entrar
             </Link>
@@ -96,8 +127,8 @@ export default function LandingNavbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button (opcional - adicionar se necessário) */}
-          <button className="md:hidden text-[#e1e8f0]">
+          {/* Mobile Menu Button */}
+          <button className="md:hidden text-[#e1e8f0] hover:text-[#57e389] transition-colors">
             <svg
               className="w-6 h-6"
               fill="none"
