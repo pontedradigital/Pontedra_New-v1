@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -11,17 +11,17 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
   const location = useLocation();
 
   const masterNavItems = [
-    { name: "Dashboard", href: "/dashboard/master", icon: Home },
-    { name: "Usuários", href: "/dashboard/master/users", icon: Users },
+    { name: "Dashboard", href: "/dashboard/master", icon: LayoutDashboard },
+    { name: "Clientes", href: "/dashboard/master/users", icon: Users },
     { name: "Serviços", href: "/dashboard/master/services", icon: Briefcase },
     { name: "Agendamentos", href: "/dashboard/master/appointments", icon: CalendarDays },
-    { name: "Integrações IA", href: "/dashboard/master/ai-integrations", icon: Bot },
     { name: "Comunicação", href: "/dashboard/master/communication", icon: MessageSquare },
+    { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Configurações", href: "/dashboard/master/settings", icon: Settings },
   ];
 
   const clientNavItems = [
-    { name: "Dashboard", href: "/dashboard/cliente", icon: Home },
+    { name: "Dashboard", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Meus Agendamentos", href: "/dashboard/cliente/my-appointments", icon: CalendarDays },
     { name: "Meus Serviços", href: "/dashboard/cliente/my-services", icon: Briefcase },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },

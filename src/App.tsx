@@ -9,6 +9,12 @@ import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
 import MasterDashboardPage from "./pages/dashboard/master/Index";
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
+import UsersPage from "./pages/dashboard/master/Users"; // Nova página
+import ServicesPage from "./pages/dashboard/master/Services"; // Nova página
+import AppointmentsPage from "./pages/dashboard/master/Appointments"; // Nova página
+import CommunicationPage from "./pages/dashboard/master/Communication"; // Nova página
+import AIInsightsPage from "./pages/dashboard/master/AIInsights"; // Nova página
+import SettingsPage from "./pages/dashboard/master/Settings"; // Nova página
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -35,12 +41,60 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* Exemplo de sub-rota para Master (pode ser expandido) */}
+            <Route
+              path="/dashboard/master/users"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <UsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/services"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <ServicesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/appointments"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <AppointmentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/communication"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <CommunicationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/ai-insights"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <AIInsightsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/settings"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Catch-all para sub-rotas do Master, se necessário */}
             <Route
               path="/dashboard/master/*"
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
-                  <MasterDashboardPage /> {/* Renderiza o layout e o conteúdo da sub-rota */}
+                  <MasterDashboardPage /> {/* Pode ser ajustado para um layout de sub-rota mais genérico */}
                 </ProtectedRoute>
               }
             />
@@ -54,12 +108,12 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* Exemplo de sub-rota para Cliente (pode ser expandido) */}
+            {/* Catch-all para sub-rotas do Cliente, se necessário */}
             <Route
               path="/dashboard/cliente/*"
               element={
                 <ProtectedRoute allowedRoles={["client"]}>
-                  <ClientDashboardPage /> {/* Renderiza o layout e o conteúdo da sub-rota */}
+                  <ClientDashboardPage /> {/* Pode ser ajustado para um layout de sub-rota mais genérico */}
                 </ProtectedRoute>
               }
             />

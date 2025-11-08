@@ -1,6 +1,7 @@
 import React from "react";
 import MasterDashboardLayout from "@/components/layouts/MasterDashboardLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Users, Briefcase, CalendarDays, Bot, LayoutDashboard } from "lucide-react"; // Importar LayoutDashboard
 
 const MasterDashboardPage = () => {
   return (
@@ -11,7 +12,7 @@ const MasterDashboardPage = () => {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
