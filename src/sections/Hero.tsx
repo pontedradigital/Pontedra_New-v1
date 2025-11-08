@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -10,15 +10,13 @@ const Hero = () => {
   const heroRef = useRef(null);
   const isInView = useInView(heroRef, { once: true, margin: "-100px" });
 
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
-
   useEffect(() => {
     if (isInView) {
       controls.start("visible");
     }
   }, [isInView, controls]);
 
-  // --- Fundo animado com partículas e linhas curvas + movimento do mouse ---
+  // --- Fundo animado com partículas e linhas curvas ---
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -187,30 +185,11 @@ const Hero = () => {
     }
   };
 
-  const handleMouseMoveSection = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePosition({ x, y });
-  };
-
-  const handleMouseLeaveSection = () => {
-    setMousePosition({ x: 50, y: 50 }); // Reset to center
-  };
-
-  const cardBackgrounds = [
-    { from: 'rgba(95, 240, 119, 0.15)', to: 'rgba(69, 208, 96, 0.15)' },
-    { from: 'rgba(69, 208, 96, 0.15)', to: 'rgba(53, 160, 80, 0.15)' },
-    { from: 'rgba(53, 160, 80, 0.15)', to: 'rgba(42, 123, 73, 0.15)' },
-  ];
-
   return (
     <section
       ref={heroRef}
       id="hero"
       className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-pontedra-hero-bg-dark"
-      onMouseMove={handleMouseMoveSection}
-      onMouseLeave={handleMouseLeaveSection}
     >
       <canvas
         ref={canvasRef}
@@ -263,29 +242,28 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Caixas numeradas com gradiente animado */}
-        <div className="relative flex flex-col gap-4 mt-12 md:mt-0">
+        {/* Caixas numeradas com gradiente animado e glow pulsante */}
+        <div className="relative flex flex-col gap-5 mt-12 md:mt-0">
           {[
             { id: 1, text: 'Atraia mais' },
             { id: 2, text: 'Venda melhor' },
             { id: 3, text: 'Seu sucesso acontece' }
-          ].map((item, index) => (
+          ].map((item) => (
             <div
               key={item.id}
-              className={`flex items-center gap-4 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px]
-                         transition-all duration-500 ease-in-out hover:-translate-y-1 hover:scale-[1.03]
-                         animate-float-delay-${index} shadow-inner border border-pontedra-line-green-dark
-                         relative overflow-hidden group flex items-center
-                         hover:shadow-[0_0_20px_rgba(95,240,119,0.25)]`}
-              style={{
-                animationDelay: `${1.0 + index * 0.2}s`,
-                background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(95, 240, 119, 0.15), rgba(10, 20, 15, 0.3)), linear-gradient(to bottom, ${cardBackgrounds[index].from}, ${cardBackgrounds[index].to})`,
-              }}
+              className="group flex items-center gap-4 relative overflow-hidden rounded-2xl px-8 py-6
+                         bg-gradient-to-b from-lime-500/20 via-lime-600/20 to-lime-700/20
+                         border border-lime-400/30 shadow-[0_0_20px_rgba(163,230,53,0.15)]
+                         backdrop-blur-sm transition-all duration-500 ease-in-out
+                         hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(163,230,53,0.4)] animate-gradient-flow animate-glow"
             >
-              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-pontedra-button-green text-pontedra-dark-text font-bold text-lg">
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-lime-500 text-black font-bold text-lg">
                 {item.id}
               </div>
-              <span className="text-white text-xl font-semibold">{item.text}</span>
+              <p className="text-white font-semibold text-lg">{item.text}</p>
+
+              {/* camada de brilho pulsante sutil */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-lime-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
             </div>
           ))}
         </div>
