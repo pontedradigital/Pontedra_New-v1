@@ -191,7 +191,7 @@ const MasterDashboardPage = () => {
             <CardContent className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsBarChart data={MOCK_CHART_DATA.monthlyAppointments}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <CartesianGrid strokeDashArray="3 3" stroke="hsl(var(--muted))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip cursor={{ fill: 'hsl(var(--accent))' }} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
@@ -210,7 +210,7 @@ const MasterDashboardPage = () => {
             <CardContent className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={MOCK_CHART_DATA.servicePopularity}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <CartesianGrid strokeDashArray="3 3" stroke="hsl(var(--muted))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip cursor={{ fill: 'hsl(var(--accent))' }} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }} />

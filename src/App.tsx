@@ -8,7 +8,7 @@ import LandingPage from "./pages/LandingPage";
 import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import NotFound from "./pages/NotFound";
-import ProtectedRoute from "@/components/auth/ProtectedRoute"; // Importar ProtectedRoute
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 // Importar as páginas de dashboard existentes
 import MasterDashboardPage from "@/pages/dashboard/master/Index";

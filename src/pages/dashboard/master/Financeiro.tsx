@@ -15,7 +15,6 @@ const FinanceiroPage = () => {
   const [chartData, setChartData] = useState(MOCK_FINANCE_CHART_DATA);
   const [loading, setLoading] = useState(false);
 
-  // Simulate automatic updates for finance entries
   useEffect(() => {
     const interval = setInterval(() => {
       const newEntry: FinanceEntry = {
@@ -26,8 +25,8 @@ const FinanceiroPage = () => {
         value: parseFloat((Math.random() * (200 - 50) + 50).toFixed(2)),
         status: "Concluído",
       };
-      setFinanceEntries(prev => [newEntry, ...prev].slice(0, 10)); // Keep last 10 entries
-    }, 30000); // Add new entry every 30 seconds
+      setFinanceEntries(prev => [newEntry, ...prev].slice(0, 10));
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [financeEntries.length]);
@@ -35,16 +34,15 @@ const FinanceiroPage = () => {
   const handleUpdateFinance = () => {
     setLoading(true);
     setTimeout(() => {
-      // Simulate fetching new data
       setFinanceSummary({
-        totalRevenue: parseFloat((MOCK_FINANCE_SUMMARY.totalRevenue * (1 + (Math.random() * 0.1 - 0.05))).toFixed(2)), // +/- 5%
-        revenueChange: parseFloat((Math.random() * 30 - 10).toFixed(1)), // -10% to +20%
+        totalRevenue: parseFloat((MOCK_FINANCE_SUMMARY.totalRevenue * (1 + (Math.random() * 0.1 - 0.05))).toFixed(2)),
+        revenueChange: parseFloat((Math.random() * 30 - 10).toFixed(1)),
         netProfit: parseFloat((MOCK_FINANCE_SUMMARY.netProfit * (1 + (Math.random() * 0.1 - 0.05))).toFixed(2)),
         mostProfitableService: ["Coloração", "Corte de Cabelo Masculino", "Limpeza de Pele"][Math.floor(Math.random() * 3)],
       });
       setFinanceEntries(MOCK_FINANCE_ENTRIES.map(entry => ({
         ...entry,
-        value: parseFloat((entry.value * (1 + (Math.random() * 0.05 - 0.02))).toFixed(2)), // +/- 2%
+        value: parseFloat((entry.value * (1 + (Math.random() * 0.05 - 0.02))).toFixed(2)),
       })));
       setChartData({
         monthlyRevenue: MOCK_FINANCE_CHART_DATA.monthlyRevenue.map(data => ({ ...data, value: data.value + Math.floor(Math.random() * 1000 - 500) })),
@@ -136,7 +134,7 @@ const FinanceiroPage = () => {
             <CardContent className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData.monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <CartesianGrid strokeDashArray="3 3" stroke="hsl(var(--muted))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip cursor={{ fill: 'hsl(var(--accent))' }} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
@@ -155,7 +153,7 @@ const FinanceiroPage = () => {
             <CardContent className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData.accumulatedProfit}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <CartesianGrid strokeDashArray="3 3" stroke="hsl(var(--muted))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip cursor={{ fill: 'hsl(var(--accent))' }} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }} />

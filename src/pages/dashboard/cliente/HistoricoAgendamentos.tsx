@@ -59,12 +59,10 @@ const HistoricoAgendamentosPage = () => {
   useEffect(() => {
     let tempAppointments = allAppointments;
 
-    // Filter by status
     if (filterStatus !== "Todos") {
       tempAppointments = tempAppointments.filter(app => app.status === filterStatus);
     }
 
-    // Filter by search term
     if (searchTerm) {
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
       tempAppointments = tempAppointments.filter(
@@ -75,7 +73,6 @@ const HistoricoAgendamentosPage = () => {
       );
     }
 
-    // Sort by date (future first, then past)
     tempAppointments.sort((a, b) => {
       const dateA = parseISO(a.dateTime);
       const dateB = parseISO(b.dateTime);
@@ -86,8 +83,8 @@ const HistoricoAgendamentosPage = () => {
 
       if (isAFuture && !isBFuture) return -1;
       if (!isAFuture && isBFuture) return 1;
-      if (isAFuture && isBFuture) return dateA.getTime() - dateB.getTime(); // Ascending for future
-      return dateB.getTime() - dateA.getTime(); // Descending for past
+      if (isAFuture && isBFuture) return dateA.getTime() - dateB.getTime();
+      return dateB.getTime() - dateA.getTime();
     });
 
     setFilteredAppointments(tempAppointments);

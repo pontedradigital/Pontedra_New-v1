@@ -2,10 +2,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, UserIcon, BellIcon } from "lucide-react"; // Adicionado BellIcon
+import { MenuIcon, UserIcon, BellIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
+import { useMockData } from "@/context/MockContext";
 
 interface HeaderProps {
   isMobile: boolean;
@@ -13,6 +14,7 @@ interface HeaderProps {
 
 export const Header = ({ isMobile }: HeaderProps) => {
   const { user, logout } = useAuth();
+  const { unreadNotificationCount } = useMockData();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 shadow-lg">
@@ -34,8 +36,11 @@ export const Header = ({ isMobile }: HeaderProps) => {
           Bem-vindo, {user?.email?.split('@')[0]}
         </h1>
       </div>
-      <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-primary">
+      <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-primary relative">
         <BellIcon className="h-5 w-5" />
+        {unreadNotificationCount > 0 && (
+          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-destructive ring-2 ring-card" />
+        )}
         <span className="sr-only">Notificações</span>
       </Button>
       <DropdownMenu>

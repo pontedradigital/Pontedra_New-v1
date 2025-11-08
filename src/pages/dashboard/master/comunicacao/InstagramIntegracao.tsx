@@ -8,25 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Camera, MessageSquareText } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useMockData } from "@/context/MockContext";
 
 const InstagramIntegracao = () => {
-  const [connected, setConnected] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { channels, toggleChannelConnection, isLoading } = useMockData();
+  const instagramChannel = channels.find(c => c.name === "Instagram Direct");
+  const connected = instagramChannel?.connected || false;
+
   const [autoGreeting, setAutoGreeting] = useState(true);
   const [awayMessage, setAwayMessage] = useState(true);
   const [forwardToHuman, setForwardToHuman] = useState(false);
 
-  const handleToggleConnection = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setConnected(!connected);
-      setLoading(false);
-      if (!connected) {
-        toast.success("Instagram Direct conectado com sucesso!");
-      } else {
-        toast.info("Instagram Direct desconectado.");
-      }
-    }, 1500);
+  const handleToggleConnection = async () => {
+    if (instagramChannel) {
+      await toggleChannelConnection(instagramChannel.id);
+    }
   };
 
   const mockRecentMessages = [
@@ -71,9 +67,9 @@ const InstagramIntegracao = () => {
                   className="w-full uppercase"
                   variant={connected ? "destructive" : "default"}
                   onClick={handleToggleConnection}
-                  disabled={loading}
+                  disabled={isLoading}
                 >
-                  {loading ? "Carregando..." : connected ? "Desconectar Conta Instagram" : "Conectar Conta Instagram"}
+                  {isLoading ? "Carregando..." : connected ? "Desconectar Conta Instagram" : "Conectar Conta Instagram"}
                 </Button>
               </div>
             </CardContent>

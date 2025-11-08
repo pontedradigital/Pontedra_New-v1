@@ -18,11 +18,11 @@ export const gerarRelatorioInteligente = (
 
   const sugestoes = [];
 
-  if (parseFloat(taxaConversao) < 70) { // Ajustado para um valor mais realista
+  if (parseFloat(taxaConversao) < 70) {
     sugestoes.push("A taxa de conclusão de serviços pode ser melhorada. Considere enviar lembretes mais frequentes ou ofertas para agendamentos pendentes.");
   }
 
-  if (totalClientes < 10) { // Exemplo de limite baixo
+  if (totalClientes < 10) {
     sugestoes.push("A base de clientes é pequena. Invista em campanhas de aquisição de clientes e programas de indicação.");
   } else if (totalClientes > 50 && totalClientes < 100) {
     sugestoes.push("Sua base de clientes está crescendo! Mantenha o engajamento com conteúdo relevante e promoções exclusivas.");

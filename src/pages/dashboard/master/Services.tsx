@@ -9,45 +9,42 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-
-interface Service {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  availability: "available" | "unavailable";
-  imageUrl?: string;
-}
-
-const MOCK_SERVICES: Service[] = [
-  { id: "s1", name: "Corte de Cabelo Masculino", description: "Corte moderno com lavagem e finalização.", price: 50.00, category: "Cabelo", availability: "available" },
-  { id: "s2", name: "Manicure e Pedicure", description: "Serviço completo de unhas.", price: 80.00, category: "Estética", availability: "available" },
-  { id: "s3", name: "Massagem Relaxante", description: "Sessão de 60 minutos para alívio do estresse.", price: 120.00, category: "Bem-estar", availability: "unavailable" },
-];
+import { useMockData } from "@/context/MockContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const ServicesPage = () => {
-  const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
+  const { services, addService, deleteService, updateService, isLoading } = useMockData();
   const [newService, setNewService] = useState({ name: "", description: "", price: 0, category: "", availability: "available" as "available" | "unavailable", imageUrl: "" });
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const handleAddService = (e: React.FormEvent) => {
+  const handleAddService = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = `s${services.length + 1}`;
-    setServices([...services, { id, ...newService }]);
-    setNewService({ name: "", description: "", price: 0, category: "", availability: "available", imageUrl: "" });
-    toast.success("Serviço adicionado com sucesso!");
+    if (!newService.name || !newService.description || newService.price <= 0) {
+      toast.error("Nome, descrição e preço são obrigatórios e o preço deve ser maior que zero.");
+      return;
+    }
+    try {
+      await addService(newService);
+      setNewService({ name: "", description: "", price: 0, category: "", availability: "available", imageUrl: "" });
+      setIsAddModalOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao adicionar serviço.");
+    }
   };
 
-  const handleDeleteService = (id: string) => {
-    setServices(services.filter(service => service.id !== id));
-    toast.info("Serviço excluído.");
+  const handleDeleteService = async (id: string) => {
+    try {
+      await deleteService(id);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir serviço.");
+    }
   };
 
   return (
     <MasterDashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold md:text-2xl text-foreground">Gestão de Produtos/Serviços</h1>
-        <Button size="sm" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" onClick={() => toast.info("Abrir modal de adicionar serviço (simulado)")}>
+        <Button size="sm" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Serviço
         </Button>
       </div>
@@ -112,85 +109,85 @@ const ServicesPage = () => {
         </Card>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mt-6"
-      >
-        <Card className="bg-card border-border shadow-lg rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-foreground">Adicionar Novo Serviço</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddService} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div className="grid gap-2">
-                <Label htmlFor="service-name" className="text-foreground">Nome</Label>
-                <Input
-                  id="service-name"
-                  value={newService.name}
-                  onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                  required
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="service-description" className="text-foreground">Descrição</Label>
-                <Input
-                  id="service-description"
-                  value={newService.description}
-                  onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                  required
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="service-price" className="text-foreground">Preço</Label>
-                <Input
-                  id="service-price"
-                  type="number"
-                  step="0.01"
-                  value={newService.price}
-                  onChange={(e) => setNewService({ ...newService, price: parseFloat(e.target.value) })}
-                  required
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="service-category" className="text-foreground">Categoria</Label>
-                <Input
-                  id="service-category"
-                  value={newService.category}
-                  onChange={(e) => setNewService({ ...newService, category: e.target.value })}
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="service-availability" className="text-foreground">Disponibilidade</Label>
-                <select
-                  id="service-availability"
-                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
-                  value={newService.availability}
-                  onChange={(e) => setNewService({ ...newService, availability: e.target.value as "available" | "unavailable" })}
-                >
-                  <option value="available">Disponível</option>
-                  <option value="unavailable">Indisponível</option>
-                </select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="service-image" className="text-foreground">URL da Imagem</Label>
-                <Input
-                  id="service-image"
-                  value={newService.imageUrl}
-                  onChange={(e) => setNewService({ ...newService, imageUrl: e.target.value })}
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <Button type="submit" className="self-end uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">Adicionar Serviço</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground rounded-2xl shadow-lg">
+          <DialogHeader>
+            <DialogTitle className="text-primary">Adicionar Novo Serviço</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Preencha os detalhes para adicionar um novo serviço.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddService} className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="service-name" className="text-foreground">Nome</Label>
+              <Input
+                id="service-name"
+                value={newService.name}
+                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                required
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="service-description" className="text-foreground">Descrição</Label>
+              <Input
+                id="service-description"
+                value={newService.description}
+                onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                required
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="service-price" className="text-foreground">Preço</Label>
+              <Input
+                id="service-price"
+                type="number"
+                step="0.01"
+                value={newService.price}
+                onChange={(e) => setNewService({ ...newService, price: parseFloat(e.target.value) })}
+                required
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="service-category" className="text-foreground">Categoria</Label>
+              <Input
+                id="service-category"
+                value={newService.category}
+                onChange={(e) => setNewService({ ...newService, category: e.target.value })}
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="service-availability" className="text-foreground">Disponibilidade</Label>
+              <select
+                id="service-availability"
+                className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                value={newService.availability}
+                onChange={(e) => setNewService({ ...newService, availability: e.target.value as "available" | "unavailable" })}
+              >
+                <option value="available">Disponível</option>
+                <option value="unavailable">Indisponível</option>
+              </select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="service-image" className="text-foreground">URL da Imagem</Label>
+              <Input
+                id="service-image"
+                value={newService.imageUrl}
+                onChange={(e) => setNewService({ ...newService, imageUrl: e.target.value })}
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+          </form>
+          <DialogFooter className="border-t border-border/50 pt-4">
+            <Button type="submit" onClick={handleAddService} disabled={isLoading} className="self-end uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
+              {isLoading ? "Adicionando..." : "Adicionar Serviço"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MasterDashboardLayout>
   );
 };

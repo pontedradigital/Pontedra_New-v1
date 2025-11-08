@@ -8,25 +8,21 @@ import { Label } from "@/components/ui/label";
 import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useMockData } from "@/context/MockContext";
 
 const MessengerIntegracao = () => {
-  const [connected, setConnected] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { channels, toggleChannelConnection, isLoading } = useMockData();
+  const messengerChannel = channels.find(c => c.name === "Messenger (Facebook)");
+  const connected = messengerChannel?.connected || false;
+
   const [quickReplies, setQuickReplies] = useState(true);
   const [newMsgNotifications, setNewMsgNotifications] = useState(true);
   const [dailySummary, setDailySummary] = useState(false);
 
-  const handleToggleConnection = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setConnected(!connected);
-      setLoading(false);
-      if (!connected) {
-        toast.success("Facebook Messenger conectado com sucesso!");
-      } else {
-        toast.info("Facebook Messenger desconectado.");
-      }
-    }, 1500);
+  const handleToggleConnection = async () => {
+    if (messengerChannel) {
+      await toggleChannelConnection(messengerChannel.id);
+    }
   };
 
   const mockRecentConversations = [
@@ -71,9 +67,9 @@ const MessengerIntegracao = () => {
                   className="w-full uppercase"
                   variant={connected ? "destructive" : "default"}
                   onClick={handleToggleConnection}
-                  disabled={loading}
+                  disabled={isLoading}
                 >
-                  {loading ? "Carregando..." : connected ? "Desconectar Página" : "Conectar Página"}
+                  {isLoading ? "Carregando..." : connected ? "Desconectar Página" : "Conectar Página"}
                 </Button>
               </div>
             </CardContent>

@@ -2,7 +2,6 @@ import React, { ReactNode } from "react";
 import { Header } from "@/components/navigation/Header";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ClientDashboardLayoutProps {

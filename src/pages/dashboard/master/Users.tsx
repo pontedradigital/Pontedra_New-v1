@@ -9,37 +9,34 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  status: "active" | "inactive";
-}
-
-const MOCK_CLIENTS: Client[] = [
-  { id: "1", name: "João Silva", email: "joao@example.com", phone: "11987654321", company: "Empresa A", status: "active" },
-  { id: "2", name: "Maria Souza", email: "maria@example.com", phone: "21912345678", company: "Empresa B", status: "active" },
-  { id: "3", name: "Pedro Lima", email: "pedro@example.com", phone: "31998765432", company: "Empresa C", status: "inactive" },
-];
+import { useMockData } from "@/context/MockContext";
 
 const UsersPage = () => {
-  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
-  const [newClient, setNewClient] = useState({ name: "", email: "", phone: "", company: "", status: "active" as "active" | "inactive" });
+  const { clients, addClient, deleteClient, updateClient, isLoading } = useMockData();
+  const [newClient, setNewClient] = useState({ name: "", email: "", phone: "", company: "" });
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const handleAddClient = (e: React.FormEvent) => {
+  const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = (clients.length + 1).toString();
-    setClients([...clients, { id, ...newClient }]);
-    setNewClient({ name: "", email: "", phone: "", company: "", status: "active" });
-    toast.success("Cliente adicionado com sucesso!");
+    if (!newClient.name || !newClient.email) {
+      toast.error("Nome e E-mail são obrigatórios.");
+      return;
+    }
+    try {
+      await addClient({ ...newClient, status: "active" });
+      setNewClient({ name: "", email: "", phone: "", company: "" });
+      setIsAddModalOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao adicionar cliente.");
+    }
   };
 
-  const handleDeleteClient = (id: string) => {
-    setClients(clients.filter(client => client.id !== id));
-    toast.info("Cliente excluído.");
+  const handleDeleteClient = async (id: string) => {
+    try {
+      await deleteClient(id);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir cliente.");
+    }
   };
 
   const handleResetPassword = (email: string) => {
@@ -54,7 +51,7 @@ const UsersPage = () => {
     <MasterDashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold md:text-2xl text-foreground">Gestão de Clientes</h1>
-        <Button size="sm" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" onClick={() => toast.info("Abrir modal de adicionar cliente (simulado)")}>
+        <Button size="sm" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" onClick={() => setIsAddModalOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Cliente
         </Button>
       </div>
@@ -121,74 +118,62 @@ const UsersPage = () => {
         </Card>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mt-6"
-      >
-        <Card className="bg-card border-border shadow-lg rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-foreground">Adicionar Novo Cliente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddClient} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div className="grid gap-2">
-                <Label htmlFor="client-name" className="text-foreground">Nome</Label>
-                <Input
-                  id="client-name"
-                  value={newClient.name}
-                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  required
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="client-email" className="text-foreground">E-mail</Label>
-                <Input
-                  id="client-email"
-                  type="email"
-                  value={newClient.email}
-                  onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                  required
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="client-phone" className="text-foreground">Telefone</Label>
-                <Input
-                  id="client-phone"
-                  value={newClient.phone}
-                  onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="client-company" className="text-foreground">Empresa</Label>
-                <Input
-                  id="client-company"
-                  value={newClient.company}
-                  onChange={(e) => setNewClient({ ...newClient, company: e.target.value })}
-                  className="bg-background border-border text-foreground focus:ring-primary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="client-status" className="text-foreground">Status</Label>
-                <select
-                  id="client-status"
-                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
-                  value={newClient.status}
-                  onChange={(e) => setNewClient({ ...newClient, status: e.target.value as "active" | "inactive" })}
-                >
-                  <option value="active">Ativo</option>
-                  <option value="inactive">Inativo</option>
-                </select>
-              </div>
-              <Button type="submit" className="self-end uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">Adicionar Cliente</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground rounded-2xl shadow-lg">
+          <DialogHeader>
+            <DialogTitle className="text-primary">Adicionar Novo Cliente</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Preencha os detalhes para adicionar um novo cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddClient} className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name" className="text-foreground">Nome</Label>
+              <Input
+                id="name"
+                value={newClient.name}
+                onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                required
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email" className="text-foreground">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newClient.email}
+                onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                required
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="phone" className="text-foreground">Telefone</Label>
+              <Input
+                id="phone"
+                value={newClient.phone}
+                onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="company" className="text-foreground">Empresa</Label>
+              <Input
+                id="company"
+                value={newClient.company}
+                onChange={(e) => setNewClient({ ...newClient, company: e.target.value })}
+                className="bg-background border-border text-foreground focus:ring-primary"
+              />
+            </div>
+          </form>
+          <DialogFooter className="border-t border-border/50 pt-4">
+            <Button type="submit" onClick={handleAddClient} disabled={isLoading} className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
+              {isLoading ? "Adicionando..." : "Adicionar Cliente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MasterDashboardLayout>
   );
 };

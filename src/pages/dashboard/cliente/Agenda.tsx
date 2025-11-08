@@ -11,8 +11,8 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Label } from "@/components/ui/label";
 import { useMockData } from "@/context/MockContext";
-import AgendaCalendar from "@/components/AgendaCalendar"; // Importar o novo componente de calendário
-import { CheckCircle2, XCircle } from "lucide-react"; // Importar ícones
+import AgendaCalendar from "@/components/AgendaCalendar";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 const AgendaPage = () => {
   const { user } = useAuth();
@@ -55,6 +55,7 @@ const AgendaPage = () => {
       setSelectedService(undefined);
     } catch (error: any) {
       console.error("Erro ao agendar:", error.message);
+      toast.error(error.message || "Erro ao agendar serviço.");
     }
   };
 
@@ -166,7 +167,7 @@ const AgendaPage = () => {
                         .sort((a, b) => {
                           const dateTimeA = new Date(`${a.date}T${a.time}`);
                           const dateTimeB = new Date(`${b.date}T${b.time}`);
-                          return dateTimeB.getTime() - dateTimeA.getTime(); // Descending order (most recent first)
+                          return dateTimeB.getTime() - dateTimeA.getTime();
                         })
                         .map((app) => (
                           <TableRow key={app.id} className="border-b border-border/50 hover:bg-background">

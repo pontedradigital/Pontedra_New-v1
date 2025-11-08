@@ -6,22 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { MessageCircle, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useMockData } from "@/context/MockContext";
 
 const WhatsAppIntegracao = () => {
-  const [connected, setConnected] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { channels, toggleChannelConnection, isLoading } = useMockData();
+  const whatsappChannel = channels.find(c => c.name === "WhatsApp Business");
+  const connected = whatsappChannel?.connected || false;
 
-  const handleToggleConnection = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setConnected(!connected);
-      setLoading(false);
-      if (!connected) {
-        toast.success("WhatsApp Business conectado com sucesso!");
-      } else {
-        toast.info("WhatsApp Business desconectado.");
-      }
-    }, 1500);
+  const handleToggleConnection = async () => {
+    if (whatsappChannel) {
+      await toggleChannelConnection(whatsappChannel.id);
+    }
   };
 
   const mockMessages = [
@@ -66,9 +61,9 @@ const WhatsAppIntegracao = () => {
                   className="w-full uppercase"
                   variant={connected ? "destructive" : "default"}
                   onClick={handleToggleConnection}
-                  disabled={loading}
+                  disabled={isLoading}
                 >
-                  {loading ? "Carregando..." : connected ? "Desconectar Conta" : "Conectar Conta"}
+                  {isLoading ? "Carregando..." : connected ? "Desconectar Conta" : "Conectar Conta"}
                 </Button>
               </div>
             </CardContent>

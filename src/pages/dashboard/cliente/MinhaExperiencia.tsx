@@ -35,10 +35,9 @@ const MinhaExperienciaPage = () => {
   const [stats30Days, setStats30Days] = useState(MOCK_CLIENT_30_DAY_STATS);
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedAppointmentDetail, setSelectedAppointmentDetail] = useState<any>(null); // Using 'any' for simplicity, ideally a specific type
+  const [selectedAppointmentDetail, setSelectedAppointmentDetail] = useState<any>(null);
 
   useEffect(() => {
-    // Simulate updates for summary and stats
     const interval = setInterval(() => {
       setSummary(prev => ({
         ...prev,
@@ -47,7 +46,7 @@ const MinhaExperienciaPage = () => {
         lastInteraction: `há ${Math.floor(Math.random() * 7) + 1} dias`,
       }));
       setStats30Days(prev => prev.map(s => ({ ...s, agendamentos: s.agendamentos + Math.floor(Math.random() * 2 - 1) })));
-    }, 30000); // Update every 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -98,7 +97,7 @@ const MinhaExperienciaPage = () => {
             <CardContent className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats30Days}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <CartesianGrid strokeDashArray="3 3" stroke="hsl(var(--muted))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip cursor={{ fill: 'hsl(var(--accent))' }} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
@@ -230,7 +229,7 @@ const MinhaExperienciaPage = () => {
             <DialogTitle className="text-primary">Detalhes do Agendamento</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Informações completas sobre o serviço agendado.
-            </DialogDescription>
+            </CardDescription>
           </DialogHeader>
           {selectedAppointmentDetail && (
             <div className="grid gap-4 py-4">

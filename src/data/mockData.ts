@@ -124,34 +124,6 @@ export interface ClientPromotion {
   actionMessage: string; // Message to pre-fill chat
 }
 
-// Removidas as interfaces ClientFinancialSummary, ClientTransaction, ClientFinancialInsight, ClientSpendingChartData
-// export interface ClientFinancialSummary {
-//   currentBalance: number;
-//   availableCredits: number;
-//   accumulatedCashback: number;
-//   monthlySpendingTarget: number; // Added for progress bar
-// }
-
-// export interface ClientTransaction {
-//   id: string;
-//   date: string;
-//   description: string;
-//   type: "credit" | "debit" | "cashback";
-//   amount: number;
-//   status: "paid" | "pending" | "refunded" | "completed";
-// }
-
-// export interface ClientFinancialInsight {
-//   id: string;
-//   message: string;
-//   category: string;
-// }
-
-// export interface ClientSpendingChartData {
-//   month: string;
-//   spending: number;
-// }
-
 export interface ClientActivitySummary {
   nextAppointment: { service: string; date: string; time: string } | null;
   lastService: { name: string; date: string } | null;
@@ -409,40 +381,6 @@ export const MOCK_CLIENT_30_DAY_STATS = [
   { name: 'Semana 3', agendamentos: 2 },
   { name: 'Semana 4', agendamentos: 4 },
 ];
-
-// Removidos os dados mockados MOCK_CLIENT_FINANCIAL_SUMMARY, MOCK_CLIENT_TRANSACTIONS, MOCK_CLIENT_FINANCIAL_INSIGHTS, MOCK_CLIENT_SPENDING_CHART_DATA
-// export const MOCK_CLIENT_FINANCIAL_SUMMARY: ClientFinancialSummary = {
-//   currentBalance: 250.75,
-//   availableCredits: 50.00,
-//   accumulatedCashback: 12.50,
-//   monthlySpendingTarget: 300.00, // Example target
-// };
-
-// export const MOCK_CLIENT_TRANSACTIONS: ClientTransaction[] = [
-//   { id: "t1", date: "2024-11-20", description: "Pagamento: Corte de Cabelo Masculino", type: "debit", amount: 55.00, status: "paid" },
-//   { id: "t2", date: "2024-11-18", description: "Crédito: Recarga de Saldo", type: "credit", amount: 100.00, status: "completed" },
-//   { id: "t3", date: "2024-11-15", description: "Cashback: Manicure e Pedicure", type: "cashback", amount: 8.50, status: "completed" },
-//   { id: "t4", date: "2024-11-10", description: "Pagamento: Limpeza de Pele", type: "debit", amount: 100.00, status: "paid" },
-//   { id: "t5", date: "2024-11-05", description: "Crédito: Bônus de Aniversário", type: "credit", amount: 20.00, status: "completed" },
-//   { id: "t6", date: "2024-10-28", description: "Pagamento: Coloração Feminina", type: "debit", amount: 180.00, status: "paid" },
-//   { id: "t7", date: "2024-10-25", description: "Cashback: Corte de Cabelo Masculino", type: "cashback", amount: 5.50, status: "completed" },
-// ];
-
-// export const MOCK_CLIENT_FINANCIAL_INSIGHTS: ClientFinancialInsight[] = [
-//   { id: "fi1", message: "Você gastou 25% menos este mês em comparação com o anterior. Ótimo controle!", category: "Economia" },
-//   { id: "fi2", message: "Seu saldo atual de R$250,75 cobre aproximadamente 4 agendamentos médios.", category: "Planejamento" },
-//   { id: "fi3", message: "Sugestão: use seu cashback de R$12,50 antes do vencimento em 31/12 para um desconto extra!", category: "Oportunidade" },
-//   { id: "fi4", message: "Você tem R$50,00 em créditos disponíveis. Que tal agendar aquele serviço que você está de olho?", category: "Créditos" },
-// ];
-
-// export const MOCK_CLIENT_SPENDING_CHART_DATA: ClientSpendingChartData[] = [
-//   { month: 'Jun', spending: 150 },
-//   { month: 'Jul', spending: 200 },
-//   { month: 'Ago', spending: 180 },
-//   { month: 'Set', spending: 250 },
-//   { month: 'Out', spending: 300 },
-//   { month: 'Nov', spending: 220 },
-// ];
 
 export const MOCK_CLIENT_ACTIVITY_SUMMARY: ClientActivitySummary = {
   nextAppointment: { service: "Manicure e Pedicure", date: "2024-12-05", time: "14:30" },

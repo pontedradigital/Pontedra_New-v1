@@ -5,54 +5,17 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Camera, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-
-interface ChannelState {
-  connected: boolean;
-  loading: boolean;
-}
+import { useMockData } from "@/context/MockContext";
 
 const CanaisAtendimentoPage = () => {
-  const [whatsappState, setWhatsappState] = useState<ChannelState>({ connected: false, loading: false });
-  const [messengerState, setMessengerState] = useState<ChannelState>({ connected: false, loading: false });
-  const [instagramState, setInstagramState] = useState<ChannelState>({ connected: false, loading: false });
-
-  const toggleConnection = (channel: "whatsapp" | "messenger" | "instagram") => {
-    let setState: React.Dispatch<React.SetStateAction<ChannelState>>;
-    let currentStatus: boolean;
-    let channelName: string;
-
-    if (channel === "whatsapp") {
-      setState = setWhatsappState;
-      currentStatus = whatsappState.connected;
-      channelName = "WhatsApp Business";
-    } else if (channel === "messenger") {
-      setState = setMessengerState;
-      currentStatus = messengerState.connected;
-      channelName = "Messenger";
-    } else {
-      setState = setInstagramState;
-      currentStatus = instagramState.connected;
-      channelName = "Instagram Direct";
-    }
-
-    setState(prev => ({ ...prev, loading: true }));
-
-    setTimeout(() => {
-      setState(prev => ({ ...prev, connected: !currentStatus, loading: false }));
-      if (!currentStatus) {
-        toast.success(`${channelName} conectado com sucesso!`);
-      } else {
-        toast.info(`${channelName} desconectado.`);
-      }
-    }, 1500); // Simulate API call
-  };
+  const { channels, toggleChannelConnection, isLoading } = useMockData();
 
   const renderChannelCard = (
+    channelId: string,
     title: string,
     description: string,
     Icon: React.ElementType,
-    state: ChannelState,
-    onToggle: () => void,
+    connected: boolean,
     delay: number
   ) => (
     <motion.div
@@ -72,23 +35,27 @@ const CanaisAtendimentoPage = () => {
           <div>
             <p className="text-sm font-semibold mb-2 text-foreground">
               Status:{" "}
-              <span className={state.connected ? "text-primary" : "text-destructive"}>
-                {state.connected ? "Conectado" : "Não conectado"}
+              <span className={connected ? "text-primary" : "text-destructive"}>
+                {connected ? "Conectado" : "Não conectado"}
               </span>
             </p>
             <Button
               className="w-full uppercase"
-              variant={state.connected ? "destructive" : "default"}
-              onClick={onToggle}
-              disabled={state.loading}
+              variant={connected ? "destructive" : "default"}
+              onClick={() => toggleChannelConnection(channelId)}
+              disabled={isLoading}
             >
-              {state.loading ? "Carregando..." : state.connected ? "Desconectar Conta" : "Simular Conexão"}
+              {isLoading ? "Carregando..." : connected ? "Desconectar Conta" : "Simular Conexão"}
             </Button>
           </div>
         </CardContent>
       </Card>
     </motion.div>
   );
+
+  const whatsappChannel = channels.find(c => c.name === "WhatsApp Business");
+  const messengerChannel = channels.find(c => c.name === "Messenger (Facebook)");
+  const instagramChannel = channels.find(c => c.name === "Instagram Direct");
 
   return (
     <MasterDashboardLayout>
@@ -97,30 +64,30 @@ const CanaisAtendimentoPage = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {renderChannelCard(
-          "WhatsApp Business",
-          "Simulação de integração com o WhatsApp para mensagens automatizadas e atendimento ao cliente.",
+        {whatsappChannel && renderChannelCard(
+          whatsappChannel.id,
+          whatsappChannel.name,
+          whatsappChannel.description,
           MessageCircle,
-          whatsappState,
-          () => toggleConnection("whatsapp"),
+          whatsappChannel.connected,
           0.1
         )}
 
-        {renderChannelCard(
-          "Messenger (Facebook)",
-          "Simulação de gerenciamento de conversas e automações no Facebook Messenger.",
+        {messengerChannel && renderChannelCard(
+          messengerChannel.id,
+          messengerChannel.name,
+          messengerChannel.description,
           MessageSquare,
-          messengerState,
-          () => toggleConnection("messenger"),
+          messengerChannel.connected,
           0.2
         )}
 
-        {renderChannelCard(
-          "Instagram Direct",
-          "Simulação de interação com clientes e automação de respostas no Instagram Direct.",
+        {instagramChannel && renderChannelCard(
+          instagramChannel.id,
+          instagramChannel.name,
+          instagramChannel.description,
           Camera,
-          instagramState,
-          () => toggleConnection("instagram"),
+          instagramChannel.connected,
           0.3
         )}
       </div>

@@ -8,32 +8,36 @@ import { toast } from "sonner";
 import { Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import { useMockData } from "@/context/MockContext";
 
 const ClientSettingsPage = () => {
   const { user } = useAuth();
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: false,
-    whatsappNotifications: true,
-  });
-  const [privacySettings, setPrivacySettings] = useState({
-    dataSharing: false,
-    marketingEmails: true,
-  });
+  const { clientNotificationSettings, clientPrivacySettings, updateClientNotificationSettings, updateClientPrivacySettings, isLoading } = useMockData();
+
+  const [localNotificationSettings, setLocalNotificationSettings] = useState(clientNotificationSettings);
+  const [localPrivacySettings, setLocalPrivacySettings] = useState(clientPrivacySettings);
+
+  React.useEffect(() => {
+    setLocalNotificationSettings(clientNotificationSettings);
+    setLocalPrivacySettings(clientPrivacySettings);
+  }, [clientNotificationSettings, clientPrivacySettings]);
 
   const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNotificationSettings({ ...notificationSettings, [e.target.id]: e.target.checked });
+    setLocalNotificationSettings({ ...localNotificationSettings, [e.target.id]: e.target.checked });
   };
 
   const handlePrivacyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPrivacySettings({ ...privacySettings, [e.target.id]: e.target.checked });
+    setLocalPrivacySettings({ ...localPrivacySettings, [e.target.id]: e.target.checked });
   };
 
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Configurações salvas com sucesso!");
-    console.log("Notification Settings:", notificationSettings);
-    console.log("Privacy Settings:", privacySettings);
+    try {
+      await updateClientNotificationSettings(localNotificationSettings);
+      await updateClientPrivacySettings(localPrivacySettings);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao salvar configurações.");
+    }
   };
 
   return (
@@ -58,7 +62,7 @@ const ClientSettingsPage = () => {
                 <input
                   id="emailNotifications"
                   type="checkbox"
-                  checked={notificationSettings.emailNotifications}
+                  checked={localNotificationSettings.emailNotifications}
                   onChange={handleNotificationChange}
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
                 />
@@ -68,7 +72,7 @@ const ClientSettingsPage = () => {
                 <input
                   id="smsNotifications"
                   type="checkbox"
-                  checked={notificationSettings.smsNotifications}
+                  checked={localNotificationSettings.smsNotifications}
                   onChange={handleNotificationChange}
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
                 />
@@ -78,7 +82,7 @@ const ClientSettingsPage = () => {
                 <input
                   id="whatsappNotifications"
                   type="checkbox"
-                  checked={notificationSettings.whatsappNotifications}
+                  checked={localNotificationSettings.whatsappNotifications}
                   onChange={handleNotificationChange}
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
                 />
@@ -103,7 +107,7 @@ const ClientSettingsPage = () => {
                 <input
                   id="dataSharing"
                   type="checkbox"
-                  checked={privacySettings.dataSharing}
+                  checked={localPrivacySettings.dataSharing}
                   onChange={handlePrivacyChange}
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
                 />
@@ -113,7 +117,7 @@ const ClientSettingsPage = () => {
                 <input
                   id="marketingEmails"
                   type="checkbox"
-                  checked={privacySettings.marketingEmails}
+                  checked={localPrivacySettings.marketingEmails}
                   onChange={handlePrivacyChange}
                   className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
                 />
@@ -129,7 +133,9 @@ const ClientSettingsPage = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex justify-end"
         >
-          <Button type="submit" className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">Salvar Configurações</Button>
+          <Button type="submit" disabled={isLoading} className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
+            {isLoading ? "Salvando..." : "Salvar Configurações"}
+          </Button>
         </motion.div>
       </form>
     </ClientDashboardLayout>

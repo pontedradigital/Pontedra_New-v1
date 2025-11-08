@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { BarChart, Lightbulb, RefreshCcw, Users, CalendarCheck, Percent } from "lucide-react";
 import { motion } from "framer-motion";
 import { gerarRelatorioInteligente, obterUltimoRelatorio } from "@/utils/assistentePontedraAnalise";
-import { useMockData } from "@/context/MockContext"; // Importar useMockData
+import { useMockData } from "@/context/MockContext";
+import { toast } from "sonner";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -19,7 +20,6 @@ const AnaliseInteligente = () => {
 
   const updateReport = () => {
     setLoadingReport(true);
-    // Simulate API call delay
     setTimeout(() => {
       const novoRelatorio = gerarRelatorioInteligente(clients, appointments, services);
       setRelatorio(novoRelatorio);
@@ -33,9 +33,9 @@ const AnaliseInteligente = () => {
     if (salvo) {
       setRelatorio(salvo);
     } else {
-      updateReport(); // Gerar o primeiro relatório se não houver nenhum salvo
+      updateReport();
     }
-  }, [clients, appointments, services]); // Dependências para regenerar o relatório se os dados mockados mudarem
+  }, [clients, appointments, services]);
 
   if (!relatorio) {
     return (

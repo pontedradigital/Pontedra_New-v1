@@ -28,7 +28,7 @@ export const analisarPadroes = () => {
 
   const padroes: { [key: string]: number } = {};
   historico.forEach((h) => {
-    const palavrasChave = h.entrada.toLowerCase().split(/\s+/).filter(word => word.length > 2); // Filtra palavras curtas
+    const palavrasChave = h.entrada.toLowerCase().split(/\s+/).filter(word => word.length > 2);
     palavrasChave.forEach(palavraChave => {
       if (!padroes[palavraChave]) padroes[palavraChave] = 0;
       padroes[palavraChave]++;

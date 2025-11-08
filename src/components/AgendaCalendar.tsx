@@ -1,6 +1,6 @@
 import React from "react";
 import Calendar from "react-calendar";
-import 'react-calendar/dist/Calendar.css'; // Importa o CSS padrão do react-calendar
+import 'react-calendar/dist/Calendar.css';
 import { motion } from "framer-motion";
 import { useMockData } from "@/context/MockContext";
 import { format, parseISO } from "date-fns";
@@ -17,7 +17,7 @@ const AgendaCalendar = ({ onSelectDate, selectedDate }: AgendaCalendarProps) => 
   const getDatesWithAppointments = () => {
     const dates = new Set<string>();
     appointments.forEach(app => {
-      dates.add(app.date); // 'YYYY-MM-DD'
+      dates.add(app.date);
     });
     return dates;
   };
@@ -51,7 +51,6 @@ const AgendaCalendar = ({ onSelectDate, selectedDate }: AgendaCalendarProps) => 
           }
           return null;
         }}
-        // Custom navigation and tile content to match theme
         prevLabel="<"
         nextLabel=">"
         prev2Label={null}
