@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
-import Navbar from "@/components/Navbar";
+import LandingNavbar from "@/components/LandingNavbar"; // Updated import
 import Hero from "@/sections/Hero";
 import Footer from "@/components/navigation/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
-import QuemSomos from "@/components/landing/QuemSomos"; // Import the new component
-import NossasSolucoes from "@/sections/NossasSolucoes"; // Import the new NossasSolucoes component
+import QuemSomos from "@/components/landing/QuemSomos";
+import NossasSolucoes from "@/sections/NossasSolucoes";
 
 export default function LandingPage() {
   const location = useLocation();
@@ -15,9 +15,9 @@ export default function LandingPage() {
     if (location.hash) {
       const id = location.hash.replace("#", "");
       const section = document.getElementById(id);
-      const nav = document.getElementById("pontedra-navbar");
-      if (section && nav) {
-        const navHeight = nav.getBoundingClientRect().height;
+      const nav = document.getElementById("pontedra-navbar"); // This ID is from the old Navbar, new one doesn't use it for scroll-margin-top
+      if (section) { // Removed nav check as new Navbar handles its own scroll state
+        const navHeight = 80; // Fixed height for the new LandingNavbar
         const top = section.getBoundingClientRect().top + window.scrollY - navHeight - 8;
         window.scrollTo({ top, behavior: "smooth" });
       }
@@ -26,15 +26,15 @@ export default function LandingPage() {
 
   return (
     <div className="font-sans bg-bgMain text-textPrimary min-h-screen">
-      <Navbar />
+      <LandingNavbar /> {/* Updated component name */}
       <main className="pt-16"> {/* Adjusted padding to account for fixed navbar */}
         <section id="hero">
           <Hero />
         </section>
 
-        <QuemSomos /> {/* Integrated the new QuemSomos component here */}
+        <QuemSomos />
 
-        <NossasSolucoes /> {/* Integrated the new NossasSolucoes component here */}
+        <NossasSolucoes />
 
         <section id="depoimentos" className="py-24 bg-card border-t border-border">
           <div className="max-w-7xl mx-auto px-6">

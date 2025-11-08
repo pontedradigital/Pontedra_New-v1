@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react"; // Import useEffect
-import { enableNavbarScrollState } from "./utils/navbarScroll"; // Import the new utility
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -60,9 +59,7 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => (
 const App = () => {
   const location = useLocation();
 
-  useEffect(() => {
-    enableNavbarScrollState();
-  }, []);
+  // Removed the useEffect that called enableNavbarScrollState() as the new LandingNavbar handles its own scroll state.
 
   return (
     <QueryClientProvider client={queryClient}>
