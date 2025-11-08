@@ -13,6 +13,18 @@ export function PopupManager() {
   const isPaginaBloqueada = location.pathname.includes('/login') || 
                             location.pathname.includes('/cadastro')
 
+  // Teste manual do pop-up
+  useEffect(() => {
+    const handleTestPopup = () => {
+      console.log('Teste manual: Forçando abertura do pop-up')
+      exibirPopup('solucoes', 0)
+      popupJaExibido.current = false // Permite reabrir para testes
+    }
+
+    window.addEventListener('test-popup', handleTestPopup)
+    return () => window.removeEventListener('test-popup', handleTestPopup)
+  }, [exibirPopup])
+
   useEffect(() => {
     if (isPaginaBloqueada || popupJaExibido.current) return
 
