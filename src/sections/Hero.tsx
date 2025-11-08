@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +9,10 @@ const Hero = () => {
   const controls = useAnimation();
   const heroRef = useRef(null);
   const isInView = useInView(heroRef, { once: true, margin: "-100px" });
+
+  // State para a posição do mouse para o gradiente dinâmico
+  const [gradientPosition, setGradientPosition] = useState({ x: '50%', y: '50%' });
+  const heroSectionRef = useRef<HTMLElement>(null); // Ref para o div de overlay do gradiente
 
   useEffect(() => {
     if (isInView) {
@@ -173,6 +177,23 @@ const Hero = () => {
     };
   }, []);
 
+  // Efeito para o gradiente dinâmico
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (heroSectionRef.current) {
+        const rect = heroSectionRef.current.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100; // Posição em porcentagem
+        const y = ((event.clientY - rect.top) / rect.height) * 100; // Posição em porcentagem
+        setGradientPosition({ x: `${x}%`, y: `${y}%` });
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
   const scrollToId = (id: string) => {
     if (window.location.pathname !== "/landing") {
       navigate(`/landing#${id}`);
@@ -195,39 +216,50 @@ const Hero = () => {
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full -z-10"
       />
+      {/* Overlay para o gradiente dinâmico */}
+      <div
+        ref={heroSectionRef}
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          '--x': gradientPosition.x,
+          '--y': gradientPosition.y,
+          background: `radial-gradient(circle at var(--x) var(--y), rgba(28, 44, 32, 0.5) 0%, rgba(11, 17, 29, 0.8) 80%)`,
+          transition: 'background-position 0.1s ease-out',
+        } as React.CSSProperties}
+      ></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 grid grid-cols-1 lg:grid-cols-2 items-center gap-16 md:gap-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-2 items-center gap-16">
         {/* Conteúdo principal (esquerda) */}
         <div className="max-w-xl text-center lg:text-left">
           <p
-            className="text-lime-400 font-medium mb-2 opacity-0 animate-fadeInUp"
+            className="text-pontedra-title-green font-medium mb-2 opacity-0 animate-fadeInUp"
             style={{ animationDelay: '0.1s' }}
           >
             💡 Soluções Web para PMEs e Profissionais
           </p>
 
           <h1
-            className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6 opacity-0 animate-fadeInUp motion-safe:animate-pulse-slow"
+            className="text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6 opacity-0 animate-fadeInUp motion-safe:animate-pulse-slow"
             style={{ animationDelay: '0.2s' }}
           >
-            Conectamos sua empresa a <span className="text-lime-400">pessoas</span>
+            Conectamos sua empresa a <span className="text-pontedra-title-green">pessoas</span>
           </h1>
 
           <p
-            className="text-gray-300 mb-8 max-w-xl mx-auto lg:mx-0 opacity-0 animate-fadeInUp motion-safe:animate-pulse-slow"
+            className="mt-6 text-lg text-gray-300 max-w-xl mx-auto lg:mx-0 opacity-0 animate-fadeInUp motion-safe:animate-pulse-slow"
             style={{ animationDelay: '0.4s' }}
           >
             Construímos pontes digitais que conectam sua marca a clientes reais, impulsionando resultados com autenticidade, tecnologia e inteligência estratégica.
           </p>
 
           <div
-            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start opacity-0 animate-fadeIn"
+            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start opacity-0 animate-fadeIn"
             style={{ animationDelay: '0.6s' }}
           >
             <a
               href="#solucoes"
               onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
-              className="bg-lime-500 text-black px-6 py-3 rounded-xl font-semibold hover:scale-105 hover:shadow-[0_0_15px_#5FF07780] transition-all duration-700 ease-out"
+              className="bg-pontedra-button-green text-black px-6 py-3 rounded-xl font-semibold hover:scale-105 hover:shadow-[0_0_15px_#5FF07780] transition-all duration-700 ease-out"
             >
               Ver Soluções
             </a>
@@ -243,7 +275,7 @@ const Hero = () => {
         </div>
 
         {/* Caixas numeradas com gradiente animado e glow pulsante */}
-        <div className="relative flex flex-col gap-5 mt-12 md:mt-0">
+        <div className="relative flex flex-col space-y-6 mt-12 md:mt-0">
           {[
             { id: 1, text: 'Atraia mais' },
             { id: 2, text: 'Venda melhor' },
@@ -253,18 +285,18 @@ const Hero = () => {
               key={item.id}
               className={`group flex items-center gap-4 relative overflow-hidden rounded-2xl py-6 px-8
                          bg-gradient-to-b from-pontedra-green-light/20 to-pontedra-green/10
-                         border border-lime-400/30 shadow-lg shadow-green-500/10
+                         border border-lime-400/30 shadow-lg shadow-pontedra-title-green/10
                          backdrop-blur-sm transition-all duration-500 ease-out`}
-              whileHover={{ scale: 1.05, y: -5, boxShadow: "0 0 20px rgba(163, 230, 53, 0.25)" }}
+              whileHover={{ y: -4, boxShadow: "0 0 20px rgba(163, 230, 53, 0.25)" }}
               transition={{ ease: "easeOut", duration: 0.3 }}
             >
-              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-lime-500 text-black font-bold text-lg">
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-pontedra-button-green text-black font-bold text-lg">
                 {item.id}
               </div>
               <p className="text-white font-semibold text-lg">{item.text}</p>
 
               {/* camada de brilho pulsante sutil */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-lime-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-pontedra-title-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
             </motion.div>
           ))}
         </div>
