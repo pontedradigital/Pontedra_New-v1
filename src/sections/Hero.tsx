@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +9,8 @@ const Hero = () => {
   const controls = useAnimation();
   const heroRef = useRef(null);
   const isInView = useInView(heroRef, { once: true, margin: "-100px" });
+
+  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
 
   useEffect(() => {
     if (isInView) {
@@ -140,7 +142,7 @@ const Hero = () => {
 
     draw();
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMoveCanvas = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
     };
@@ -165,10 +167,10 @@ const Hero = () => {
       });
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMoveCanvas);
     window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMoveCanvas);
       window.removeEventListener("resize", handleResize);
     };
   }, []);
@@ -185,11 +187,30 @@ const Hero = () => {
     }
   };
 
+  const handleMouseMoveSection = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePosition({ x, y });
+  };
+
+  const handleMouseLeaveSection = () => {
+    setMousePosition({ x: 50, y: 50 }); // Reset to center
+  };
+
+  const cardBackgrounds = [
+    { from: 'rgba(95, 240, 119, 0.15)', to: 'rgba(69, 208, 96, 0.15)' },
+    { from: 'rgba(69, 208, 96, 0.15)', to: 'rgba(53, 160, 80, 0.15)' },
+    { from: 'rgba(53, 160, 80, 0.15)', to: 'rgba(42, 123, 73, 0.15)' },
+  ];
+
   return (
     <section
       ref={heroRef}
       id="hero"
       className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-pontedra-hero-bg-dark"
+      onMouseMove={handleMouseMoveSection}
+      onMouseLeave={handleMouseLeaveSection}
     >
       <canvas
         ref={canvasRef}
@@ -251,15 +272,20 @@ const Hero = () => {
           ].map((item, index) => (
             <div
               key={item.id}
-              className="flex items-center gap-4 bg-gradient-to-b from-lime-500/20 via-lime-600/20 to-lime-700/20
-                         backdrop-blur-sm border border-lime-500/30 rounded-2xl px-6 py-4 w-[300px] h-[90px]
-                         shadow-lg hover:scale-[1.03] hover:shadow-lime-400/30 transition-all duration-500 animate-gradient-flow"
-              style={{ animationDelay: `${1.0 + index * 0.2}s` }} // Sincroniza com o texto
+              className={`flex items-center gap-4 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px]
+                         transition-all duration-500 ease-in-out hover:-translate-y-1 hover:scale-[1.03]
+                         animate-float-delay-${index} shadow-inner border border-pontedra-line-green-dark
+                         relative overflow-hidden group flex items-center
+                         hover:shadow-[0_0_20px_rgba(95,240,119,0.25)]`}
+              style={{
+                animationDelay: `${1.0 + index * 0.2}s`,
+                background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(95, 240, 119, 0.15), rgba(10, 20, 15, 0.3)), linear-gradient(to bottom, ${cardBackgrounds[index].from}, ${cardBackgrounds[index].to})`,
+              }}
             >
-              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-lime-500 text-black font-bold text-lg">
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-pontedra-button-green text-pontedra-dark-text font-bold text-lg">
                 {item.id}
               </div>
-              <p className="text-white font-semibold text-xl">{item.text}</p>
+              <span className="text-white text-xl font-semibold">{item.text}</span>
             </div>
           ))}
         </div>
