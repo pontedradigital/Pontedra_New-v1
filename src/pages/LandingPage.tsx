@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import LandingNavbar from "@/components/navigation/LandingNavbar";
 import Footer from "@/components/navigation/Footer";
 import { motion } from "framer-motion";
-import { MessageCircle, MessageSquare, Camera, CalendarDays, BarChart, Bot, Zap, ShieldCheck, Clock } from "lucide-react";
+import { MessageCircle, MessageSquare, Camera, CalendarDays, BarChart, Bot, Zap, ShieldCheck, Clock, TrendingUp, Check } from "lucide-react"; // Adicionado TrendingUp e Check
 import { cn } from "@/lib/utils";
 
 const sectionVariants = {
