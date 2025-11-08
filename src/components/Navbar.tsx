@@ -55,7 +55,7 @@ export default function Navbar() {
     <header className={`fixed w-full z-50 transition-all duration-300 ${navClass}`}>
       <nav className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         <a href="/landing" className="text-pontedra-green font-bold text-lg tracking-wide">
-          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-7 w-auto" />
+          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-21 w-auto" /> {/* Aumentado em 300% (h-7 * 3 = h-21) */}
         </a>
 
         <div className="hidden md:flex items-center gap-8 text-textPrimary">
