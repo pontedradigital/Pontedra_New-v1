@@ -17,6 +17,7 @@ import { AssistantMessage } from "@/components/chat/AssistantMessage";
 import { assistentePontedraBase } from "@/data/assistentePontedraBase"; // Importar a base de conhecimento
 import { registrarInteracao } from "@/utils/registroChat"; // Importar utilitário de registro
 import { registrarAgendamento } from "@/utils/agendamentosFake"; // Importar utilitário de agendamento
+import { atualizarBaseDeConhecimento, analisarPadroes } from "@/utils/assistentePontedraAprendizado"; // Importar módulo de aprendizado
 
 interface Message {
   id: number;
@@ -267,6 +268,7 @@ const AtendimentoInteligentePage = () => {
 
     addBotMessage(botResponse);
     registrarInteracao(clientName, userText, botResponse); // Registrar interação
+    atualizarBaseDeConhecimento(userText, botResponse); // Registrar para aprendizado
     setChatState(prev => ({
       ...prev,
       lastServiceMentioned: newLastServiceMentioned,

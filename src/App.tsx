@@ -21,6 +21,7 @@ import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
 import BlogPage from "./pages/dashboard/master/BlogPage";
 import FinanceiroPage from "./pages/dashboard/master/Financeiro";
+import AprendizadoPontedra from "./pages/dashboard/master/AprendizadoPontedra"; // Importar nova página
 
 import WhatsAppIntegracao from "./pages/dashboard/master/comunicacao/WhatsAppIntegracao";
 import InstagramIntegracao from "./pages/dashboard/master/comunicacao/InstagramIntegracao";
@@ -136,18 +137,26 @@ const App = () => {
               }
             />
             <Route
-              path="/dashboard/master/settings"
-              element={
-                <ProtectedRoute allowedRoles={["master"]}>
-                  <PageTransition><SettingsPage /></PageTransition>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/dashboard/master/financeiro"
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
                   <PageTransition><FinanceiroPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/aprendizado"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><AprendizadoPontedra /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/settings"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><SettingsPage /></PageTransition>
                 </ProtectedRoute>
               }
             />
