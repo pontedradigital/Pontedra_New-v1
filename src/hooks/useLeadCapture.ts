@@ -72,9 +72,8 @@ export function useLeadCapture() {
       if (edgeFunctionError) throw edgeFunctionError
       if (!emailResponse.success) throw new Error(emailResponse.error || 'Erro ao enviar e-mails pela Edge Function.')
 
-      // Marca que o lead foi capturado
-      localStorage.setItem('pontedra_lead_captured', 'true')
-      localStorage.setItem('pontedra_lead_email', leadData.email)
+      // Removido: localStorage.setItem('pontedra_lead_captured', 'true')
+      // Removido: localStorage.setItem('pontedra_lead_email', leadData.email)
 
       return { success: true, data: dbResponse }
     } catch (err) {
@@ -86,13 +85,11 @@ export function useLeadCapture() {
     }
   }
 
-  const verificarLeadCapturado = () => {
-    return localStorage.getItem('pontedra_lead_captured') === 'true'
-  }
+  // Removido: verificarLeadCapturado
 
   return {
     capturarLead,
-    verificarLeadCapturado,
+    // Removido: verificarLeadCapturado,
     loading,
     error,
   }

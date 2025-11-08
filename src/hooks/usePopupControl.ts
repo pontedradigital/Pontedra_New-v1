@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useLeadCapture } from './useLeadCapture'
+// Removido: import { useLeadCapture } from './useLeadCapture'
 
 type PopupTipo = 'solucoes' | 'tempo' | 'saida' | 'retorno'
 
 export function usePopupControl() {
   const [shouldShowPopup, setShouldShowPopup] = useState(false)
   const [popupTipo, setPopupTipo] = useState<PopupTipo | null>(null)
-  const { verificarLeadCapturado } = useLeadCapture() // Mantido para a regra de não exibir se o lead já foi capturado
+  // Removido: const { verificarLeadCapturado } = useLeadCapture()
 
   const getSessionId = () => {
     let sessionId = localStorage.getItem('pontedra_session_id')
@@ -18,14 +18,7 @@ export function usePopupControl() {
     return sessionId
   }
 
-  // A lógica de 'deveExibir' agora é mais simples, focando apenas na captura de lead
-  const verificarSeDeveExibirLeadCapturado = useCallback(() => {
-    if (verificarLeadCapturado()) {
-      console.log('usePopupControl: Lead já capturado, não exibir pop-up.')
-      return false
-    }
-    return true
-  }, [verificarLeadCapturado])
+  // Removido: verificarSeDeveExibirLeadCapturado
 
   const registrarExibicao = async (tipo: PopupTipo, tempoNaPagina?: number) => {
     const sessionId = getSessionId()
@@ -49,18 +42,14 @@ export function usePopupControl() {
     console.log('usePopupControl: exibirPopup chamado com tipo:', tipo)
     
     // A verificação principal de exibição única por sessão será feita no PopupManager
-    // Aqui, apenas verificamos se o lead já foi capturado
-    if (!verificarSeDeveExibirLeadCapturado()) {
-      console.log('usePopupControl: Popup bloqueado porque o lead já foi capturado.')
-      return
-    }
+    // Removido: if (!verificarSeDeveExibirLeadCapturado()) { ... }
 
     console.log('usePopupControl: Configurando popup para exibição')
     setPopupTipo(tipo)
     setShouldShowPopup(true)
     await registrarExibicao(tipo, tempoNaPagina)
     console.log('usePopupControl: shouldShowPopup=true, popupTipo=', tipo)
-  }, [registrarExibicao, verificarSeDeveExibirLeadCapturado])
+  }, [registrarExibicao]) // Removido verificarSeDeveExibirLeadCapturado das dependências
 
   const fecharPopup = () => {
     console.log('usePopupControl: fecharPopup chamado.')
