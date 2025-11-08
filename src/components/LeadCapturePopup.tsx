@@ -32,6 +32,7 @@ const mensagensPorTipo = {
 }
 
 export function LeadCapturePopup({ isOpen, onClose, tipo }: LeadCapturePopupProps) {
+  console.log('LeadCapturePopup renderizado - isOpen:', isOpen, 'tipo:', tipo)
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [telefone, setTelefone] = useState('')
