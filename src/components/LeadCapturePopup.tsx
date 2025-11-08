@@ -96,9 +96,9 @@ export function LeadCapturePopup({ isOpen, onClose, tipo }: LeadCapturePopupProp
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', duration: 0.5 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
+            className="fixed inset-0 flex items-center justify-center z-50" // Alterado para usar inset-0 e flexbox
           >
-            <div className="bg-gradient-to-br from-[#0D1B2A] to-[#1a2f42] rounded-2xl shadow-2xl border border-pontedra-border-light p-8 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#0D1B2A] to-[#1a2f42] rounded-2xl shadow-2xl border border-pontedra-border-light p-8 relative overflow-hidden w-full max-w-md"> {/* Adicionado w-full max-w-md aqui */}
               {/* Efeito de brilho */}
               <div className="absolute inset-0 bg-gradient-to-br from-pontedra-green/10 to-transparent pointer-events-none" />
 
