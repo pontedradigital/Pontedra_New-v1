@@ -1,4 +1,3 @@
-// Este arquivo foi atualizado para resolver um erro de sintaxe.
 import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -186,13 +185,6 @@ const Hero = () => {
     }
   };
 
-  // Define os pontos de cor para o gradiente contínuo
-  const gradientColors = [
-    { from: '#7FFF7A', to: '#6AD465' }, // Box 1
-    { from: '#6AD465', to: '#5FB95A' }, // Box 2
-    { from: '#5FB95A', to: '#56B84E' }, // Box 3
-  ];
-
   return (
     <section
       ref={heroRef}
@@ -204,7 +196,7 @@ const Hero = () => {
         className="absolute top-0 left-0 w-full h-full -z-10"
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 flex flex-col md:flex-row items-center justify-between">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 grid grid-cols-1 lg:grid-cols-2 items-center gap-16 md:gap-8">
         {/* Conteúdo principal (esquerda) */}
         <div className="max-w-xl text-center lg:text-left">
           <p
@@ -259,12 +251,11 @@ const Hero = () => {
           ].map((item, index) => (
             <motion.div
               key={item.id}
-              className={`group flex items-center gap-4 relative overflow-hidden rounded-2xl px-8 py-6
-                         bg-gradient-to-b from-lime-500/20 via-lime-600/20 to-lime-700/20
-                         border border-lime-400/30 shadow-[0_0_20px_rgba(163,230,53,0.15)]
-                         backdrop-blur-sm transition-all duration-500 ease-in-out
-                         hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(163,230,53,0.4)] animate-gradient-flow animate-glow`}
-              whileHover={{ scale: 1.05, y: -5, boxShadow: "0 0 20px rgba(95, 240, 119, 0.25)" }}
+              className={`group flex items-center gap-4 relative overflow-hidden rounded-2xl py-6 px-8
+                         bg-gradient-to-b from-pontedra-green-light/20 to-pontedra-green/10
+                         border border-lime-400/30 shadow-lg shadow-green-500/10
+                         backdrop-blur-sm transition-all duration-500 ease-out`}
+              whileHover={{ scale: 1.05, y: -5, boxShadow: "0 0 20px rgba(163, 230, 53, 0.25)" }}
               transition={{ ease: "easeOut", duration: 0.3 }}
             >
               <div className="w-12 h-12 flex items-center justify-center rounded-full bg-lime-500 text-black font-bold text-lg">
