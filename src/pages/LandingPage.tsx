@@ -4,6 +4,7 @@ import Hero from "@/sections/Hero";
 import Footer from "@/components/navigation/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 import QuemSomos from "@/components/landing/QuemSomos"; // Import the new component
+import NossasSolucoes from "@/sections/NossasSolucoes"; // Import the new NossasSolucoes component
 
 export default function LandingPage() {
   const location = useLocation();
@@ -33,12 +34,7 @@ export default function LandingPage() {
 
         <QuemSomos /> {/* Integrated the new QuemSomos component here */}
 
-        <section id="solucoes" className="py-24 bg-background border-t border-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-foreground mb-6">Nossas Soluções</h2>
-            <p className="text-textSecondary max-w-3xl">Oferecemos soluções personalizadas em desenvolvimento web, marketing digital e consultoria para impulsionar seu negócio.</p>
-          </div>
-        </section>
+        <NossasSolucoes /> {/* Integrated the new NossasSolucoes component here */}
 
         <section id="depoimentos" className="py-24 bg-card border-t border-border">
           <div className="max-w-7xl mx-auto px-6">
