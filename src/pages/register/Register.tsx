@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { registerService } from "@/services/auth";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar"; // Importar a nova Navbar
+import LandingNavbar from "@/components/LandingNavbar"; // Updated import to LandingNavbar
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -34,7 +34,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Navbar />
+      <LandingNavbar /> {/* Updated component name */}
       <div className="flex flex-1 items-center justify-center mt-16">
         <motion.div
           initial={{ opacity: 0, y: -50 }}
