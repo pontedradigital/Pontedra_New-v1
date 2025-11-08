@@ -74,7 +74,7 @@ export default function LandingNavbar() {
         }`}
       >
         <div className="container mx-auto px-4 md:px-8">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-24 md:h-28">
             {/* Logo */}
             <motion.button
               onClick={scrollToTop}
@@ -92,7 +92,7 @@ export default function LandingNavbar() {
                 <img
                   src="/pontedra-logo.webp"
                   alt="Pontedra Logo"
-                  className="h-12 md:h-16 w-auto drop-shadow-[0_0_15px_rgba(87,227,137,0.5)]"
+                  className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-[0_0_20px_rgba(87,227,137,0.6)] transition-all duration-300"
                 />
               </div>
             </motion.button>
