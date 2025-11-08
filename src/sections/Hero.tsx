@@ -185,6 +185,13 @@ const Hero = () => {
     }
   };
 
+  // Define os pontos de cor para o gradiente contínuo
+  const gradientColors = [
+    { from: '#7FFF7A', to: '#6AD465' }, // Box 1
+    { from: '#6AD465', to: '#5FB95A' }, // Box 2
+    { from: '#5FB95A', to: '#56B84E' }, // Box 3
+  ];
+
   return (
     <section
       ref={heroRef}
@@ -248,23 +255,23 @@ const Hero = () => {
             { id: 1, text: 'Atraia mais' },
             { id: 2, text: 'Venda melhor' },
             { id: 3, text: 'Seu sucesso acontece' }
-          ].map((item) => (
-            <div
+          ].map((item, index) => (
+            <motion.div
               key={item.id}
-              className="group flex items-center gap-4 relative overflow-hidden rounded-2xl px-8 py-6
-                         bg-gradient-to-b from-lime-500/20 via-lime-600/20 to-lime-700/20
+              className={`group flex items-center gap-4 relative overflow-hidden rounded-2xl px-8 py-6
+                         bg-gradient-to-b ${gradientColors[index].from} ${gradientColors[index].to}
                          border border-lime-400/30 shadow-[0_0_20px_rgba(163,230,53,0.15)]
                          backdrop-blur-sm transition-all duration-500 ease-in-out
-                         hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(163,230,53,0.4)] animate-gradient-flow animate-glow"
+                         animate-gradient-flow animate-float-delay-${index}
+                         w-[360px] h-[108px]`} {/* Aumentado em ~20% */}
+              whileHover={{ scale: 1.05, y: -5, boxShadow: "0 0 20px rgba(95, 240, 119, 0.25)" }}
+              transition={{ ease: "easeOut", duration: 0.3 }}
             >
               <div className="w-12 h-12 flex items-center justify-center rounded-full bg-lime-500 text-black font-bold text-lg">
                 {item.id}
               </div>
               <p className="text-white font-semibold text-lg">{item.text}</p>
-
-              {/* camada de brilho pulsante sutil */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-lime-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
