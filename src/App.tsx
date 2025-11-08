@@ -20,6 +20,7 @@ import AIInsightsPage from "./pages/dashboard/master/AIInsights";
 import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
 import BlogPage from "./pages/dashboard/master/BlogPage";
+import FinanceiroPage from "./pages/dashboard/master/Financeiro"; // Importar nova página Financeiro
 
 // Novas páginas de comunicação
 import WhatsAppIntegracao from "./pages/dashboard/master/comunicacao/WhatsAppIntegracao";
@@ -136,6 +137,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={["master"]}>
                     <PageTransition><SettingsPage /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/master/financeiro" // Nova rota para Financeiro
+                element={
+                  <ProtectedRoute allowedRoles={["master"]}>
+                    <PageTransition><FinanceiroPage /></PageTransition>
                   </ProtectedRoute>
                 }
               />

@@ -78,6 +78,32 @@ export interface ClientPrivacySettings {
   marketingEmails: boolean;
 }
 
+export interface AISuggestion {
+  id: string;
+  category: string;
+  message: string;
+  icon: string; // Lucide icon name
+}
+
+export interface RecentActivity {
+  id: string;
+  type: "client_register" | "appointment_created" | "report_generated" | "whatsapp_message" | "service_added" | "blog_post";
+  description: string;
+  timestamp: string;
+  link: string;
+  icon: string; // Lucide icon name
+  iconColor: string; // Tailwind color class
+}
+
+export interface FinanceEntry {
+  id: string;
+  date: string;
+  clientName: string;
+  serviceName: string;
+  value: number;
+  status: "Concluído" | "Pendente" | "Cancelado";
+}
+
 export const MOCK_CLIENT_SERVICES: Service[] = [
   { id: "s1", name: "Corte de Cabelo Masculino", description: "Corte moderno com lavagem e finalização.", price: 55.00, category: "Cabelo", availability: "available", imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Corte" },
   { id: "s2", name: "Manicure e Pedicure", description: "Serviço completo de unhas.", price: 85.00, category: "Estética", availability: "available", imageUrl: "https://via.placeholder.com/150/FF0000/FFFFFF?text=Manicure" },
@@ -188,5 +214,70 @@ export const MOCK_CHART_DATA = {
     { name: 'Massagem', value: 98 },
     { name: 'Coloração', value: 390 },
     { name: 'Limpeza', value: 480 },
+  ],
+};
+
+// New Mock Data for IA Insights and Planejamento Inteligente
+export const MOCK_AI_SUGGESTIONS: AISuggestion[] = [
+  { id: "ia1", category: "Marketing", message: "Sugestão de Marketing: publique mais conteúdo nas redes sociais para atrair novos clientes.", icon: "Lightbulb" },
+  { id: "ia2", category: "Promoções", message: "Promoção sugerida: desconto de 10% em serviços com baixa demanda (março).", icon: "Tag" },
+  { id: "ia3", category: "Preço", message: "Revisar preço de Manicure — aumento de 5% pode elevar o lucro sem afetar volume.", icon: "DollarSign" },
+  { id: "ia4", category: "Atendimento", message: "Otimizar tempo de resposta no WhatsApp em horários de pico para melhorar a satisfação.", icon: "MessageSquare" },
+  { id: "ia5", category: "Retenção de Clientes", message: "Campanha de e-mail para clientes inativos há mais de 3 meses com oferta especial.", icon: "Users" },
+  { id: "ia6", category: "Serviços", message: "Considere adicionar um novo serviço de 'Spa dos Pés' devido à alta procura por bem-estar.", icon: "Briefcase" },
+];
+
+// New Mock Data for Atividades Recentes
+export const MOCK_RECENT_ACTIVITIES: RecentActivity[] = [
+  { id: "act1", type: "client_register", description: "Cadastro de novo cliente: Ana Beatriz", timestamp: "02/11 - 14:32", link: "/dashboard/master/users", icon: "UserPlus", iconColor: "text-primary" },
+  { id: "act2", type: "appointment_created", description: "Novo agendamento criado: Corte de Cabelo para João Silva", timestamp: "03/11 - 09:10", link: "/dashboard/master/appointments", icon: "CalendarPlus", iconColor: "text-blue-400" },
+  { id: "act3", type: "report_generated", description: "Relatório de vendas gerado", timestamp: "03/11 - 18:47", link: "/dashboard/master/financeiro", icon: "BarChart", iconColor: "text-yellow-400" },
+  { id: "act4", type: "whatsapp_message", description: "Mensagem recebida no WhatsApp Business de Maria", timestamp: "04/11 - 10:15", link: "/dashboard/master/comunicacao/whatsapp", icon: "MessageCircle", iconColor: "text-green-400" },
+  { id: "act5", type: "service_added", description: "Novo serviço 'Limpeza de Pele' adicionado", timestamp: "04/11 - 11:00", link: "/dashboard/master/services", icon: "Briefcase", iconColor: "text-purple-400" },
+  { id: "act6", type: "blog_post", description: "Novo post no blog: 'Dicas de Verão'", timestamp: "04/11 - 14:00", link: "/dashboard/master/blog", icon: "Newspaper", iconColor: "text-orange-400" },
+];
+
+// New Mock Data for Financeiro
+export const MOCK_FINANCE_SUMMARY = {
+  totalRevenue: 12340.00,
+  revenueChange: 18.0, // percentage change from previous month
+  netProfit: 8950.00,
+  mostProfitableService: "Coloração",
+};
+
+export const MOCK_FINANCE_ENTRIES: FinanceEntry[] = [
+  { id: "fe1", date: "2024-11-02", clientName: "Ana Beatriz", serviceName: "Corte de Cabelo Masculino", value: 80.00, status: "Concluído" },
+  { id: "fe2", date: "2024-11-03", clientName: "João Pedro", serviceName: "Manicure e Pedicure", value: 65.00, status: "Concluído" },
+  { id: "fe3", date: "2024-11-04", clientName: "Camila Silva", serviceName: "Coloração Feminina", value: 150.00, status: "Concluído" },
+  { id: "fe4", date: "2024-11-05", clientName: "Lucas Mendes", serviceName: "Limpeza de Pele", value: 100.00, status: "Pendente" },
+  { id: "fe5", date: "2024-11-06", clientName: "Fernanda Lima", serviceName: "Massagem Relaxante", value: 130.00, status: "Cancelado" },
+];
+
+export const MOCK_FINANCE_CHART_DATA = {
+  monthlyRevenue: [
+    { name: 'Jan', value: 8000 },
+    { name: 'Fev', value: 9500 },
+    { name: 'Mar', value: 7000 },
+    { name: 'Abr', value: 10200 },
+    { name: 'Mai', value: 11500 },
+    { name: 'Jun', value: 9800 },
+    { name: 'Jul', value: 13000 },
+    { name: 'Ago', value: 12500 },
+    { name: 'Set', value: 14000 },
+    { name: 'Out', value: 11000 },
+    { name: 'Nov', value: 12340 }, // Current month
+  ],
+  accumulatedProfit: [
+    { name: 'Jan', value: 5000 },
+    { name: 'Fev', value: 6200 },
+    { name: 'Mar', value: 4500 },
+    { name: 'Abr', value: 7000 },
+    { name: 'Mai', value: 8500 },
+    { name: 'Jun', value: 7200 },
+    { name: 'Jul', value: 10000 },
+    { name: 'Ago', value: 9500 },
+    { name: 'Set', value: 11000 },
+    { name: 'Out', value: 8800 },
+    { name: 'Nov', value: 8950 }, // Current month
   ],
 };
