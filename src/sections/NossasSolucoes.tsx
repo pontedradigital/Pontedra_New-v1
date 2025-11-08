@@ -141,7 +141,7 @@ const ServiceCard = ({ service, isExpanded, onToggle }: { service: typeof servic
   return (
     <motion.article
       layout
-      className="relative group bg-[#111d2e]/80 backdrop-blur-xl border border-[#1d2c3f] rounded-2xl p-6 overflow-hidden cursor-pointer"
+      className="relative group bg-[#111d2e]/80 backdrop-blur-xl border border-[#1d2c3f] rounded-2xl p-6 overflow-hidden cursor-pointer h-[280px] flex flex-col"
       whileHover={{ scale: 1.02, y: -5 }}
       onClick={onToggle}
       transition={{ duration: 0.3 }}
@@ -153,50 +153,52 @@ const ServiceCard = ({ service, isExpanded, onToggle }: { service: typeof servic
         transition={{ duration: 2, repeat: Infinity }}
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col h-full">
         {/* Cabeçalho */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1d3a2f] to-[#0f1f1a] flex items-center justify-center border border-[#57e389]/30">
-              <Icon className="w-7 h-7 text-[#57e389]" strokeWidth={1.5} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-[#e1e8f0]">{service.title}</h3>
-              <CategoryBadge category={service.badge} />
-            </div>
+        <div className="flex items-start gap-4 mb-4">
+          <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#1d3a2f] to-[#0f1f1a] flex items-center justify-center border border-[#57e389]/30">
+            <Icon className="w-7 h-7 text-[#57e389]" strokeWidth={1.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold text-[#e1e8f0] mb-2 line-clamp-2">{service.title}</h3>
+            <CategoryBadge category={service.badge} />
           </div>
         </div>
 
-        {/* Descrição */}
-        <AnimatePresence mode="wait">
-          {!isExpanded ? (
-            <motion.p
-              key="short"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-[#9ba8b5] text-sm leading-relaxed"
-            >
-              {service.shortDesc}
-            </motion.p>
-          ) : (
-            <motion.p
-              key="full"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="text-[#9ba8b5] text-sm leading-relaxed"
-            >
-              {service.fullDesc}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        {/* Descrição - flex-1 faz ocupar espaço disponível */}
+        <div className="flex-1 overflow-hidden">
+          <AnimatePresence mode="wait">
+            {!isExpanded ? (
+              <motion.p
+                key="short"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-[#9ba8b5] text-sm leading-relaxed line-clamp-3"
+              >
+                {service.shortDesc}
+              </motion.p>
+            ) : (
+              <motion.div
+                key="full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="overflow-y-auto max-h-[120px] pr-2 custom-scrollbar"
+              >
+                <p className="text-[#9ba8b5] text-sm leading-relaxed">
+                  {service.fullDesc}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-        {/* Indicador de expansão */}
-        <div className="mt-4 flex items-center gap-2 text-[#57e389] text-sm font-medium">
-          <span>{isExpanded ? "Ver menos" : "Passe o mouse para mais detalhes"}</span>
+        {/* Indicador de expansão - sempre no final */}
+        <div className="mt-4 pt-3 border-t border-[#1d2c3f]/50 flex items-center gap-2 text-[#57e389] text-xs font-medium">
+          <span className="flex-1">{isExpanded ? "Ver menos" : "Passe o mouse para mais detalhes"}</span>
           <motion.div
-            animate={{ x: isExpanded ? -5 : 0 }}
+            animate={{ x: isExpanded ? -3 : 0 }}
             transition={{ duration: 0.3 }}
           >
             →

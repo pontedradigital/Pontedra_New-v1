@@ -323,3 +323,22 @@
 .animate-glow {
   animation: glow-pulse 5s ease-in-out infinite;
 }
+
+/* Scrollbar customizada para cards expandidos */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(29, 44, 63, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(87, 227, 137, 0.5);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(87, 227, 137, 0.7);
+}
