@@ -13,7 +13,7 @@ import { MOCK_CLIENT_SERVICES, MOCK_AVAILABLE_TIMES } from "@/data/mockData";
 import { toast } from "sonner";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Importar useLocation
 
 interface Message {
   id: number;
@@ -43,6 +43,7 @@ const CentralAtendimentoPage = () => {
   const { addClientAppointment, clientAppointments } = useMockData();
   const clientName = user?.email?.split('@')[0] || "Cliente";
   const navigate = useNavigate();
+  const location = useLocation(); // Usar useLocation para acessar o state
 
   const [chatState, setChatState] = useState<ChatState>(() => {
     if (typeof window !== 'undefined') {
@@ -79,6 +80,16 @@ const CentralAtendimentoPage = () => {
       setTimeout(() => {
         addBotMessage(CHATBOT_RESPONSES.find(r => r.type === "greeting")?.text || "Olá! Como posso ajudar?");
       }, 500);
+    }
+
+    // Check for initial message from location state
+    if (location.state && (location.state as { initialMessage?: string }).initialMessage) {
+      const initialMsg = (location.state as { initialMessage: string }).initialMessage;
+      setInputMessage(initialMsg);
+      // Optionally, send the message automatically
+      // handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
+      // Clear the state so it doesn't re-trigger on subsequent renders
+      navigate(location.pathname, { replace: true, state: {} });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

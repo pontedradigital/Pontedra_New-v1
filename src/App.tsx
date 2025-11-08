@@ -29,9 +29,10 @@ import MessengerIntegracao from "./pages/dashboard/master/comunicacao/MessengerI
 
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
-import ClientCentralAtendimentoPage from "./pages/dashboard/cliente/CentralAtendimento"; // Importar a nova página
+import ClientCentralAtendimentoPage from "./pages/dashboard/cliente/CentralAtendimento";
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
+import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia"; // Importar a nova página
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -190,6 +191,14 @@ const App = () => {
                 }
               />
               <Route
+                path="/dashboard/cliente/minha-experiencia" // Nova rota
+                element={
+                  <ProtectedRoute allowedRoles={["client"]}>
+                    <PageTransition><ClientMinhaExperienciaPage /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard/cliente/agenda"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
@@ -198,7 +207,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/cliente/central-atendimento" // Nova rota
+                path="/dashboard/cliente/central-atendimento"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><ClientCentralAtendimentoPage /></PageTransition>

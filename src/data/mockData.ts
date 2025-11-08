@@ -104,6 +104,26 @@ export interface FinanceEntry {
   status: "Concluído" | "Pendente" | "Cancelado";
 }
 
+export interface ClientExperienceSummary {
+  totalAppointments: number;
+  completedAppointments: number;
+  pendingAppointments: number;
+  lastInteraction: string; // e.g., "há 3 dias"
+}
+
+export interface ClientAIRecommendation {
+  id: string;
+  message: string;
+  category: string;
+}
+
+export interface ClientPromotion {
+  id: string;
+  title: string;
+  description: string;
+  actionMessage: string; // Message to pre-fill chat
+}
+
 export const MOCK_CLIENT_SERVICES: Service[] = [
   { id: "s1", name: "Corte de Cabelo Masculino", description: "Corte moderno com lavagem e finalização.", price: 55.00, category: "Cabelo", availability: "available", imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Corte" },
   { id: "s2", name: "Manicure e Pedicure", description: "Serviço completo de unhas.", price: 85.00, category: "Estética", availability: "available", imageUrl: "https://via.placeholder.com/150/FF0000/FFFFFF?text=Manicure" },
@@ -281,3 +301,42 @@ export const MOCK_FINANCE_CHART_DATA = {
     { name: 'Nov', value: 8950 }, // Current month
   ],
 };
+
+// New Mock Data for Client Experience Page
+export const MOCK_CLIENT_EXPERIENCE_SUMMARY: ClientExperienceSummary = {
+  totalAppointments: 15,
+  completedAppointments: 12,
+  pendingAppointments: 3,
+  lastInteraction: "há 3 dias",
+};
+
+export const MOCK_CLIENT_APPOINTMENT_HISTORY = [
+  { id: "h1", date: "2024-11-20", serviceName: "Corte de Cabelo Masculino", status: "Concluído", value: 55.00 },
+  { id: "h2", date: "2024-11-15", serviceName: "Manicure e Pedicure", status: "Concluído", value: 85.00 },
+  { id: "h3", date: "2024-11-10", serviceName: "Limpeza de Pele", status: "Concluído", value: 100.00 },
+  { id: "h4", date: "2024-11-05", serviceName: "Coloração Feminina", status: "Concluído", value: 180.00 },
+  { id: "h5", date: "2024-10-28", serviceName: "Corte de Cabelo Masculino", status: "Concluído", value: 55.00 },
+  { id: "h6", date: "2024-12-01", serviceName: "Massagem Relaxante", status: "Pendente", value: 130.00 },
+  { id: "h7", date: "2024-12-05", serviceName: "Manicure e Pedicure", status: "Pendente", value: 85.00 },
+];
+
+export const MOCK_CLIENT_AI_RECOMMENDATIONS: ClientAIRecommendation[] = [
+  { id: "rec1", message: "Você costuma agendar aos sábados. Deseja garantir seu próximo horário?", category: "Agendamento" },
+  { id: "rec2", message: "Faz 30 dias desde seu último corte, gostaria de repetir o serviço?", category: "Serviço Recorrente" },
+  { id: "rec3", message: "Baseado nos seus agendamentos, sugerimos o serviço de limpeza facial para complementar sua rotina.", category: "Sugestão de Serviço" },
+  { id: "rec4", message: "Notamos que você não experimentou nossa Massagem Relaxante. Que tal agendar uma sessão?", category: "Novidade" },
+  { id: "rec5", message: "Seu feedback é importante! Avalie seu último serviço de Manicure e Pedicure.", category: "Feedback" },
+];
+
+export const MOCK_CLIENT_PROMOTIONS: ClientPromotion[] = [
+  { id: "promo1", title: "Desconto de 10% em Coloração", description: "Aproveite 10% de desconto na sua próxima coloração feminina este mês!", actionMessage: "Quero aproveitar a promoção de 10% em coloração!" },
+  { id: "promo2", title: "Pacote Bem-Estar", description: "Agende Massagem Relaxante + Limpeza de Pele e ganhe 15% de desconto.", actionMessage: "Tenho interesse no pacote Bem-Estar com 15% de desconto." },
+  { id: "promo3", title: "Aniversariante do Mês", description: "Parabéns! Você tem um presente especial de 20% de desconto em qualquer serviço.", actionMessage: "Quero usar meu desconto de aniversário de 20%!" },
+];
+
+export const MOCK_CLIENT_30_DAY_STATS = [
+  { name: 'Semana 1', agendamentos: 3 },
+  { name: 'Semana 2', agendamentos: 5 },
+  { name: 'Semana 3', agendamentos: 2 },
+  { name: 'Semana 4', agendamentos: 4 },
+];
