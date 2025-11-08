@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import { BrowserRouter } from "react-router-dom"; // Importação já existente
-import { Toaster } from 'sonner'; // Importação adicionada
+// Removendo a importação de BrowserRouter daqui, pois já é importado em main.tsx
+import { Toaster } from 'sonner';
 import Index from "@/pages/Index";
 import Blog from "@/pages/Blog";
 import BlogPostPage from "@/pages/BlogPostPage";
@@ -14,8 +14,8 @@ import ScrollToTopSpecific from "./components/ScrollToTopSpecific";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" richColors /> {/* Toaster adicionado aqui */}
+    <> {/* Substituído BrowserRouter por um Fragment */}
+      <Toaster position="top-right" richColors />
       <ScrollToTopSpecific />
       <Routes>
         {/* Rotas Públicas */}
@@ -31,7 +31,7 @@ function App() {
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+    </>
   );
 }
 
