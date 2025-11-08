@@ -182,22 +182,25 @@ const AppointmentsPage = () => {
                 <h3 className="text-lg font-semibold mb-4 text-foreground">Agendamentos para {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "a data selecionada"}</h3>
                 {filteredAppointments.filter(app => app.date === (selectedDate ? format(selectedDate, "yyyy-MM-dd") : "")).length > 0 ? (
                   <ul className="space-y-2">
-                    {filteredAppointments.filter(app => app.date === (selectedDate ? format(selectedDate, "yyyy-MM-dd") : "")).map(app => (
-                      <li key={app.id} className="flex justify-between items-center p-3 bg-background border border-border rounded-md shadow-sm">
-                        <div>
-                          <p className="font-medium text-foreground">{app.serviceName}</p>
-                          <p className="text-sm text-muted-foreground">{getClientName(app.clientEmail)} às {app.time}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          app.status === "confirmed" ? "bg-green-500/20 text-green-400" :
-                          app.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
-                          app.status === "completed" ? "bg-blue-500/20 text-blue-400" :
-                          "bg-red-500/20 text-red-400"
-                        }`}>
-                          {app.status}
-                        </span>
-                      </li>
-                    ))}
+                    {filteredAppointments
+                      .filter(app => app.date === (selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""))
+                      .sort((a, b) => b.time.localeCompare(a.time)) // Descending time for same day
+                      .map(app => (
+                        <li key={app.id} className="flex justify-between items-center p-3 bg-background border border-border rounded-md shadow-sm">
+                          <div>
+                            <p className="font-medium text-foreground">{app.serviceName}</p>
+                            <p className="text-sm text-muted-foreground">{getClientName(app.clientEmail)} às {app.time}</p>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            app.status === "confirmed" ? "bg-green-500/20 text-green-400" :
+                            app.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
+                            app.status === "completed" ? "bg-blue-500/20 text-blue-400" :
+                            "bg-red-500/20 text-red-400"
+                          }`}>
+                            {app.status}
+                          </span>
+                        </li>
+                      ))}
                   </ul>
                 ) : (
                   <p className="text-muted-foreground">Nenhum agendamento para esta data.</p>
@@ -218,41 +221,47 @@ const AppointmentsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAppointments.map((app) => (
-                    <TableRow key={app.id} className="border-b border-border/50 hover:bg-background">
-                      <TableCell className="font-medium text-foreground">{getClientName(app.clientEmail)}</TableCell>
-                      <TableCell className="text-muted-foreground">{app.serviceName}</TableCell>
-                      <TableCell className="text-muted-foreground">{app.date}</TableCell>
-                      <TableCell className="text-muted-foreground">{app.time}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          app.status === "confirmed" ? "bg-green-500/20 text-green-400" :
-                          app.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
-                          app.status === "completed" ? "bg-blue-500/20 text-blue-400" :
-                          "bg-red-500/20 text-red-400"
-                        }`}>
-                          {app.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:bg-background hover:text-primary">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
-                            <DropdownMenuLabel className="text-primary">Ações</DropdownMenuLabel>
-                            <DropdownMenuItem className="hover:bg-muted cursor-pointer" onClick={() => handleUpdateStatus(app.id, "confirmed")}>Confirmar</DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-muted cursor-pointer" onClick={() => handleUpdateStatus(app.id, "completed")}>Concluir</DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-border" />
-                            <DropdownMenuItem className="text-destructive hover:bg-destructive/20 cursor-pointer" onClick={() => handleUpdateStatus(app.id, "cancelled")}>Cancelar</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredAppointments
+                    .sort((a, b) => {
+                      const dateTimeA = new Date(`${a.date}T${a.time}`);
+                      const dateTimeB = new Date(`${b.date}T${b.time}`);
+                      return dateTimeB.getTime() - dateTimeA.getTime(); // Descending order (most recent first)
+                    })
+                    .map((app) => (
+                      <TableRow key={app.id} className="border-b border-border/50 hover:bg-background">
+                        <TableCell className="font-medium text-foreground">{getClientName(app.clientEmail)}</TableCell>
+                        <TableCell className="text-muted-foreground">{app.serviceName}</TableCell>
+                        <TableCell className="text-muted-foreground">{app.date}</TableCell>
+                        <TableCell className="text-muted-foreground">{app.time}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            app.status === "confirmed" ? "bg-green-500/20 text-green-400" :
+                            app.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
+                            app.status === "completed" ? "bg-blue-500/20 text-blue-400" :
+                            "bg-red-500/20 text-red-400"
+                          }`}>
+                            {app.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:bg-background hover:text-primary">
+                                <span className="sr-only">Abrir menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
+                              <DropdownMenuLabel className="text-primary">Ações</DropdownMenuLabel>
+                              <DropdownMenuItem className="hover:bg-muted cursor-pointer" onClick={() => handleUpdateStatus(app.id, "confirmed")}>Confirmar</DropdownMenuItem>
+                              <DropdownMenuItem className="hover:bg-muted cursor-pointer" onClick={() => handleUpdateStatus(app.id, "completed")}>Concluir</DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-border" />
+                              <DropdownMenuItem className="text-destructive hover:bg-destructive/20 cursor-pointer" onClick={() => handleUpdateStatus(app.id, "cancelled")}>Cancelar</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>

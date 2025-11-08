@@ -171,23 +171,29 @@ const AgendaPage = () => {
                   </TableHeader>
                   <TableBody>
                     {clientAppointments.length > 0 ? (
-                      clientAppointments.map((app) => (
-                        <TableRow key={app.id} className="border-b border-border/50 hover:bg-background">
-                          <TableCell className="font-medium text-foreground">{app.serviceName}</TableCell>
-                          <TableCell className="text-muted-foreground">{app.date}</TableCell>
-                          <TableCell className="text-muted-foreground">{app.time}</TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              app.status === "confirmed" ? "bg-green-500/20 text-green-400" :
-                              app.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
-                              app.status === "completed" ? "bg-blue-500/20 text-blue-400" :
-                              "bg-red-500/20 text-red-400"
-                            }`}>
-                              {app.status}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      clientAppointments
+                        .sort((a, b) => {
+                          const dateTimeA = new Date(`${a.date}T${a.time}`);
+                          const dateTimeB = new Date(`${b.date}T${b.time}`);
+                          return dateTimeB.getTime() - dateTimeA.getTime(); // Descending order (most recent first)
+                        })
+                        .map((app) => (
+                          <TableRow key={app.id} className="border-b border-border/50 hover:bg-background">
+                            <TableCell className="font-medium text-foreground">{app.serviceName}</TableCell>
+                            <TableCell className="text-muted-foreground">{app.date}</TableCell>
+                            <TableCell className="text-muted-foreground">{app.time}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                app.status === "confirmed" ? "bg-green-500/20 text-green-400" :
+                                app.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
+                                app.status === "completed" ? "bg-blue-500/20 text-blue-400" :
+                                "bg-red-500/20 text-red-400"
+                              }`}>
+                                {app.status}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))
                     ) : (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-muted-foreground">
