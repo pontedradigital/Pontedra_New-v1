@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { enviarEmailConfirmacaoLead } from '@/lib/email' // Importação adicionada
+// Removendo a importação de enviarEmailConfirmacaoLead, pois agora será uma Edge Function
 
 interface LeadData {
   nome: string
@@ -44,7 +44,8 @@ export function useLeadCapture() {
       const sessionId = getSessionId()
       const trackingData = getTrackingData()
 
-      const { data, error: supabaseError } = await supabase.rpc('register_lead_captured', {
+      // 1. Registrar o lead no Supabase Database
+      const { data: dbResponse, error: supabaseError } = await supabase.rpc('register_lead_captured', {
         p_session_id: sessionId,
         p_nome: leadData.nome,
         p_email: leadData.email,
@@ -63,21 +64,19 @@ export function useLeadCapture() {
 
       if (supabaseError) throw supabaseError
 
-      // Envia e-mails de confirmação
-      await enviarEmailConfirmacaoLead({
-        nome: leadData.nome,
-        email: leadData.email,
-        telefone: leadData.telefone,
-        assunto: leadData.assunto,
-        mensagem: leadData.mensagem,
-        origem: leadData.origem,
+      // 2. Invocar a Edge Function para enviar e-mails
+      const { data: emailResponse, error: edgeFunctionError } = await supabase.functions.invoke('send-lead-emails', {
+        body: { data: leadData }, // Passa os dados do lead para a Edge Function
       })
+
+      if (edgeFunctionError) throw edgeFunctionError
+      if (!emailResponse.success) throw new Error(emailResponse.error || 'Erro ao enviar e-mails pela Edge Function.')
 
       // Marca que o lead foi capturado
       localStorage.setItem('pontedra_lead_captured', 'true')
       localStorage.setItem('pontedra_lead_email', leadData.email)
 
-      return { success: true, data }
+      return { success: true, data: dbResponse }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao capturar lead'
       setError(errorMessage)
