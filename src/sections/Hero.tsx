@@ -1,11 +1,23 @@
 import React, { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, useAnimation, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
 
+  // Hooks para animação de rolagem
+  const controls = useAnimation();
+  const heroRef = useRef(null);
+  const isInView = useInView(heroRef, { once: true, margin: "-100px" }); // Anima uma vez quando 100px da seção estiver visível
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [isInView, controls]);
+
+  // --- Fundo animado com linhas + movimento do mouse ---
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -14,8 +26,8 @@ const Hero = () => {
     let height = (canvas.height = window.innerHeight);
     const lines: any[] = [];
     const lineCount = 30;
-    const color1 = "#3B82F6"; // azul suave
-    const color2 = "#9333EA"; // roxo vibrante
+    const color1 = "#3B82F6";
+    const color2 = "#9333EA";
     let mouseX = 0;
     let mouseY = 0;
 
@@ -83,18 +95,27 @@ const Hero = () => {
     }
   };
 
+  // --- Efeito visual e estrutura da HERO ---
   return (
-    <section id="hero" className="relative h-screen w-full flex flex-col justify-center items-center text-center overflow-hidden">
+    <section
+      ref={heroRef} // Anexa a referência para detectar a visibilidade
+      id="hero"
+      className="relative h-screen w-full flex flex-col justify-center items-center text-center overflow-hidden"
+    >
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full -z-10"
       />
 
-      {/* Conteúdo principal do HERO */}
+      {/* Conteúdo principal do HERO com animações */}
       <motion.h1
-        className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="text-5xl md:text-7xl font-extrabold text-white drop-shadow-lg"
+        variants={{
+          hidden: { opacity: 0, y: 50 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        initial="hidden"
+        animate={controls}
         transition={{ duration: 1 }}
       >
         Soluções Digitais que Conectam Resultados
@@ -102,14 +123,27 @@ const Hero = () => {
 
       <motion.p
         className="text-lg md:text-2xl text-gray-200 mt-4 max-w-2xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        variants={{
+          hidden: { opacity: 0, y: 30 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        initial="hidden"
+        animate={controls}
         transition={{ delay: 0.3, duration: 1 }}
       >
         Transforme sua presença online em um fluxo constante de clientes.
       </motion.p>
 
-      <div className="mt-8 flex gap-4">
+      <motion.div
+        className="mt-8 flex gap-4"
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        initial="hidden"
+        animate={controls}
+        transition={{ delay: 0.5, duration: 0.8 }}
+      >
         <a
           href="#solucoes"
           onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
@@ -125,23 +159,32 @@ const Hero = () => {
         >
           Portfólio
         </a>
-      </div>
+      </motion.div>
 
-      {/* Checklist lateral */}
-      <div className="absolute right-10 bottom-10 flex flex-col text-white gap-3">
+      {/* Checklist lateral com animações */}
+      <motion.div
+        className="absolute right-10 bottom-10 flex flex-col text-white gap-3"
+        variants={{
+          hidden: { opacity: 0, x: 50 },
+          visible: { opacity: 1, x: 0 },
+        }}
+        initial="hidden"
+        animate={controls}
+        transition={{ delay: 0.8, duration: 1 }}
+      >
         <div className="flex items-center gap-2">
-          <span className="text-blue-400 font-bold">1.</span>
+          <span className="text-blue-400 font-bold text-xl">1.</span>
           <span>Identifique sua dor</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-purple-400 font-bold">2.</span>
+          <span className="text-purple-400 font-bold text-xl">2.</span>
           <span>Nós resolvemos</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-green-400 font-bold">3.</span>
-          <span>Transforme em resultados</span>
+          <span className="text-green-400 font-bold text-xl">3.</span>
+          <span>Conquiste resultados</span>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };
