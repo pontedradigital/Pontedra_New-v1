@@ -37,7 +37,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
   const clientNavItems = [
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
-    { name: "Chat IA", href: "/dashboard/cliente/chat", icon: Bot },
+    { name: "Chat IA", href: "/dashboard/cliente/chat", icon: Bot }, // Link atualizado
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
   ];
