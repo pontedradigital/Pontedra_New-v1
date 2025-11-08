@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion"; // Removido Bot
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -38,7 +38,7 @@ const Login = () => {
         <Card className="mx-auto max-w-sm bg-card border-border shadow-lg rounded-2xl">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-10 w-auto" />
+              <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-28 w-auto" />
             </div>
             <CardTitle className="text-2xl font-bold text-foreground">Login</CardTitle>
             <CardDescription className="text-muted-foreground">
