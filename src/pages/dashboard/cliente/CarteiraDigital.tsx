@@ -123,6 +123,14 @@ const CarteiraDigitalPage = () => {
     }
   };
 
+  const currentMonthlySpending = transactions
+    .filter(t => t.type === "debit" && new Date(t.date).getMonth() === new Date().getMonth())
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const spendingPercentage = financialSummary.monthlySpendingTarget > 0
+    ? Math.min(100, (currentMonthlySpending / financialSummary.monthlySpendingTarget) * 100)
+    : 0;
+
   return (
     <ClientDashboardLayout>
       <div className="flex items-center mb-6">
@@ -140,6 +148,15 @@ const CarteiraDigitalPage = () => {
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{formatCurrency(financialSummary.currentBalance)}</div>
               <p className="text-xs text-muted-foreground">Seu dinheiro disponível</p>
+              <div className="relative w-full h-2 bg-muted rounded-full mt-4">
+                <div
+                  className="absolute h-full bg-primary rounded-full"
+                  style={{ width: `${spendingPercentage}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Gastos este mês: {formatCurrency(currentMonthlySpending)} de {formatCurrency(financialSummary.monthlySpendingTarget)} ({spendingPercentage.toFixed(0)}%)
+              </p>
               <Button className="mt-4 w-full uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" onClick={() => setIsAddCreditModalOpen(true)}>
                 Adicionar Crédito
               </Button>
@@ -381,7 +398,7 @@ const CarteiraDigitalPage = () => {
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="text-foreground font-medium">Status:</span>
-                <span className={cn("col-span-2 capitalize", getStatusColor(selectedTransactionDetail.status))}>{selectedTransactionDetail.status}</span>
+                <span className={cn("col-span-2 capitalize", getStatusDetailColor(selectedTransactionDetail.status))}>{selectedTransactionDetail.status}</span>
               </div>
             </div>
           )}

@@ -29,11 +29,11 @@ import MessengerIntegracao from "./pages/dashboard/master/comunicacao/MessengerI
 
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
-import ClientCentralAtendimentoPage from "./pages/dashboard/cliente/CentralAtendimento";
+import AtendimentoInteligentePage from "./pages/dashboard/cliente/AtendimentoInteligente"; // Importar a nova página
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
-import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital"; // Importar a nova página
+import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -208,15 +208,15 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/cliente/central-atendimento"
+                path="/dashboard/cliente/atendimento-inteligente" // Nova rota
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientCentralAtendimentoPage /></PageTransition>
+                    <PageTransition><AtendimentoInteligentePage /></PageTransition>
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/dashboard/cliente/carteira-digital" // Nova rota
+                path="/dashboard/cliente/carteira-digital"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><ClientCarteiraDigitalPage /></PageTransition>

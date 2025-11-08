@@ -1,24 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import ClientDashboardLayout from "@/components/layouts/ClientDashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Bot as BotIcon, Loader2, Mic, CalendarDays, MessageSquareText, DollarSign, PhoneCall } from "lucide-react";
+import { Send, Bot as BotIcon, Loader2, Mic, CalendarDays, MessageSquareText, DollarSign, PhoneCall, History, Star } from "lucide-react";
 import { CHATBOT_RESPONSES } from "@/data/chatbotResponses";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useMockData } from "@/context/MockContext";
-import { MOCK_CLIENT_SERVICES, MOCK_AVAILABLE_TIMES } from "@/data/mockData";
+import { MOCK_CLIENT_SERVICES, MOCK_AVAILABLE_TIMES, MOCK_CLIENT_ACTIVITY_SUMMARY } from "@/data/mockData";
 import { toast } from "sonner";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNavigate, useLocation } from "react-router-dom"; // Importar useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface Message {
   id: number;
   text: string;
   sender: "user" | "bot";
+  timestamp: string;
 }
 
 interface ChatState {
@@ -28,28 +29,26 @@ interface ChatState {
   pendingAppointment: { serviceName: string; date: string; time: string } | null;
 }
 
-interface ConversationHistoryItem {
-  id: string;
-  date: string;
-  summary: string;
-  messages: Message[];
-}
+const LOCAL_STORAGE_KEY_CHAT = "pontedra_ia_chat_history";
 
-const LOCAL_STORAGE_KEY_CHAT = "pontedra_chat_history";
-const LOCAL_STORAGE_KEY_CONVERSATIONS = "pontedra_conversation_history";
-
-const CentralAtendimentoPage = () => {
+const AtendimentoInteligentePage = () => {
   const { user } = useAuth();
   const { addClientAppointment, clientAppointments } = useMockData();
   const clientName = user?.email?.split('@')[0] || "Cliente";
   const navigate = useNavigate();
-  const location = useLocation(); // Usar useLocation para acessar o state
+  const location = useLocation();
 
   const [chatState, setChatState] = useState<ChatState>(() => {
     if (typeof window !== 'undefined') {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY_CHAT);
       if (savedState) {
-        return JSON.parse(savedState);
+        const parsedState = JSON.parse(savedState);
+        // Ensure timestamps are present for old messages if not already
+        const messagesWithTimestamps = parsedState.messages.map((msg: Message) => ({
+          ...msg,
+          timestamp: msg.timestamp || new Date().toISOString(),
+        }));
+        return { ...parsedState, messages: messagesWithTimestamps };
       }
     }
     return {
@@ -60,20 +59,12 @@ const CentralAtendimentoPage = () => {
     };
   });
 
-  const [conversationHistory, setConversationHistory] = useState<ConversationHistoryItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedHistory = localStorage.getItem(LOCAL_STORAGE_KEY_CONVERSATIONS);
-      if (savedHistory) {
-        return JSON.parse(savedHistory);
-      }
-    }
-    return [];
-  });
-
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const proactiveTipIntervalRef = useRef<number | null>(null);
+
+  const clientActivity = MOCK_CLIENT_ACTIVITY_SUMMARY; // Mocked client activity
 
   useEffect(() => {
     if (chatState.messages.length === 0) {
@@ -82,12 +73,9 @@ const CentralAtendimentoPage = () => {
       }, 500);
     }
 
-    // Check for initial message from location state
     if (location.state && (location.state as { initialMessage?: string }).initialMessage) {
       const initialMsg = (location.state as { initialMessage: string }).initialMessage;
       setInputMessage(initialMsg);
-      // Optionally, send the message automatically
-      // handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
       // Clear the state so it doesn't re-trigger on subsequent renders
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -100,13 +88,6 @@ const CentralAtendimentoPage = () => {
     }
   }, [chatState]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_STORAGE_KEY_CONVERSATIONS, JSON.stringify(conversationHistory));
-    }
-  }, [conversationHistory]);
-
-  // Proactive AI tip
   useEffect(() => {
     const resetProactiveTimer = () => {
       if (proactiveTipIntervalRef.current) {
@@ -130,22 +111,22 @@ const CentralAtendimentoPage = () => {
   const addBotMessage = (text: string) => {
     setChatState(prev => ({
       ...prev,
-      messages: [...prev.messages, { id: Date.now(), text, sender: "bot" }],
+      messages: [...prev.messages, { id: Date.now(), text, sender: "bot", timestamp: new Date().toISOString() }],
     }));
   };
 
   const processUserMessage = async (userText: string) => {
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate AI processing time
+    await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate AI processing time
 
-    let botResponse = CHATBOT_RESPONSES.find(r => r.type === "fallback")?.text || "Desculpe, não entendi.";
+    let botResponse = CHATBOT_RESPONSES.find(r => r.type === "fallback")?.text || "Desculpe, não entendi. 😕";
     let newLastServiceMentioned = chatState.lastServiceMentioned;
     let newAwaitingConfirmation = chatState.awaitingConfirmation;
     let newPendingAppointment = chatState.pendingAppointment;
 
     const lowerCaseText = userText.toLowerCase();
 
-    // Intent: Scheduling
+    // Intent: Scheduling (multi-turn)
     if (chatState.awaitingConfirmation === "service") {
       const service = MOCK_CLIENT_SERVICES.find(s => lowerCaseText.includes(s.name.toLowerCase()));
       if (service) {
@@ -154,7 +135,7 @@ const CentralAtendimentoPage = () => {
         newLastServiceMentioned = service.name;
         botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_prompt_date_time")?.text?.replace('{serviceName}', service.name) || "Ótimo! E qual dia e horário você prefere?";
       } else {
-        botResponse = "Não encontrei este serviço. Por favor, escolha um dos nossos serviços: Corte de Cabelo Masculino, Manicure e Pedicure, Massagem Relaxante, Coloração Feminina ou Limpeza de Pele.";
+        botResponse = "Não encontrei este serviço. Por favor, escolha um dos nossos serviços: Corte de Cabelo Masculino, Manicure e Pedicure, Massagem Relaxante, Coloração Feminina ou Limpeza de Pele. 🧐";
       }
     } else if (chatState.awaitingConfirmation === "date_time" && newPendingAppointment) {
       const dateMatch = lowerCaseText.match(/(hoje|amanhã|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/);
@@ -168,10 +149,9 @@ const CentralAtendimentoPage = () => {
           parsedDate = new Date();
           parsedDate.setDate(parsedDate.getDate() + 1);
         } else {
-          // Try to parse dd/mm or dd/mm/yyyy
           const parts = dateMatch[1].split('/');
           if (parts.length === 2) {
-            const year = new Date().getFullYear(); // Assume current year
+            const year = new Date().getFullYear();
             parsedDate = parseISO(`${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`);
           } else if (parts.length === 3) {
             const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
@@ -190,28 +170,28 @@ const CentralAtendimentoPage = () => {
           serviceName: newPendingAppointment.serviceName,
           date: newPendingAppointment.date,
           time: newPendingAppointment.time,
-          status: "pending",
+          status: "confirmed", // Simulate immediate confirmation
         }, user?.email || "cliente@teste.com");
 
         botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_confirm_success")?.text
           ?.replace('{serviceName}', newPendingAppointment.serviceName)
           .replace('{date}', format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR }))
-          .replace('{time}', newPendingAppointment.time) || "Agendamento confirmado!";
+          .replace('{time}', newPendingAppointment.time) || "Agendamento confirmado! ✅";
         newAwaitingConfirmation = null;
         newPendingAppointment = null;
         newLastServiceMentioned = null;
         toast.success("Agendamento criado com sucesso!");
       } else {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_confirm_fail")?.text || "Não consegui entender a data ou hora. Por favor, tente novamente com um formato como 'amanhã às 14h' ou '25/12 às 10h'.";
+        botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_confirm_fail")?.text || "Não consegui entender a data ou hora. Por favor, tente novamente com um formato como 'amanhã às 14h' ou '25/12 às 10h'. 📅";
       }
     }
     // Intent: General Services
     else if (lowerCaseText.includes("serviços") || lowerCaseText.includes("o que vocês oferecem")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "services_general")?.text || "Nossos serviços incluem Corte, Manicure, Coloração e Limpeza. Qual deles você deseja mais informações?";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "services_general")?.text || "Nossos serviços incluem Corte, Manicure, Coloração e Limpeza. Qual deles você deseja mais informações? 💇‍♀️💅";
       newAwaitingConfirmation = "service";
     }
     // Intent: Service Price
-    else if (lowerCaseText.includes("valor") || lowerCaseText.includes("preço")) {
+    else if (lowerCaseText.includes("valor") || lowerCaseText.includes("preço") || lowerCaseText.includes("quanto custa")) {
       if (lowerCaseText.includes("corte")) {
         botResponse = CHATBOT_RESPONSES.find(r => r.type === "service_price_corte")?.text || "O Corte de Cabelo Masculino custa R$55,00.";
         newLastServiceMentioned = "Corte de Cabelo Masculino";
@@ -230,46 +210,46 @@ const CentralAtendimentoPage = () => {
       } else if (chatState.lastServiceMentioned) {
         const service = MOCK_CLIENT_SERVICES.find(s => s.name === chatState.lastServiceMentioned);
         if (service) {
-          botResponse = `O serviço de ${service.name} custa R$${service.price.toFixed(2)}. Deseja agendar?`;
+          botResponse = `O serviço de ${service.name} custa R$${service.price.toFixed(2)}. Deseja agendar? 💰`;
         }
       } else {
-        botResponse = "Para qual serviço você gostaria de saber o valor?";
+        botResponse = "Para qual serviço você gostaria de saber o valor? 💸";
       }
     }
     // Intent: Promotions
-    else if (lowerCaseText.includes("promoção") || lowerCaseText.includes("desconto")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! A IA identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
+    else if (lowerCaseText.includes("promoção") || lowerCaseText.includes("desconto") || lowerCaseText.includes("oferta")) {
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! 🎉 A IA identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
     }
     // Intent: Human Assistance
     else if (lowerCaseText.includes("falar com alguém") || lowerCaseText.includes("atendente") || lowerCaseText.includes("suporte")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "human_assistance")?.text || "Um de nossos atendentes será notificado.";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "human_assistance")?.text || "Um de nossos atendentes será notificado. 🧑‍💻";
     }
     // Intent: Thank you / Goodbye
     else if (lowerCaseText.includes("obrigado") || lowerCaseText.includes("valeu")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "thank_you")?.text || "De nada!";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "thank_you")?.text || "De nada! 😊";
     }
     else if (lowerCaseText.includes("tchau") || lowerCaseText.includes("até mais")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "goodbye")?.text || "Até mais!";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "goodbye")?.text || "Até mais! 👋";
     }
     // Intent: Scheduling trigger
     else if (lowerCaseText.includes("agendar") || lowerCaseText.includes("marcar")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_prompt_service")?.text || "Claro! Para qual serviço você gostaria de agendar?";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_prompt_service")?.text || "Claro! Para qual serviço você gostaria de agendar? 📝";
       newAwaitingConfirmation = "service";
     }
     // Intent: Cancel/Reschedule (simulated)
     else if (lowerCaseText.includes("cancelar agendamento")) {
-      botResponse = "Para cancelar um agendamento, por favor, acesse a página 'Meus Agendamentos' ou informe o ID do agendamento que deseja cancelar. (Funcionalidade simulada)";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "cancel_appointment_prompt")?.text || "Para cancelar um agendamento, por favor, acesse a página 'Meus Agendamentos' ou informe o ID do agendamento que deseja cancelar. (Funcionalidade simulada) ❌";
     }
     else if (lowerCaseText.includes("reagendar")) {
-      botResponse = "Para reagendar, por favor, acesse a página 'Meus Agendamentos' e selecione a opção de reagendamento. (Funcionalidade simulada)";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "reschedule_appointment_prompt")?.text || "Para reagendar, por favor, acesse a página 'Meus Agendamentos' e selecione a opção de reagendamento. (Funcionalidade simulada) 🔄";
     }
     // Intent: Check appointment status
-    else if (lowerCaseText.includes("status do meu agendamento") || lowerCaseText.includes("meu agendamento")) {
+    else if (lowerCaseText.includes("status do meu agendamento") || lowerCaseText.includes("meu agendamento") || lowerCaseText.includes("próximo agendamento")) {
       const upcoming = clientAppointments.filter(app => app.clientEmail === user?.email && (app.status === "pending" || app.status === "confirmed"));
       if (upcoming.length > 0) {
-        botResponse = `Seu próximo agendamento é para '${upcoming[0].serviceName}' em ${format(parseISO(upcoming[0].date), "dd/MM/yyyy", { locale: ptBR })} às ${upcoming[0].time}. Status: ${upcoming[0].status}.`;
+        botResponse = `Seu próximo agendamento é para '${upcoming[0].serviceName}' em ${format(parseISO(upcoming[0].date), "dd/MM/yyyy", { locale: ptBR })} às ${upcoming[0].time}. Status: ${upcoming[0].status}. 🗓️`;
       } else {
-        botResponse = "Você não tem agendamentos futuros registrados.";
+        botResponse = CHATBOT_RESPONSES.find(r => r.type === "check_appointment_status_no_upcoming")?.text || "Você não tem agendamentos futuros registrados. Que tal agendar um novo serviço? 🗓️";
       }
     }
 
@@ -292,144 +272,56 @@ const CentralAtendimentoPage = () => {
       id: Date.now(),
       text: inputMessage,
       sender: "user",
+      timestamp: new Date().toISOString(),
     };
     setChatState(prev => ({ ...prev, messages: [...prev.messages, newUserMessage] }));
     setInputMessage("");
     processUserMessage(inputMessage);
 
-    // Reset proactive tip timer on user activity
     if (proactiveTipIntervalRef.current) {
       clearInterval(proactiveTipIntervalRef.current);
-      proactiveTipIntervalRef.current = null; // Clear ref to ensure new interval is set
+      proactiveTipIntervalRef.current = null;
     }
   };
 
-  const handleQuickAction = (action: string) => {
-    let simulatedMessage = "";
-    switch (action) {
-      case "agendar":
-        simulatedMessage = "Quero agendar um novo serviço.";
-        break;
-      case "ver_agendamentos":
-        navigate("/dashboard/cliente/agenda");
-        toast.info("Redirecionando para Meus Agendamentos.");
-        return;
-      case "suporte_humano":
-        simulatedMessage = "Preciso falar com um atendente humano.";
-        break;
-      case "duvidas_precos":
-        simulatedMessage = "Quais são os preços dos serviços?";
-        break;
-      default:
-        return;
-    }
-    const newUserMessage: Message = {
-      id: Date.now(),
-      text: simulatedMessage,
-      sender: "user",
-    };
-    setChatState(prev => ({ ...prev, messages: [...prev.messages, newUserMessage] }));
-    processUserMessage(simulatedMessage);
-  };
+  const formatTimestamp = (isoString: string) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
-  const handleLoadConversation = (conversation: ConversationHistoryItem) => {
-    setChatState({
-      messages: conversation.messages,
-      lastServiceMentioned: null, // Reset context for loaded conversation
-      awaitingConfirmation: null,
-      pendingAppointment: null,
-    });
-    toast.info(`Conversa de ${conversation.date} carregada.`);
-  };
-
-  const handleNewConversation = () => {
-    if (chatState.messages.length > 1) { // Save current conversation if it has more than just the greeting
-      const summary = chatState.messages.length > 2 ? chatState.messages[1].text.substring(0, 50) + "..." : "Nova conversa";
-      setConversationHistory(prev => [
-        { id: `conv-${Date.now()}`, date: format(new Date(), "dd/MM/yyyy HH:mm"), summary, messages: chatState.messages },
-        ...prev,
-      ]);
-    }
-    setChatState({
-      messages: [],
-      lastServiceMentioned: null,
-      awaitingConfirmation: null,
-      pendingAppointment: null,
-    });
-    setTimeout(() => {
-      addBotMessage(CHATBOT_RESPONSES.find(r => r.type === "greeting")?.text || "Olá! Como posso ajudar?");
-    }, 500);
-    toast.info("Nova conversa iniciada.");
+    if (diffMinutes < 1) return "agora";
+    if (diffMinutes < 60) return `há ${diffMinutes} min`;
+    if (diffMinutes < 24 * 60) return `há ${Math.floor(diffMinutes / 60)}h`;
+    return format(date, "dd/MM HH:mm");
   };
 
   return (
     <ClientDashboardLayout>
       <div className="flex items-center mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Central de Atendimento com IA</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Atendimento Inteligente (IA Chat)</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6 h-[calc(100vh-180px)]">
-        {/* Histórico de Conversas Recentes */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="hidden lg:flex flex-col bg-card border-border shadow-lg rounded-2xl p-4"
-        >
-          <h2 className="text-lg font-semibold text-foreground mb-4">Histórico de Conversas</h2>
-          <Button onClick={handleNewConversation} className="w-full mb-4 uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
-            Nova Conversa
-          </Button>
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-            {conversationHistory.length === 0 ? (
-              <p className="text-muted-foreground text-sm text-center">Nenhuma conversa anterior.</p>
-            ) : (
-              conversationHistory.map((conv) => (
-                <motion.div
-                  key={conv.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="p-3 bg-background border border-border rounded-md cursor-pointer hover:bg-muted transition-colors"
-                  onClick={() => handleLoadConversation(conv)}
-                >
-                  <p className="text-sm font-medium text-foreground">{conv.summary}</p>
-                  <p className="text-xs text-muted-foreground">{conv.date}</p>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </motion.div>
-
-        {/* Janela de Chat */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 h-[calc(100vh-180px)]">
+        {/* Janela Principal de Conversa */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           className="flex flex-col bg-card border-border shadow-lg rounded-2xl"
         >
           <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center gap-2 text-foreground">
               <BotIcon className="h-5 w-5 text-primary" /> Assistente Pontedra
             </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground flex items-center gap-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              Online | IA Pontedra pronta para ajudar
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-            {/* Botões de Acesso Rápido */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("agendar")}>
-                <CalendarDays className="h-4 w-4 mr-2" /> Agendar novo serviço
-              </Button>
-              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("ver_agendamentos")}>
-                <MessageSquareText className="h-4 w-4 mr-2" /> Ver meus agendamentos
-              </Button>
-              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("suporte_humano")}>
-                <PhoneCall className="h-4 w-4 mr-2" /> Falar com suporte humano
-              </Button>
-              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("duvidas_precos")}>
-                <DollarSign className="h-4 w-4 mr-2" /> Dúvidas sobre preços
-              </Button>
-            </div>
-
             {chatState.messages.map((message) => (
               <div
                 key={message.id}
@@ -439,7 +331,7 @@ const CentralAtendimentoPage = () => {
                 )}
               >
                 {message.sender === "bot" && (
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary border border-border">
                     <BotIcon className="h-4 w-4" />
                   </div>
                 )}
@@ -448,16 +340,22 @@ const CentralAtendimentoPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   className={cn(
-                    "max-w-[70%] p-3 rounded-lg",
+                    "max-w-[70%] p-3 rounded-lg relative",
                     message.sender === "user"
-                      ? "bg-blue-600 text-white rounded-br-none shadow-md" // Azul para usuário
-                      : "bg-primary text-background rounded-bl-none border border-primary/50 shadow-sm" // Verde para IA
+                      ? "bg-primary text-primary-foreground rounded-br-none shadow-md"
+                      : "bg-muted text-muted-foreground rounded-bl-none border border-border shadow-sm"
                   )}
                 >
                   {message.text}
+                  <span className={cn(
+                    "absolute text-[0.65rem] opacity-70",
+                    message.sender === "user" ? "bottom-1 -left-10 text-primary-foreground/80" : "bottom-1 -right-10 text-muted-foreground/80"
+                  )}>
+                    {formatTimestamp(message.timestamp)}
+                  </span>
                 </motion.div>
                 {message.sender === "user" && (
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-border">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-background flex items-center justify-center text-foreground border border-border">
                     {clientName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -465,14 +363,14 @@ const CentralAtendimentoPage = () => {
             ))}
             {isTyping && (
               <div className="flex items-end gap-2 justify-start">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary border border-border">
                   <BotIcon className="h-4 w-4" />
                 </div>
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="max-w-[70%] p-3 rounded-lg bg-background text-foreground rounded-bl-none border border-border shadow-sm flex items-center gap-2"
+                  className="max-w-[70%] p-3 rounded-lg bg-muted text-muted-foreground rounded-bl-none border border-border shadow-sm flex items-center gap-2"
                 >
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   <span>Digitando...</span>
@@ -490,7 +388,7 @@ const CentralAtendimentoPage = () => {
                 className="flex-1 bg-background border-border text-foreground focus:ring-primary"
                 disabled={isTyping}
               />
-              <Button type="button" size="icon" variant="outline" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => toast.info("Entrada de voz simulada.")}>
+              <Button type="button" size="icon" variant="outline" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => toast.info("Entrada de voz simulada.")} disabled={isTyping}>
                 <Mic className="h-4 w-4" />
               </Button>
               <Button type="submit" size="icon" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" disabled={isTyping}>
@@ -499,9 +397,90 @@ const CentralAtendimentoPage = () => {
             </form>
           </div>
         </motion.div>
+
+        {/* Painel Lateral de Apoio */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="hidden lg:flex flex-col bg-card border-border shadow-lg rounded-2xl p-4 space-y-6"
+        >
+          <h2 className="text-lg font-semibold text-foreground">Sua Atividade</h2>
+
+          <div className="grid gap-4">
+            <Card className="bg-background border-border shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" /> Próximo Agendamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {clientActivity.nextAppointment ? (
+                  <>
+                    <p className="text-lg font-bold text-foreground">{clientActivity.nextAppointment.service}</p>
+                    <p className="text-sm text-muted-foreground">{clientActivity.nextAppointment.date} às {clientActivity.nextAppointment.time}</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum agendamento futuro.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-background border-border shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <History className="h-4 w-4 text-muted-foreground" /> Último Serviço
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {clientActivity.lastService ? (
+                  <>
+                    <p className="text-lg font-bold text-foreground">{clientActivity.lastService.name}</p>
+                    <p className="text-sm text-muted-foreground">{clientActivity.lastService.date}</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum serviço recente.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-background border-border shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Star className="h-4 w-4 text-muted-foreground" /> Pontos de Fidelidade
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-foreground">{clientActivity.loyaltyPoints}</p>
+                <p className="text-xs text-muted-foreground">Acumulados</p>
+              </CardContent>
+            </Card>
+
+            {clientActivity.pendingPayment && (
+              <Card className="bg-background border-border shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-destructive" /> Pagamento Pendente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-lg font-bold text-destructive">R$ {clientActivity.pendingPayment.amount.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">Vencimento: {clientActivity.pendingPayment.dueDate}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <Button
+            onClick={() => navigate("/dashboard/cliente/minha-experiencia")}
+            className="w-full uppercase mt-auto bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20"
+          >
+            Ver Histórico de Atendimentos
+          </Button>
+        </motion.div>
       </div>
     </ClientDashboardLayout>
   );
 };
 
-export default CentralAtendimentoPage;
+export default AtendimentoInteligentePage;

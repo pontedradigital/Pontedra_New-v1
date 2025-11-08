@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { CalendarDays, CheckCircle2, Clock, Lightbulb, Gift, History, BarChart2, Star } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Lightbulb, Gift, History, BarChart2, Star, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
@@ -64,7 +64,7 @@ const MinhaExperienciaPage = () => {
   };
 
   const handleAproveitarPromocao = (message: string) => {
-    navigate("/dashboard/cliente/central-atendimento", { state: { initialMessage: message } });
+    navigate("/dashboard/cliente/atendimento-inteligente", { state: { initialMessage: message } });
   };
 
   return (

@@ -128,6 +128,7 @@ export interface ClientFinancialSummary {
   currentBalance: number;
   availableCredits: number;
   accumulatedCashback: number;
+  monthlySpendingTarget: number; // Added for progress bar
 }
 
 export interface ClientTransaction {
@@ -148,6 +149,13 @@ export interface ClientFinancialInsight {
 export interface ClientSpendingChartData {
   month: string;
   spending: number;
+}
+
+export interface ClientActivitySummary {
+  nextAppointment: { service: string; date: string; time: string } | null;
+  lastService: { name: string; date: string } | null;
+  loyaltyPoints: number;
+  pendingPayment: { amount: number; dueDate: string } | null;
 }
 
 
@@ -372,6 +380,7 @@ export const MOCK_CLIENT_FINANCIAL_SUMMARY: ClientFinancialSummary = {
   currentBalance: 250.75,
   availableCredits: 50.00,
   accumulatedCashback: 12.50,
+  monthlySpendingTarget: 300.00, // Example target
 };
 
 export const MOCK_CLIENT_TRANSACTIONS: ClientTransaction[] = [
@@ -399,3 +408,10 @@ export const MOCK_CLIENT_SPENDING_CHART_DATA: ClientSpendingChartData[] = [
   { month: 'Out', spending: 300 },
   { month: 'Nov', spending: 220 },
 ];
+
+export const MOCK_CLIENT_ACTIVITY_SUMMARY: ClientActivitySummary = {
+  nextAppointment: { service: "Manicure e Pedicure", date: "2024-12-05", time: "14:30" },
+  lastService: { name: "Corte de Cabelo Masculino", date: "2024-11-20" },
+  loyaltyPoints: 150,
+  pendingPayment: null, // { amount: 75.00, dueDate: "2024-12-10" },
+};
