@@ -85,7 +85,7 @@ const CarteiraDigitalPage = () => {
   const handleGenerateNewInsights = () => {
     const newInsights = MOCK_CLIENT_FINANCIAL_INSIGHTS.sort(() => 0.5 - Math.random()).slice(0, 3);
     setFinancialInsights(newInsights);
-    toast.info("Novos insights financeiros gerados pela Assistente Pontedra!");
+    toast.info("Novos insights financeiros gerados!");
   };
 
   const handleViewDetails = (transaction: ClientTransaction) => {
@@ -281,12 +281,12 @@ const CarteiraDigitalPage = () => {
           </Card>
         </motion.div>
 
-        {/* Assistente Pontedra Financeira — Insights Inteligentes */}
+        {/* IA Pontedra Financeira — Insights Inteligentes */}
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.6 }} className="lg:col-span-1">
           <Card className="bg-card border-border shadow-lg rounded-2xl h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-foreground flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-primary" /> Assistente Pontedra Financeira — Insights Inteligentes
+                <Lightbulb className="h-5 w-5 text-primary" /> Insights Financeiros
               </CardTitle>
               <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={handleGenerateNewInsights}>
                 <RefreshCcw className="h-4 w-4" />
@@ -398,7 +398,7 @@ const CarteiraDigitalPage = () => {
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="text-foreground font-medium">Status:</span>
-                <span className={cn("col-span-2 capitalize", getStatusColor(selectedTransactionDetail.status))}>{selectedTransactionDetail.status}</span>
+                <span className={cn("col-span-2 capitalize", getStatusDetailColor(selectedTransactionDetail.status))}>{selectedTransactionDetail.status}</span>
               </div>
             </div>
           )}

@@ -18,7 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "Assistente Pontedra"; // Atualizado para "Assistente Pontedra"
+  sender: "user" | "bot";
   timestamp: string;
 }
 
@@ -43,13 +43,12 @@ const AtendimentoInteligentePage = () => {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY_CHAT);
       if (savedState) {
         const parsedState = JSON.parse(savedState);
-        // Ensure timestamps and sender are present for old messages if not already
-        const messagesWithTimestampsAndSender = parsedState.messages.map((msg: Message) => ({
+        // Ensure timestamps are present for old messages if not already
+        const messagesWithTimestamps = parsedState.messages.map((msg: Message) => ({
           ...msg,
           timestamp: msg.timestamp || new Date().toISOString(),
-          sender: msg.sender === "bot" ? "Assistente Pontedra" : msg.sender, // Atualiza sender de "bot" para "Assistente Pontedra"
         }));
-        return { ...parsedState, messages: messagesWithTimestampsAndSender };
+        return { ...parsedState, messages: messagesWithTimestamps };
       }
     }
     return {
@@ -112,7 +111,7 @@ const AtendimentoInteligentePage = () => {
   const addBotMessage = (text: string) => {
     setChatState(prev => ({
       ...prev,
-      messages: [...prev.messages, { id: Date.now(), text, sender: "Assistente Pontedra", timestamp: new Date().toISOString() }], // Remetente atualizado
+      messages: [...prev.messages, { id: Date.now(), text, sender: "bot", timestamp: new Date().toISOString() }],
     }));
   };
 
@@ -219,7 +218,7 @@ const AtendimentoInteligentePage = () => {
     }
     // Intent: Promotions
     else if (lowerCaseText.includes("promoção") || lowerCaseText.includes("desconto") || lowerCaseText.includes("oferta")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! 🎉 A Assistente Pontedra identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! 🎉 A IA identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
     }
     // Intent: Human Assistance
     else if (lowerCaseText.includes("falar com alguém") || lowerCaseText.includes("atendente") || lowerCaseText.includes("suporte")) {
@@ -299,7 +298,7 @@ const AtendimentoInteligentePage = () => {
   return (
     <ClientDashboardLayout>
       <div className="flex items-center mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Atendimento Inteligente (Assistente Pontedra)</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Atendimento Inteligente (IA Chat)</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 h-[calc(100vh-180px)]">
@@ -319,7 +318,7 @@ const AtendimentoInteligentePage = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Online | Assistente Pontedra pronta para ajudar
+              Online | IA Pontedra pronta para ajudar
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -331,7 +330,7 @@ const AtendimentoInteligentePage = () => {
                   message.sender === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {message.sender === "Assistente Pontedra" && ( // Condição atualizada
+                {message.sender === "bot" && (
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary border border-border">
                     <BotIcon className="h-4 w-4" />
                   </div>

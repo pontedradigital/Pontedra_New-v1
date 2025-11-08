@@ -64,7 +64,7 @@ const ClientDashboardPage = () => {
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
           <Card className="bg-card border-border shadow-lg rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Chat com Assistente Pontedra</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Chat com IA Pontedra</CardTitle>
               <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
