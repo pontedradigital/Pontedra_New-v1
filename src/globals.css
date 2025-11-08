@@ -323,3 +323,42 @@
 .animate-glow {
   animation: glow-pulse 5s ease-in-out infinite;
 }
+
+/* ========================================
+   TRANSIÇÕES DISCRETAS ENTRE SEÇÕES
+   ======================================== */
+
+/* Remove todas as bordas */
+section {
+  border: none !important;
+  position: relative;
+}
+
+/* Gradiente sutil entre seções */
+section::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(
+    to bottom,
+    rgba(13, 27, 42, 0) 0%,
+    rgba(13, 27, 42, 0.15) 50%,
+    rgba(13, 27, 42, 0) 100%
+  );
+  filter: blur(15px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+section:last-of-type::after {
+  display: none;
+}
+
+/* Sobreposição leve entre seções */
+section + section {
+  margin-top: -40px;
+  padding-top: 60px;
+}
