@@ -5,6 +5,7 @@ import Footer from "@/components/navigation/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 import QuemSomos from "@/components/landing/QuemSomos";
 import NossasSolucoes from "@/sections/NossasSolucoes";
+import Depoimentos from "@/sections/Depoimentos"; // Importar o novo componente Depoimentos
 
 export default function LandingPage() {
   const location = useLocation();
@@ -36,12 +37,8 @@ export default function LandingPage() {
 
         <NossasSolucoes />
 
-        <section id="depoimentos" className="py-24 bg-card border-t border-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-foreground mb-6">Depoimentos</h2>
-            <p className="text-textSecondary max-w-3xl">Veja o que nossos clientes satisfeitos têm a dizer sobre a Pontedra.</p>
-          </div>
-        </section>
+        {/* Nova seção de Depoimentos */}
+        <Depoimentos />
 
         <section id="blog" className="py-24 bg-background border-t border-border">
           <div className="max-w-7xl mx-auto px-6">
