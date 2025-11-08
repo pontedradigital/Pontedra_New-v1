@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion";
 
 const ClientSettingsPage = () => {
   const { user } = useAuth();
@@ -37,82 +38,99 @@ const ClientSettingsPage = () => {
 
   return (
     <ClientDashboardLayout>
-      <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">Configurações</h1>
+      <div className="flex items-center mb-6">
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Configurações</h1>
       </div>
 
       <form onSubmit={handleSaveChanges} className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Notificações</CardTitle>
-            <CardDescription>Gerencie como você recebe as notificações.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="flex items-center space-x-2">
-              <input
-                id="emailNotifications"
-                type="checkbox"
-                checked={notificationSettings.emailNotifications}
-                onChange={handleNotificationChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <Label htmlFor="emailNotifications">Notificações por E-mail</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                id="smsNotifications"
-                type="checkbox"
-                checked={notificationSettings.smsNotifications}
-                onChange={handleNotificationChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <Label htmlFor="smsNotifications">Notificações por SMS</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                id="whatsappNotifications"
-                type="checkbox"
-                checked={notificationSettings.whatsappNotifications}
-                onChange={handleNotificationChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <Label htmlFor="whatsappNotifications">Notificações por WhatsApp</Label>
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Card className="bg-card border-border shadow-lg rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-foreground">Notificações</CardTitle>
+              <CardDescription className="text-muted-foreground">Gerencie como você recebe as notificações.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  id="emailNotifications"
+                  type="checkbox"
+                  checked={notificationSettings.emailNotifications}
+                  onChange={handleNotificationChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
+                />
+                <Label htmlFor="emailNotifications" className="text-foreground">Notificações por E-mail</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="smsNotifications"
+                  type="checkbox"
+                  checked={notificationSettings.smsNotifications}
+                  onChange={handleNotificationChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
+                />
+                <Label htmlFor="smsNotifications" className="text-foreground">Notificações por SMS</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="whatsappNotifications"
+                  type="checkbox"
+                  checked={notificationSettings.whatsappNotifications}
+                  onChange={handleNotificationChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
+                />
+                <Label htmlFor="whatsappNotifications" className="text-foreground">Notificações por WhatsApp</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Privacidade</CardTitle>
-            <CardDescription>Controle suas preferências de privacidade.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="flex items-center space-x-2">
-              <input
-                id="dataSharing"
-                type="checkbox"
-                checked={privacySettings.dataSharing}
-                onChange={handlePrivacyChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <Label htmlFor="dataSharing">Compartilhamento de Dados com Terceiros</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                id="marketingEmails"
-                type="checkbox"
-                checked={privacySettings.marketingEmails}
-                onChange={handlePrivacyChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <Label htmlFor="marketingEmails">Receber E-mails de Marketing</Label>
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Card className="bg-card border-border shadow-lg rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-foreground">Privacidade</CardTitle>
+              <CardDescription className="text-muted-foreground">Controle suas preferências de privacidade.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  id="dataSharing"
+                  type="checkbox"
+                  checked={privacySettings.dataSharing}
+                  onChange={handlePrivacyChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
+                />
+                <Label htmlFor="dataSharing" className="text-foreground">Compartilhamento de Dados com Terceiros</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="marketingEmails"
+                  type="checkbox"
+                  checked={privacySettings.marketingEmails}
+                  onChange={handlePrivacyChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-border rounded bg-background"
+                />
+                <Label htmlFor="marketingEmails" className="text-foreground">Receber E-mails de Marketing</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <div className="flex justify-end">
-          <Button type="submit">Salvar Configurações</Button>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="flex justify-end"
+        >
+          <Button type="submit" className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">Salvar Configurações</Button>
+        </motion.div>
       </form>
     </ClientDashboardLayout>
   );

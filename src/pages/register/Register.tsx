@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { registerService } from "@/services/auth";
 import { toast } from "sonner";
 import { Bot } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -21,8 +22,6 @@ const Register = () => {
       return;
     }
 
-    // In a real application, you would send this to a backend.
-    // For this mock, we'll just simulate success.
     const success = await registerService(email, password);
 
     if (success) {
@@ -34,62 +33,71 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-950">
-      <Card className="mx-auto max-w-sm">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-2">
-            <Bot className="h-10 w-10 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Cadastre-se</CardTitle>
-          <CardDescription>
-            Crie sua conta para começar a usar a plataforma.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="mx-auto max-w-sm bg-card border-border shadow-lg rounded-2xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-2">
+              <Bot className="h-10 w-10 text-primary" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+            <CardTitle className="text-2xl font-bold text-foreground">Cadastre-se</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Crie sua conta para começar a usar a plataforma.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email" className="text-foreground">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-background border-border text-foreground focus:ring-primary"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password" className="text-foreground">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-background border-border text-foreground focus:ring-primary"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="confirm-password" className="text-foreground">Confirmar Senha</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-background border-border text-foreground focus:ring-primary"
+                />
+              </div>
+              <Button type="submit" className="w-full uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
+                Cadastrar
+              </Button>
+            </form>
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              Já tem uma conta?{" "}
+              <Link to="/login" className="underline text-primary hover:text-primary/80">
+                Entrar
+              </Link>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="confirm-password">Confirmar Senha</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Cadastrar
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            Já tem uma conta?{" "}
-            <Link to="/login" className="underline">
-              Entrar
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };

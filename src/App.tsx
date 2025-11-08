@@ -7,19 +7,23 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
+import LandingPage from "./pages/LandingPage"; // Importar LandingPage
+
 import MasterDashboardPage from "./pages/dashboard/master/Index";
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import UsersPage from "./pages/dashboard/master/Users";
 import ServicesPage from "./pages/dashboard/master/Services";
 import AppointmentsPage from "./pages/dashboard/master/Appointments";
-import CanaisAtendimentoPage from "./pages/dashboard/master/CanaisAtendimento"; // Renomeado
+import CanaisAtendimentoPage from "./pages/dashboard/master/CanaisAtendimento";
 import AIInsightsPage from "./pages/dashboard/master/AIInsights";
-import AnalisesPage from "./pages/dashboard/master/Analises"; // Nova página
+import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
+
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
 import ClientChatPage from "./pages/dashboard/cliente/Chat";
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
+
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -33,7 +37,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Index />} /> {/* Index agora lida com o redirecionamento inicial */}
+            <Route path="/landing" element={<LandingPage />} /> {/* Nova rota para a Landing Page */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
@@ -71,7 +76,7 @@ const App = () => (
               }
             />
             <Route
-              path="/dashboard/master/canais-atendimento" // Rota atualizada
+              path="/dashboard/master/canais-atendimento"
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
                   <CanaisAtendimentoPage />
@@ -87,7 +92,7 @@ const App = () => (
               }
             />
             <Route
-              path="/dashboard/master/analises" // Nova rota
+              path="/dashboard/master/analises"
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
                   <AnalisesPage />
@@ -107,7 +112,7 @@ const App = () => (
               path="/dashboard/master/*"
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
-                  <MasterDashboardPage /> {/* Pode ser ajustado para um layout de sub-rota mais genérico */}
+                  <MasterDashboardPage />
                 </ProtectedRoute>
               }
             />
@@ -158,7 +163,7 @@ const App = () => (
               path="/dashboard/cliente/*"
               element={
                 <ProtectedRoute allowedRoles={["client"]}>
-                  <ClientDashboardPage /> {/* Pode ser ajustado para um layout de sub-rota mais genérico */}
+                  <ClientDashboardPage />
                 </ProtectedRoute>
               }
             />

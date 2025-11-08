@@ -7,6 +7,7 @@ import { Send, Bot as BotIcon } from "lucide-react";
 import { CHATBOT_RESPONSES } from "@/data/chatbotResponses";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface Message {
   id: number;
@@ -59,17 +60,22 @@ const ChatPage = () => {
 
   return (
     <ClientDashboardLayout>
-      <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">Chat com IA Pontedra</h1>
+      <div className="flex items-center mb-6">
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Chat com IA Pontedra</h1>
       </div>
 
-      <Card className="flex flex-col h-[calc(100vh-180px)]"> {/* Adjust height based on header/footer */}
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BotIcon className="h-5 w-5" /> Assistente Pontedra
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="flex flex-col h-[calc(100vh-180px)] bg-card border-border shadow-lg rounded-2xl"
+      >
+        <CardHeader className="border-b border-border">
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <BotIcon className="h-5 w-5 text-primary" /> Assistente Pontedra
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -83,18 +89,21 @@ const ChatPage = () => {
                   <BotIcon className="h-4 w-4" />
                 </div>
               )}
-              <div
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 className={cn(
                   "max-w-[70%] p-3 rounded-lg",
                   message.sender === "user"
-                    ? "bg-blue-500 text-white rounded-br-none"
-                    : "bg-muted text-foreground rounded-bl-none"
+                    ? "bg-primary text-background rounded-br-none shadow-md"
+                    : "bg-background text-foreground rounded-bl-none border border-border shadow-sm"
                 )}
               >
                 {message.text}
-              </div>
+              </motion.div>
               {message.sender === "user" && (
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-800">
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-border">
                   {user?.email?.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -102,20 +111,20 @@ const ChatPage = () => {
           ))}
           <div ref={messagesEndRef} />
         </CardContent>
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-border">
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
               placeholder="Digite sua mensagem..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1"
+              className="flex-1 bg-background border-border text-foreground focus:ring-primary"
             />
-            <Button type="submit" size="icon">
+            <Button type="submit" size="icon" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
               <Send className="h-4 w-4" />
             </Button>
           </form>
         </div>
-      </Card>
+      </motion.div>
     </ClientDashboardLayout>
   );
 };

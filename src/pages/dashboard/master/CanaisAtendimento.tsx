@@ -52,16 +52,17 @@ const CanaisAtendimentoPage = () => {
     description: string,
     Icon: React.ElementType,
     state: ChannelState,
-    onToggle: () => void
+    onToggle: () => void,
+    delay: number
   ) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.5, delay: delay }}
     >
-      <Card className="h-full flex flex-col">
+      <Card className="h-full flex flex-col bg-card border-border shadow-lg rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
           <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent className="flex-1 flex flex-col justify-between">
@@ -69,14 +70,14 @@ const CanaisAtendimentoPage = () => {
             {description}
           </p>
           <div>
-            <p className="text-sm font-semibold mb-2">
+            <p className="text-sm font-semibold mb-2 text-foreground">
               Status:{" "}
-              <span className={state.connected ? "text-green-500" : "text-red-500"}>
+              <span className={state.connected ? "text-primary" : "text-destructive"}>
                 {state.connected ? "Conectado" : "Não conectado"}
               </span>
             </p>
             <Button
-              className="w-full"
+              className="w-full uppercase"
               variant={state.connected ? "destructive" : "default"}
               onClick={onToggle}
               disabled={state.loading}
@@ -91,8 +92,8 @@ const CanaisAtendimentoPage = () => {
 
   return (
     <MasterDashboardLayout>
-      <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">Canais de Atendimento</h1>
+      <div className="flex items-center mb-6">
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Canais de Atendimento</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -101,7 +102,8 @@ const CanaisAtendimentoPage = () => {
           "Simulação de integração com o WhatsApp para mensagens automatizadas e atendimento ao cliente.",
           MessageCircle,
           whatsappState,
-          () => toggleConnection("whatsapp")
+          () => toggleConnection("whatsapp"),
+          0.1
         )}
 
         {renderChannelCard(
@@ -109,7 +111,8 @@ const CanaisAtendimentoPage = () => {
           "Simulação de gerenciamento de conversas e automações no Facebook Messenger.",
           MessageSquare,
           messengerState,
-          () => toggleConnection("messenger")
+          () => toggleConnection("messenger"),
+          0.2
         )}
 
         {renderChannelCard(
@@ -117,20 +120,26 @@ const CanaisAtendimentoPage = () => {
           "Simulação de interação com clientes e automação de respostas no Instagram Direct.",
           Camera,
           instagramState,
-          () => toggleConnection("instagram")
+          () => toggleConnection("instagram"),
+          0.3
         )}
       </div>
 
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm mt-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border shadow-sm bg-card mt-6"
+      >
         <div className="flex flex-col items-center gap-1 text-center p-4">
-          <h3 className="text-2xl font-bold tracking-tight">
+          <h3 className="text-2xl font-bold tracking-tight text-foreground">
             Integrações de Comunicação
           </h3>
           <p className="text-sm text-muted-foreground">
             Gerencie toda a comunicação com seus clientes em um só lugar.
           </p>
         </div>
-      </div>
+      </motion.div>
     </MasterDashboardLayout>
   );
 };

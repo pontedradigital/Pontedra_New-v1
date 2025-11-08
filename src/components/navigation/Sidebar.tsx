@@ -1,7 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart } from "lucide-react"; // Importar User e BarChart
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext"; // Importar useAuth
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Importar Avatar
 
 interface SidebarProps {
   userRole: "master" | "client" | undefined;
@@ -9,15 +11,16 @@ interface SidebarProps {
 
 export const Sidebar = ({ userRole }: SidebarProps) => {
   const location = useLocation();
+  const { user } = useAuth(); // Usar useAuth para obter informações do usuário
 
   const masterNavItems = [
     { name: "Dashboard", href: "/dashboard/master", icon: LayoutDashboard },
     { name: "Clientes", href: "/dashboard/master/users", icon: Users },
     { name: "Serviços", href: "/dashboard/master/services", icon: Briefcase },
     { name: "Agendamentos", href: "/dashboard/master/appointments", icon: CalendarDays },
-    { name: "Canais de Atendimento", href: "/dashboard/master/canais-atendimento", icon: MessageSquare }, // Renomeado
+    { name: "Canais de Atendimento", href: "/dashboard/master/canais-atendimento", icon: MessageSquare },
     { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
-    { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart }, // Novo item
+    { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
     { name: "Configurações", href: "/dashboard/master/settings", icon: Settings },
   ];
 
@@ -32,27 +35,42 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
   const navItems = userRole === "master" ? masterNavItems : clientNavItems;
 
   return (
-    <nav className="flex flex-col gap-2 px-2 py-4 text-lg font-medium lg:px-4">
-      <Link
-        to="/"
-        className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-      >
-        <Bot className="h-4 w-4 transition-all group-hover:scale-110" />
-        <span className="sr-only">Dyad SaaS</span>
-      </Link>
-      {navItems.map((item) => (
-        <Link
-          key={item.name}
-          to={item.href}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-            location.pathname.startsWith(item.href) && "bg-muted text-primary"
-          )}
-        >
-          <item.icon className="h-4 w-4" />
-          {item.name}
+    <div className="flex h-full max-h-screen flex-col gap-2 bg-sidebar border-r border-sidebar-border">
+      <div className="flex h-16 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
+        <Link to="/" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
+          <Bot className="h-6 w-6 text-primary" />
+          <span className="text-lg">Pontedra SaaS</span>
         </Link>
-      ))}
-    </nav>
+      </div>
+      <div className="flex-1 overflow-auto py-4">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          {user && (
+            <div className="flex items-center gap-3 px-3 py-2 mb-4">
+              <Avatar className="h-9 w-9 border border-primary">
+                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarFallback className="bg-primary text-primary-foreground">{user.email.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-semibold text-foreground">{user.email.split('@')[0]}</span>
+                <span className="text-xs text-muted-foreground capitalize">{user.role}</span>
+              </div>
+            </div>
+          )}
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-sidebar-accent",
+                location.pathname.startsWith(item.href) && "bg-sidebar-accent text-primary"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </div>
   );
 };

@@ -10,7 +10,7 @@ const Index = () => {
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        navigate("/login");
+        navigate("/landing"); // Redireciona para a Landing Page se não estiver autenticado
       } else {
         if (user?.role === "master") {
           navigate("/dashboard/master");
@@ -18,7 +18,7 @@ const Index = () => {
           navigate("/dashboard/cliente");
         } else {
           // Fallback for unknown roles or if user object is incomplete
-          navigate("/login");
+          navigate("/landing"); // Redireciona para a Landing Page
         }
       }
     }
@@ -26,10 +26,10 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Carregando...</h1>
-          <p className="text-xl text-gray-600">Verificando sua sessão.</p>
+          <p className="text-xl text-muted-foreground">Verificando sua sessão.</p>
         </div>
         <MadeWithDyad />
       </div>
@@ -39,10 +39,10 @@ const Index = () => {
   // This component will redirect, so this content should ideally not be seen.
   // It's a fallback in case of very fast redirects or issues.
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">Redirecionando...</h1>
-        <p className="text-xl text-gray-600">Aguarde um momento.</p>
+        <p className="text-xl text-muted-foreground">Aguarde um momento.</p>
       </div>
       <MadeWithDyad />
     </div>

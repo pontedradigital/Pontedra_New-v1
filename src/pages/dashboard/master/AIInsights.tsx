@@ -37,84 +37,91 @@ const AIInsightsPage = () => {
 
   return (
     <MasterDashboardLayout>
-      <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">IA Insights</h1>
+      <div className="flex items-center mb-6">
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">IA Insights</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
-          <Card>
+          <Card className="bg-card border-border shadow-lg rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Horário Mais Movimentado</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Horário Mais Movimentado</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{insights.mostBusyTime}</div>
+              <div className="text-2xl font-bold text-foreground">{insights.mostBusyTime}</div>
               <p className="text-xs text-muted-foreground">Baseado em agendamentos</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
-          <Card>
+          <Card className="bg-card border-border shadow-lg rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Serviço Mais Agendado</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Serviço Mais Agendado</CardTitle>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-bold">{insights.mostBookedService}</div>
+              <div className="text-lg font-bold text-foreground">{insights.mostBookedService}</div>
               <p className="text-xs text-muted-foreground">Popularidade entre clientes</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
-          <Card>
+          <Card className="bg-card border-border shadow-lg rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clientes Ativos (Mês)</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Clientes Ativos (Mês)</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{insights.activeClients}</div>
+              <div className="text-2xl font-bold text-foreground">{insights.activeClients}</div>
               <p className="text-xs text-muted-foreground">Interações recentes</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
-          <Card>
+          <Card className="bg-card border-border shadow-lg rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tempo Médio de Resposta</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Tempo Médio de Resposta</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{insights.avgResponseTime} min</div>
+              <div className="text-2xl font-bold text-foreground">{insights.avgResponseTime} min</div>
               <p className="text-xs text-muted-foreground">No chat e canais</p>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Visão Geral da IA</CardTitle>
-          <Bot className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Aqui o Master receberá sugestões automáticas de desempenho, engajamento e oportunidades com base nos dados de agendamento e interação.
-          </p>
-          <div className="border rounded-md p-4 bg-muted/50">
-            <h4 className="font-semibold mb-2">Relatório de IA (Simulado)</h4>
-            <ul className="list-disc list-inside text-sm text-muted-foreground">
-              <li>**Sugestão de Otimização:** Clientes que agendam "Corte de Cabelo Masculino" frequentemente também se interessam por "Barba e Bigode". Considere oferecer um pacote combinado.</li>
-              <li>**Tendência de Agendamento:** Aumento de 15% nos agendamentos para serviços de "Estética" nas últimas 4 semanas.</li>
-              <li>**Engajamento:** Clientes que recebem lembretes via WhatsApp têm uma taxa de comparecimento 20% maior.</li>
-              <li>**Oportunidade de Venda:** Identificamos 50 clientes inativos há mais de 3 meses. Sugerimos uma campanha de reengajamento com um desconto especial.</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="mt-6"
+      >
+        <Card className="bg-card border-border shadow-lg rounded-2xl">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-foreground">Visão Geral da IA</CardTitle>
+            <Bot className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Aqui o Master receberá sugestões automáticas de desempenho, engajamento e oportunidades com base nos dados de agendamento e interação.
+            </p>
+            <div className="border border-border rounded-lg p-4 bg-background">
+              <h4 className="font-semibold mb-2 text-foreground">Relatório de IA (Simulado)</h4>
+              <ul className="list-disc list-inside text-sm text-muted-foreground">
+                <li>**Sugestão de Otimização:** Clientes que agendam "Corte de Cabelo Masculino" frequentemente também se interessam por "Barba e Bigode". Considere oferecer um pacote combinado.</li>
+                <li>**Tendência de Agendamento:** Aumento de 15% nos agendamentos para serviços de "Estética" nas últimas 4 semanas.</li>
+                <li>**Engajamento:** Clientes que recebem lembretes via WhatsApp têm uma taxa de comparecimento 20% maior.</li>
+                <li>**Oportunidade de Venda:** Identificamos 50 clientes inativos há mais de 3 meses. Sugerimos uma campanha de reengajamento com um desconto especial.</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </MasterDashboardLayout>
   );
 };
