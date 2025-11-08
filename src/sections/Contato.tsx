@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Instagram, Facebook, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from 'sonner' // Mantido para notificações gerais
+import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase' // Import supabase client
 
 export function Contato() {
   const [nome, setNome] = useState('')
@@ -14,24 +15,59 @@ export function Contato() {
   const [assunto, setAssunto] = useState('')
   const [mensagem, setMensagem] = useState('')
   
-  const [loading, setLoading] = useState(false) // Estado de loading local
+  const [loading, setLoading] = useState(false)
+  const [ipAddress, setIpAddress] = useState<string | null>(null); // State for IP address
+
+  useEffect(() => {
+    // Tenta obter o endereço IP do cliente.
+    // Nota: Para maior precisão, o IP deve ser obtido no lado do servidor/Edge Function,
+    // mas esta é uma tentativa client-side.
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => setIpAddress(data.ip))
+      .catch(error => console.error("Falha ao buscar endereço IP:", error));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    // Simular envio de mensagem (sem lógica de lead capture)
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    try {
+      const { data, error } = await supabase.functions.invoke('send-lead-emails', {
+        body: {
+          nome,
+          email,
+          telefone,
+          assunto,
+          mensagem,
+          origem: 'Formulário de Contato do Site',
+          url_captura: window.location.href,
+          ip_address: ipAddress, // Passa o IP do cliente se disponível
+        },
+      });
 
-    toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.')
-    
-    // Limpar formulário
-    setNome('')
-    setEmail('')
-    setTelefone('')
-    setAssunto('')
-    setMensagem('')
-    setLoading(false)
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.success) {
+        toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.')
+        // Limpar formulário
+        setNome('')
+        setEmail('')
+        setTelefone('')
+        setAssunto('')
+        setMensagem('')
+      } else {
+        toast.error('Ocorreu um erro ao enviar a mensagem. Tente novamente.')
+        console.error('Erro na resposta da Edge Function:', data);
+      }
+    } catch (error: any) {
+      toast.error(`Erro ao enviar mensagem: ${error.message || 'Erro desconhecido'}`);
+      console.error('Erro ao invocar a Edge Function:', error);
+    } finally {
+      setLoading(false)
+    }
   }
 
   const formatarTelefone = (value: string) => {
