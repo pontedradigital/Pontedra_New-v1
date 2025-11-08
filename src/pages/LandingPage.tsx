@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import LandingNavbar from "@/components/LandingNavbar"; // Updated import
 import Hero from "@/sections/Hero";
-import Footer from "@/components/navigation/Footer";
+import Footer from "@/sections/Footer"; // Importar o novo componente Footer
 import { useLocation, useNavigate } from "react-router-dom";
 import QuemSomos from "@/components/landing/QuemSomos";
 import NossasSolucoes from "@/sections/NossasSolucoes";

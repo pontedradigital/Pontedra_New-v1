@@ -42,6 +42,11 @@ import BeneficiosFidelidadePage from "./pages/dashboard/cliente/BeneficiosFideli
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
+// Importar as novas páginas
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import TermosUso from "./pages/TermosUso";
+
+
 const queryClient = new QueryClient();
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
@@ -72,6 +77,10 @@ const App = () => {
             <Route path="/landing" element={<PageTransition><LandingPage /></PageTransition>} />
             <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
             <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+
+            {/* Novas Rotas para Páginas Legais */}
+            <Route path="/politica-privacidade" element={<PageTransition><PoliticaPrivacidade /></PageTransition>} />
+            <Route path="/termos-uso" element={<PageTransition><TermosUso /></PageTransition>} />
 
             {/* Rotas Protegidas para Master */}
             <Route
