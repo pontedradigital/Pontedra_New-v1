@@ -70,7 +70,7 @@ const ClientDashboardPage = () => {
             <CardContent>
               <div className="text-2xl font-bold text-foreground">Olá, {user?.email?.split('@')[0]}!</div>
               <p className="text-xs text-muted-foreground">Converse com nossa assistente virtual.</p>
-              <Link to="/dashboard/cliente/chat" className="text-primary hover:underline text-xs mt-2 block">Iniciar Chat</Link>
+              <Link to="/dashboard/cliente/central-atendimento" className="text-primary hover:underline text-xs mt-2 block">Iniciar Chat</Link>
             </CardContent>
           </Card>
         </motion.div>

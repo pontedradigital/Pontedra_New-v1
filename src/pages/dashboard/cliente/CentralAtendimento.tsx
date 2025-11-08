@@ -3,7 +3,7 @@ import ClientDashboardLayout from "@/components/layouts/ClientDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Bot as BotIcon, Loader2 } from "lucide-react";
+import { Send, Bot as BotIcon, Loader2, Mic, CalendarDays, MessageSquareText, DollarSign, PhoneCall } from "lucide-react";
 import { CHATBOT_RESPONSES } from "@/data/chatbotResponses";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { MOCK_CLIENT_SERVICES, MOCK_AVAILABLE_TIMES } from "@/data/mockData";
 import { toast } from "sonner";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   id: number;
@@ -27,16 +28,25 @@ interface ChatState {
   pendingAppointment: { serviceName: string; date: string; time: string } | null;
 }
 
-const LOCAL_STORAGE_KEY = "pontedra_chat_history";
+interface ConversationHistoryItem {
+  id: string;
+  date: string;
+  summary: string;
+  messages: Message[];
+}
 
-const ChatPage = () => {
+const LOCAL_STORAGE_KEY_CHAT = "pontedra_chat_history";
+const LOCAL_STORAGE_KEY_CONVERSATIONS = "pontedra_conversation_history";
+
+const CentralAtendimentoPage = () => {
   const { user } = useAuth();
-  const { addClientAppointment } = useMockData();
+  const { addClientAppointment, clientAppointments } = useMockData();
   const clientName = user?.email?.split('@')[0] || "Cliente";
+  const navigate = useNavigate();
 
   const [chatState, setChatState] = useState<ChatState>(() => {
     if (typeof window !== 'undefined') {
-      const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const savedState = localStorage.getItem(LOCAL_STORAGE_KEY_CHAT);
       if (savedState) {
         return JSON.parse(savedState);
       }
@@ -47,6 +57,16 @@ const ChatPage = () => {
       awaitingConfirmation: null,
       pendingAppointment: null,
     };
+  });
+
+  const [conversationHistory, setConversationHistory] = useState<ConversationHistoryItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedHistory = localStorage.getItem(LOCAL_STORAGE_KEY_CONVERSATIONS);
+      if (savedHistory) {
+        return JSON.parse(savedHistory);
+      }
+    }
+    return [];
   });
 
   const [inputMessage, setInputMessage] = useState("");
@@ -65,9 +85,15 @@ const ChatPage = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chatState));
+      localStorage.setItem(LOCAL_STORAGE_KEY_CHAT, JSON.stringify(chatState));
     }
   }, [chatState]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_KEY_CONVERSATIONS, JSON.stringify(conversationHistory));
+    }
+  }, [conversationHistory]);
 
   // Proactive AI tip
   useEffect(() => {
@@ -219,6 +245,23 @@ const ChatPage = () => {
       botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_prompt_service")?.text || "Claro! Para qual serviço você gostaria de agendar?";
       newAwaitingConfirmation = "service";
     }
+    // Intent: Cancel/Reschedule (simulated)
+    else if (lowerCaseText.includes("cancelar agendamento")) {
+      botResponse = "Para cancelar um agendamento, por favor, acesse a página 'Meus Agendamentos' ou informe o ID do agendamento que deseja cancelar. (Funcionalidade simulada)";
+    }
+    else if (lowerCaseText.includes("reagendar")) {
+      botResponse = "Para reagendar, por favor, acesse a página 'Meus Agendamentos' e selecione a opção de reagendamento. (Funcionalidade simulada)";
+    }
+    // Intent: Check appointment status
+    else if (lowerCaseText.includes("status do meu agendamento") || lowerCaseText.includes("meu agendamento")) {
+      const upcoming = clientAppointments.filter(app => app.clientEmail === user?.email && (app.status === "pending" || app.status === "confirmed"));
+      if (upcoming.length > 0) {
+        botResponse = `Seu próximo agendamento é para '${upcoming[0].serviceName}' em ${format(parseISO(upcoming[0].date), "dd/MM/yyyy", { locale: ptBR })} às ${upcoming[0].time}. Status: ${upcoming[0].status}.`;
+      } else {
+        botResponse = "Você não tem agendamentos futuros registrados.";
+      }
+    }
+
 
     addBotMessage(botResponse);
     setChatState(prev => ({
@@ -250,92 +293,204 @@ const ChatPage = () => {
     }
   };
 
+  const handleQuickAction = (action: string) => {
+    let simulatedMessage = "";
+    switch (action) {
+      case "agendar":
+        simulatedMessage = "Quero agendar um novo serviço.";
+        break;
+      case "ver_agendamentos":
+        navigate("/dashboard/cliente/agenda");
+        toast.info("Redirecionando para Meus Agendamentos.");
+        return;
+      case "suporte_humano":
+        simulatedMessage = "Preciso falar com um atendente humano.";
+        break;
+      case "duvidas_precos":
+        simulatedMessage = "Quais são os preços dos serviços?";
+        break;
+      default:
+        return;
+    }
+    const newUserMessage: Message = {
+      id: Date.now(),
+      text: simulatedMessage,
+      sender: "user",
+    };
+    setChatState(prev => ({ ...prev, messages: [...prev.messages, newUserMessage] }));
+    processUserMessage(simulatedMessage);
+  };
+
+  const handleLoadConversation = (conversation: ConversationHistoryItem) => {
+    setChatState({
+      messages: conversation.messages,
+      lastServiceMentioned: null, // Reset context for loaded conversation
+      awaitingConfirmation: null,
+      pendingAppointment: null,
+    });
+    toast.info(`Conversa de ${conversation.date} carregada.`);
+  };
+
+  const handleNewConversation = () => {
+    if (chatState.messages.length > 1) { // Save current conversation if it has more than just the greeting
+      const summary = chatState.messages.length > 2 ? chatState.messages[1].text.substring(0, 50) + "..." : "Nova conversa";
+      setConversationHistory(prev => [
+        { id: `conv-${Date.now()}`, date: format(new Date(), "dd/MM/yyyy HH:mm"), summary, messages: chatState.messages },
+        ...prev,
+      ]);
+    }
+    setChatState({
+      messages: [],
+      lastServiceMentioned: null,
+      awaitingConfirmation: null,
+      pendingAppointment: null,
+    });
+    setTimeout(() => {
+      addBotMessage(CHATBOT_RESPONSES.find(r => r.type === "greeting")?.text || "Olá! Como posso ajudar?");
+    }, 500);
+    toast.info("Nova conversa iniciada.");
+  };
+
   return (
     <ClientDashboardLayout>
       <div className="flex items-center mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Chat com IA Pontedra</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Central de Atendimento com IA</h1>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex flex-col h-[calc(100vh-180px)] bg-card border-border shadow-lg rounded-2xl"
-      >
-        <CardHeader className="border-b border-border">
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <BotIcon className="h-5 w-5 text-primary" /> Assistente Pontedra
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          {chatState.messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "flex items-end gap-2",
-                message.sender === "user" ? "justify-end" : "justify-start"
-              )}
-            >
-              {message.sender === "bot" && (
+      <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6 h-[calc(100vh-180px)]">
+        {/* Histórico de Conversas Recentes */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="hidden lg:flex flex-col bg-card border-border shadow-lg rounded-2xl p-4"
+        >
+          <h2 className="text-lg font-semibold text-foreground mb-4">Histórico de Conversas</h2>
+          <Button onClick={handleNewConversation} className="w-full mb-4 uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
+            Nova Conversa
+          </Button>
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+            {conversationHistory.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center">Nenhuma conversa anterior.</p>
+            ) : (
+              conversationHistory.map((conv) => (
+                <motion.div
+                  key={conv.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-3 bg-background border border-border rounded-md cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => handleLoadConversation(conv)}
+                >
+                  <p className="text-sm font-medium text-foreground">{conv.summary}</p>
+                  <p className="text-xs text-muted-foreground">{conv.date}</p>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </motion.div>
+
+        {/* Janela de Chat */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex flex-col bg-card border-border shadow-lg rounded-2xl"
+        >
+          <CardHeader className="border-b border-border">
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <BotIcon className="h-5 w-5 text-primary" /> Assistente Pontedra
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            {/* Botões de Acesso Rápido */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("agendar")}>
+                <CalendarDays className="h-4 w-4 mr-2" /> Agendar novo serviço
+              </Button>
+              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("ver_agendamentos")}>
+                <MessageSquareText className="h-4 w-4 mr-2" /> Ver meus agendamentos
+              </Button>
+              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("suporte_humano")}>
+                <PhoneCall className="h-4 w-4 mr-2" /> Falar com suporte humano
+              </Button>
+              <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => handleQuickAction("duvidas_precos")}>
+                <DollarSign className="h-4 w-4 mr-2" /> Dúvidas sobre preços
+              </Button>
+            </div>
+
+            {chatState.messages.map((message) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex items-end gap-2",
+                  message.sender === "user" ? "justify-end" : "justify-start"
+                )}
+              >
+                {message.sender === "bot" && (
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                    <BotIcon className="h-4 w-4" />
+                  </div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={cn(
+                    "max-w-[70%] p-3 rounded-lg",
+                    message.sender === "user"
+                      ? "bg-blue-600 text-white rounded-br-none shadow-md" // Azul para usuário
+                      : "bg-primary text-background rounded-bl-none border border-primary/50 shadow-sm" // Verde para IA
+                  )}
+                >
+                  {message.text}
+                </motion.div>
+                {message.sender === "user" && (
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-border">
+                    {clientName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            ))}
+            {isTyping && (
+              <div className="flex items-end gap-2 justify-start">
                 <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                   <BotIcon className="h-4 w-4" />
                 </div>
-              )}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className={cn(
-                  "max-w-[70%] p-3 rounded-lg",
-                  message.sender === "user"
-                    ? "bg-blue-600 text-white rounded-br-none shadow-md" // Azul para usuário
-                    : "bg-primary text-background rounded-bl-none border border-primary/50 shadow-sm" // Verde para IA
-                )}
-              >
-                {message.text}
-              </motion.div>
-              {message.sender === "user" && (
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-border">
-                  {clientName.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-          ))}
-          {isTyping && (
-            <div className="flex items-end gap-2 justify-start">
-              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                <BotIcon className="h-4 w-4" />
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="max-w-[70%] p-3 rounded-lg bg-background text-foreground rounded-bl-none border border-border shadow-sm flex items-center gap-2"
+                >
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span>Digitando...</span>
+                </motion.div>
               </div>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="max-w-[70%] p-3 rounded-lg bg-background text-foreground rounded-bl-none border border-border shadow-sm flex items-center gap-2"
-              >
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span>Digitando...</span>
-              </motion.div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </CardContent>
-        <div className="p-4 border-t border-border">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <Input
-              placeholder="Digite sua mensagem..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 bg-background border-border text-foreground focus:ring-primary"
-              disabled={isTyping}
-            />
-            <Button type="submit" size="icon" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" disabled={isTyping}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </motion.div>
+            )}
+            <div ref={messagesEndRef} />
+          </CardContent>
+          <div className="p-4 border-t border-border">
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <Input
+                placeholder="Digite sua dúvida ou solicitação..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                className="flex-1 bg-background border-border text-foreground focus:ring-primary"
+                disabled={isTyping}
+              />
+              <Button type="button" size="icon" variant="outline" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => toast.info("Entrada de voz simulada.")}>
+                <Mic className="h-4 w-4" />
+              </Button>
+              <Button type="submit" size="icon" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20" disabled={isTyping}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
     </ClientDashboardLayout>
   );
 };
 
-export default ChatPage;
+export default CentralAtendimentoPage;

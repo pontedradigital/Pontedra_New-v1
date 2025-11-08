@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, useLocation } from "react-router-dom"; // Removido BrowserRouter
+import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import Index from "./pages/Index";
@@ -20,9 +20,8 @@ import AIInsightsPage from "./pages/dashboard/master/AIInsights";
 import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
 import BlogPage from "./pages/dashboard/master/BlogPage";
-import FinanceiroPage from "./pages/dashboard/master/Financeiro"; // Importar nova página Financeiro
+import FinanceiroPage from "./pages/dashboard/master/Financeiro";
 
-// Novas páginas de comunicação
 import WhatsAppIntegracao from "./pages/dashboard/master/comunicacao/WhatsAppIntegracao";
 import InstagramIntegracao from "./pages/dashboard/master/comunicacao/InstagramIntegracao";
 import MessengerIntegracao from "./pages/dashboard/master/comunicacao/MessengerIntegracao";
@@ -30,7 +29,7 @@ import MessengerIntegracao from "./pages/dashboard/master/comunicacao/MessengerI
 
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
-import ClientChatPage from "./pages/dashboard/cliente/Chat";
+import ClientCentralAtendimentoPage from "./pages/dashboard/cliente/CentralAtendimento"; // Importar a nova página
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 
@@ -141,14 +140,13 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/master/financeiro" // Nova rota para Financeiro
+                path="/dashboard/master/financeiro"
                 element={
                   <ProtectedRoute allowedRoles={["master"]}>
                     <PageTransition><FinanceiroPage /></PageTransition>
                   </ProtectedRoute>
                 }
               />
-              {/* Novas Rotas de Comunicação */}
               <Route
                 path="/dashboard/master/comunicacao/whatsapp"
                 element={
@@ -200,10 +198,10 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/cliente/chat"
+                path="/dashboard/cliente/central-atendimento" // Nova rota
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientChatPage /></PageTransition>
+                    <PageTransition><ClientCentralAtendimentoPage /></PageTransition>
                   </ProtectedRoute>
                 }
               />

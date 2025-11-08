@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset } from "lucide-react"; // Adicionado Headset
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,7 +29,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     },
     { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
-    { name: "Financeiro", href: "/dashboard/master/financeiro", icon: DollarSign }, // Novo item
+    { name: "Financeiro", href: "/dashboard/master/financeiro", icon: DollarSign },
     { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper },
     { name: "Configurações", href: "/dashboard/master/settings", icon: Settings },
   ];
@@ -37,7 +37,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
   const clientNavItems = [
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
-    { name: "Chat IA", href: "/dashboard/cliente/chat", icon: Bot }, // Link atualizado
+    { name: "Central de Atendimento", href: "/dashboard/cliente/central-atendimento", icon: Headset }, // Novo item
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
   ];
