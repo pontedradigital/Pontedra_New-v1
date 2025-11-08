@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +18,15 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Clientes", href: "/dashboard/master/users", icon: Users },
     { name: "Serviços", href: "/dashboard/master/services", icon: Briefcase },
     { name: "Agendamentos", href: "/dashboard/master/appointments", icon: CalendarDays },
-    { name: "Canais de Atendimento", href: "/dashboard/master/canais-atendimento", icon: MessageSquare },
+    {
+      name: "Canais de Comunicação",
+      icon: MessageSquare,
+      subItems: [
+        { name: "WhatsApp Business", href: "/dashboard/master/comunicacao/whatsapp", icon: MessageCircle },
+        { name: "Instagram Direct", href: "/dashboard/master/comunicacao/instagram", icon: Camera },
+        { name: "Facebook Messenger", href: "/dashboard/master/comunicacao/messenger", icon: MessageSquare },
+      ],
+    },
     { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
     { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper },
@@ -57,17 +65,41 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
             </div>
           )}
           {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-sidebar-accent",
-                location.pathname.startsWith(item.href) && "bg-sidebar-accent text-primary"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.name}
-            </Link>
+            item.subItems ? (
+              <div key={item.name} className="mb-2">
+                <span className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground cursor-default">
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </span>
+                <div className="ml-6 border-l border-sidebar-border pl-3">
+                  {item.subItems.map((subItem) => (
+                    <Link
+                      key={subItem.name}
+                      to={subItem.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-sidebar-accent",
+                        location.pathname.startsWith(subItem.href) && "bg-sidebar-accent text-primary"
+                      )}
+                    >
+                      <subItem.icon className="h-4 w-4" />
+                      {subItem.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-sidebar-accent",
+                  location.pathname.startsWith(item.href) && "bg-sidebar-accent text-primary"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.name}
+              </Link>
+            )
           ))}
         </nav>
       </div>

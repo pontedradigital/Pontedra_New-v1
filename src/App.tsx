@@ -21,6 +21,12 @@ import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
 import BlogPage from "./pages/dashboard/master/BlogPage";
 
+// Novas páginas de comunicação
+import WhatsAppIntegracao from "./pages/dashboard/master/comunicacao/WhatsAppIntegracao";
+import InstagramIntegracao from "./pages/dashboard/master/comunicacao/InstagramIntegracao";
+import MessengerIntegracao from "./pages/dashboard/master/comunicacao/MessengerIntegracao";
+
+
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
 import ClientChatPage from "./pages/dashboard/cliente/Chat";
@@ -130,6 +136,31 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={["master"]}>
                     <PageTransition><SettingsPage /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              {/* Novas Rotas de Comunicação */}
+              <Route
+                path="/dashboard/master/comunicacao/whatsapp"
+                element={
+                  <ProtectedRoute allowedRoles={["master"]}>
+                    <PageTransition><WhatsAppIntegracao /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/master/comunicacao/instagram"
+                element={
+                  <ProtectedRoute allowedRoles={["master"]}>
+                    <PageTransition><InstagramIntegracao /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/master/comunicacao/messenger"
+                element={
+                  <ProtectedRoute allowedRoles={["master"]}>
+                    <PageTransition><MessengerIntegracao /></PageTransition>
                   </ProtectedRoute>
                 }
               />
