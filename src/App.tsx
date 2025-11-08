@@ -37,6 +37,7 @@ import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
 import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte";
 import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos";
+import BeneficiosFidelidadePage from "./pages/dashboard/cliente/BeneficiosFidelidade"; // Importar a nova página
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -241,7 +242,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            {/* Rota da Carteira Digital removida */}
+            <Route
+              path="/dashboard/cliente/beneficios-fidelidade"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><BeneficiosFidelidadePage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard/cliente/notificacoes-suporte"
               element={
