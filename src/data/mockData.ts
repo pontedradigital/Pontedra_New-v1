@@ -449,46 +449,40 @@ export const MOCK_CLIENT_ACTIVITY_SUMMARY: ClientActivitySummary = {
   pendingPayment: null, // { amount: 75.00, dueDate: "2024-12-10" },
 };
 
-export const MOCK_CLIENT_NOTIFICATIONS: ClientNotification[] = [
-  {
-    id: "notif1",
-    clientEmail: "cliente@teste.com",
-    type: "lembrete",
-    title: "Lembrete de Agendamento",
-    message: "Você tem um corte de cabelo agendado amanhã, 23/11, às 14h. Não se atrase! ⏰",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-    read: false,
-  },
-  {
-    id: "notif2",
-    clientEmail: "cliente@teste.com",
-    type: "promoção",
-    title: "Nova Promoção Disponível!",
-    message: "Aproveite 10% de desconto no seu próximo serviço de Massagem Relaxante. Válido até 30/11! 🎉",
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-    read: false,
-  },
-  {
-    id: "notif3",
-    clientEmail: "cliente@teste.com",
-    type: "confirmação",
-    title: "Agendamento Confirmado",
-    message: "Seu agendamento para Manicure e Pedicure em 22/11 às 14:30h foi confirmado com sucesso! ✅",
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
-    read: true,
-  },
-  {
-    id: "notif4",
-    clientEmail: "cliente@teste.com",
-    type: "info",
-    title: "Atualização da Plataforma",
-    message: "Novas funcionalidades foram adicionadas à sua Carteira Digital. Confira! 💳",
-    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
-    read: true,
-  },
-];
+export type NotificationType = "lembrete" | "promoção" | "confirmação" | "cancelamento" | "suporte" | "info";
 
-// New mock data for "Histórico e Controle de Agendamentos"
+export interface ClientNotification {
+  id: string;
+  clientEmail: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  timestamp: string; // ISO string
+  read: boolean;
+}
+
+export interface SupportMessage {
+  id: string;
+  sender: "user" | "support";
+  message: string;
+  timestamp: string;
+}
+
+// New interface for detailed client appointment history
+export type AppointmentStatus = "Agendado" | "Concluído" | "Cancelado" | "Pendente";
+
+export interface DetailedClientAppointment {
+  id: string;
+  clientEmail: string;
+  service: string;
+  professional: string;
+  dateTime: string; // "YYYY-MM-DD HH:mm"
+  status: AppointmentStatus;
+  value: number;
+  notes?: string;
+}
+
+
 export const MOCK_CLIENT_DETAILED_APPOINTMENT_HISTORY: DetailedClientAppointment[] = [
   {
     id: "dca1",
@@ -551,3 +545,48 @@ export const MOCK_CLIENT_DETAILED_APPOINTMENT_HISTORY: DetailedClientAppointment
     notes: "Retoque de raiz, tom loiro acinzentado."
   },
 ];
+
+export const MOCK_CLIENT_NOTIFICATIONS: ClientNotification[] = [
+  {
+    id: "notif1",
+    clientEmail: "cliente@teste.com",
+    type: "lembrete",
+    title: "Lembrete de Agendamento",
+    message: "Você tem um corte de cabelo agendado amanhã, 23/11, às 14h. Não se atrase! ⏰",
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    read: false,
+  },
+  {
+    id: "notif2",
+    clientEmail: "cliente@teste.com",
+    type: "promoção",
+    title: "Nova Promoção Disponível!",
+    message: "Aproveite 10% de desconto no seu próximo serviço de Massagem Relaxante. Válido até 30/11! 🎉",
+    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+    read: false,
+  },
+  {
+    id: "notif3",
+    clientEmail: "cliente@teste.com",
+    type: "confirmação",
+    title: "Agendamento Confirmado",
+    message: "Seu agendamento para Manicure e Pedicure em 22/11 às 14:30h foi confirmado com sucesso! ✅",
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+    read: true,
+  },
+  {
+    id: "notif4",
+    clientEmail: "cliente@teste.com",
+    type: "info",
+    title: "Atualização da Plataforma",
+    message: "Novas funcionalidades foram adicionadas à sua Carteira Digital. Confira! 💳",
+    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    read: true,
+  },
+];
+
+export const assistantProfile = {
+  name: "Assistente Pontedra",
+  status: "Online",
+  description: "Assistente Pontedra integrada para auxiliar clientes em dúvidas, agendamentos e promoções em tempo real."
+};

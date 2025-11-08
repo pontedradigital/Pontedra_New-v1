@@ -18,7 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "bot";
+  sender: "user" | "Assistente Pontedra"; // Atualizado para "Assistente Pontedra"
   timestamp: string;
 }
 
@@ -43,12 +43,13 @@ const AtendimentoInteligentePage = () => {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY_CHAT);
       if (savedState) {
         const parsedState = JSON.parse(savedState);
-        // Ensure timestamps are present for old messages if not already
-        const messagesWithTimestamps = parsedState.messages.map((msg: Message) => ({
+        // Ensure timestamps and sender are present for old messages if not already
+        const messagesWithTimestampsAndSender = parsedState.messages.map((msg: Message) => ({
           ...msg,
           timestamp: msg.timestamp || new Date().toISOString(),
+          sender: msg.sender === "bot" ? "Assistente Pontedra" : msg.sender, // Atualiza sender de "bot" para "Assistente Pontedra"
         }));
-        return { ...parsedState, messages: messagesWithTimestamps };
+        return { ...parsedState, messages: messagesWithTimestampsAndSender };
       }
     }
     return {
@@ -111,7 +112,7 @@ const AtendimentoInteligentePage = () => {
   const addBotMessage = (text: string) => {
     setChatState(prev => ({
       ...prev,
-      messages: [...prev.messages, { id: Date.now(), text, sender: "bot", timestamp: new Date().toISOString() }],
+      messages: [...prev.messages, { id: Date.now(), text, sender: "Assistente Pontedra", timestamp: new Date().toISOString() }], // Remetente atualizado
     }));
   };
 
@@ -330,7 +331,7 @@ const AtendimentoInteligentePage = () => {
                   message.sender === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {message.sender === "bot" && (
+                {message.sender === "Assistente Pontedra" && ( // Condição atualizada
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary border border-border">
                     <BotIcon className="h-4 w-4" />
                   </div>
