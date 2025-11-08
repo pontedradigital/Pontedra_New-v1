@@ -35,9 +35,9 @@ import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
 import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital";
 import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte";
-import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos"; // Importar a nova página
+import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos";
 
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext"; // Manter import para tipagem, mas não usar o componente aqui
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -62,196 +62,196 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <AuthProvider>
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-              <Route path="/landing" element={<PageTransition><LandingPage /></PageTransition>} />
-              <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-              <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+        {/* AuthProvider foi movido para main.tsx */}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+            <Route path="/landing" element={<PageTransition><LandingPage /></PageTransition>} />
+            <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+            <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
 
-              {/* Rotas Protegidas para Master */}
-              <Route
-                path="/dashboard/master"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><MasterDashboardPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/users"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><UsersPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/services"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><ServicesPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/appointments"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><AppointmentsPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/canais-atendimento"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><CanaisAtendimentoPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/ai-insights"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><AIInsightsPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/analises"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><AnalisesPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/blog"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><BlogPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/settings"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><SettingsPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/financeiro"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><FinanceiroPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/comunicacao/whatsapp"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><WhatsAppIntegracao /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/comunicacao/instagram"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><InstagramIntegracao /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/comunicacao/messenger"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><MessengerIntegracao /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/master/*"
-                element={
-                  <ProtectedRoute allowedRoles={["master"]}>
-                    <PageTransition><MasterDashboardPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
+            {/* Rotas Protegidas para Master */}
+            <Route
+              path="/dashboard/master"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><MasterDashboardPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/users"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><UsersPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/services"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><ServicesPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/appointments"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><AppointmentsPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/canais-atendimento"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><CanaisAtendimentoPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/ai-insights"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><AIInsightsPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/analises"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><AnalisesPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/blog"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><BlogPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/settings"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><SettingsPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/financeiro"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><FinanceiroPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/comunicacao/whatsapp"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><WhatsAppIntegracao /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/comunicacao/instagram"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><InstagramIntegracao /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/comunicacao/messenger"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><MessengerIntegracao /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/*"
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><MasterDashboardPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
 
-              {/* Rotas Protegidas para Cliente */}
-              <Route
-                path="/dashboard/cliente"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientDashboardPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/minha-experiencia"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientMinhaExperienciaPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/agenda"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientAgendaPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/historico-agendamentos" // Nova rota
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><HistoricoAgendamentosPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/atendimento-inteligente"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><AtendimentoInteligentePage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/carteira-digital"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientCarteiraDigitalPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/notificacoes-suporte"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><NotificacoesSuportePage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/perfil"
-                element={
-                  <ProtectedRoute allowedRoles={["client"]}>
-                    <PageTransition><ClientPerfilPage /></PageTransition>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/cliente/settings"
-                element={
+            {/* Rotas Protegidas para Cliente */}
+            <Route
+              path="/dashboard/cliente"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><ClientDashboardPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/minha-experiencia"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><ClientMinhaExperienciaPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/agenda"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><ClientAgendaPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/historico-agendamentos"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><HistoricoAgendamentosPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/atendimento-inteligente"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><AtendimentoInteligentePage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/carteira-digital"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><ClientCarteiraDigitalPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/notificacoes-suporte"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><NotificacoesSuportePage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/perfil"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PageTransition><ClientPerfilPage /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/cliente/settings"
+              element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><ClientSettingsPage /></PageTransition>
                   </ProtectedRoute>
@@ -269,7 +269,6 @@ const App = () => {
               <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
             </Routes>
           </AnimatePresence>
-        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
