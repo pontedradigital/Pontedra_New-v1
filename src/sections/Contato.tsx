@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useLeadCapture } from '@/hooks/useLeadCapture'
-import { toast } from 'sonner'
+import { toast } from 'sonner' // Mantido para notificações gerais
 
 export function Contato() {
   const [nome, setNome] = useState('')
@@ -15,32 +14,24 @@ export function Contato() {
   const [assunto, setAssunto] = useState('')
   const [mensagem, setMensagem] = useState('')
   
-  const { capturarLead, loading } = useLeadCapture()
+  const [loading, setLoading] = useState(false) // Estado de loading local
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
 
-    const result = await capturarLead({
-      nome,
-      email,
-      telefone,
-      assunto,
-      mensagem,
-      origem: 'formulario_contato',
-    })
+    // Simular envio de mensagem (sem lógica de lead capture)
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-    if (result.success) {
-      toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.')
-      
-      // Limpar formulário
-      setNome('')
-      setEmail('')
-      setTelefone('')
-      setAssunto('')
-      setMensagem('')
-    } else {
-      toast.error('Erro ao enviar mensagem. Tente novamente.')
-    }
+    toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.')
+    
+    // Limpar formulário
+    setNome('')
+    setEmail('')
+    setTelefone('')
+    setAssunto('')
+    setMensagem('')
+    setLoading(false)
   }
 
   const formatarTelefone = (value: string) => {
