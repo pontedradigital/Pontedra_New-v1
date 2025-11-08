@@ -16,6 +16,8 @@ const Hero = () => {
     const lineCount = 30;
     const color1 = "#3B82F6"; // azul suave
     const color2 = "#9333EA"; // roxo vibrante
+    let mouseX = 0;
+    let mouseY = 0;
 
     for (let i = 0; i < lineCount; i++) {
       lines.push({
@@ -36,10 +38,15 @@ const Hero = () => {
       ctx.strokeStyle = gradient;
 
       lines.forEach((line) => {
+        const dx = line.x - mouseX;
+        const dy = line.y - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const parallax = Math.max(0, 100 - dist) * 0.02;
+
         ctx.globalAlpha = line.alpha;
         ctx.beginPath();
-        ctx.moveTo(line.x, line.y);
-        ctx.lineTo(line.x + line.length, line.y);
+        ctx.moveTo(line.x + parallax, line.y + parallax);
+        ctx.lineTo(line.x + line.length + parallax, line.y + parallax);
         ctx.stroke();
 
         line.y += line.speed;
@@ -50,6 +57,11 @@ const Hero = () => {
     };
 
     draw();
+
+    window.addEventListener("mousemove", (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
 
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
