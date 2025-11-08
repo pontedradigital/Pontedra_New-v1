@@ -217,7 +217,7 @@ export default function LandingNavbar() {
                     className="w-full text-center px-6 py-3 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 shadow-lg shadow-[#57e389]/30"
                   >
                     Acessar Plataforma
-                  </Link>
+                  </button>
                 </motion.div>
               </div>
             </motion.div>
