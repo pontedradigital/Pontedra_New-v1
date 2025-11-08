@@ -34,7 +34,7 @@ const AnalisesPage = () => {
   return (
     <MasterDashboardLayout>
       <div className="flex items-center mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Relatórios e Sugestões IA</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Relatórios e Sugestões da Assistente Pontedra</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -100,7 +100,7 @@ const AnalisesPage = () => {
       >
         <div className="flex flex-col items-center gap-1 text-center p-4">
           <h3 className="text-2xl font-bold tracking-tight text-foreground">
-            Relatórios Inteligentes
+            Relatórios Inteligentes da Assistente Pontedra
           </h3>
           <p className="text-sm text-muted-foreground">
             Insights e sugestões para otimizar seu negócio.

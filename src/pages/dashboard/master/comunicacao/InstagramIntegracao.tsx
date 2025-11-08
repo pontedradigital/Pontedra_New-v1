@@ -55,7 +55,7 @@ const InstagramIntegracao = () => {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-between">
               <p className="text-sm text-muted-foreground mb-4">
-                Gerencie suas mensagens diretas no Instagram e automatize respostas com a IA Pontedra.
+                Gerencie suas mensagens diretas no Instagram e automatize respostas com a Assistente Pontedra.
               </p>
               <div>
                 <p className="text-sm font-semibold mb-2 text-foreground">

@@ -43,7 +43,7 @@ const AIInsightsPage = () => {
   return (
     <MasterDashboardLayout>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">IA Insights</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Assistente Pontedra Insights</h1>
         <Button size="sm" className="bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20 uppercase" onClick={handleGenerateInsights} disabled={isLoading}>
           <RefreshCcw className="h-4 w-4 mr-2" /> {isLoading ? "Gerando..." : "Atualizar Insights"}
         </Button>
@@ -111,7 +111,7 @@ const AIInsightsPage = () => {
       >
         <Card className="bg-card border-border shadow-lg rounded-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Visão Geral da IA</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Visão Geral da Assistente Pontedra</CardTitle>
             <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -119,7 +119,7 @@ const AIInsightsPage = () => {
               Aqui o Master receberá sugestões automáticas de desempenho, engajamento e oportunidades com base nos dados de agendamento e interação.
             </p>
             <div className="border border-border rounded-lg p-4 bg-background">
-              <h4 className="font-semibold mb-2 text-foreground">Relatório de IA (Simulado)</h4>
+              <h4 className="font-semibold mb-2 text-foreground">Relatório da Assistente Pontedra (Simulado)</h4>
               <ul className="list-disc list-inside text-sm text-muted-foreground">
                 {aiInsights.map((insight) => (
                   <li key={insight.id}>

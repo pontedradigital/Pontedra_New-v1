@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import LandingNavbar from "@/components/navigation/LandingNavbar";
 import Footer from "@/components/navigation/Footer";
 import { motion } from "framer-motion";
-import { MessageCircle, MessageSquare, Camera, CalendarDays, BarChart, Bot, Zap, ShieldCheck, Clock, TrendingUp, Check } from "lucide-react"; // Adicionado TrendingUp e Check
+import { MessageCircle, MessageSquare, Camera, CalendarDays, BarChart, Bot, Zap, ShieldCheck, Clock, TrendingUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sectionVariants = {
@@ -35,7 +35,7 @@ const LandingPage = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-5xl md:text-7xl font-bold leading-tight mb-6 text-foreground"
           >
-            Automatize seus atendimentos com a <span className="text-primary">Inteligência Pontedra</span>
+            Automatize seus atendimentos com a <span className="text-primary">Assistente Pontedra</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -71,10 +71,10 @@ const LandingPage = () => {
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { icon: Bot, title: "Atendimento Inteligente", description: "Utilize nossa IA para responder dúvidas e otimizar o suporte ao cliente 24/7." },
+              { icon: Bot, title: "Atendimento Inteligente", description: "Utilize nossa Assistente Pontedra para responder dúvidas e otimizar o suporte ao cliente 24/7." },
               { icon: MessageSquare, title: "Centralização de Canais", description: "Gerencie todas as suas conversas de WhatsApp, Instagram e Messenger em uma única plataforma." },
               { icon: CalendarDays, title: "Agenda Inteligente", description: "Permita que seus clientes agendem serviços de forma autônoma, com lembretes automáticos." },
-              { icon: BarChart, title: "Relatórios com IA", description: "Obtenha insights valiosos sobre o desempenho do seu negócio e sugestões de otimização." },
+              { icon: BarChart, title: "Relatórios com Assistente Pontedra", description: "Obtenha insights valiosos sobre o desempenho do seu negócio e sugestões de otimização." },
             ].map((benefit, index) => (
               <motion.div
                 key={index}
@@ -109,8 +109,8 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { icon: Zap, title: "1. Conecte seus Canais", description: "Integre facilmente WhatsApp, Messenger e Instagram Direct à plataforma." },
-              { icon: ShieldCheck, title: "2. Configure sua IA", description: "Personalize a assistente Pontedra para atender às necessidades específicas do seu negócio." },
-              { icon: Clock, title: "3. Automatize Agendamentos", description: "Deixe a IA gerenciar sua agenda, confirmando e lembrando clientes automaticamente." },
+              { icon: ShieldCheck, title: "2. Configure sua Assistente Pontedra", description: "Personalize a Assistente Pontedra para atender às necessidades específicas do seu negócio." },
+              { icon: Clock, title: "3. Automatize Agendamentos", description: "Deixe a Assistente Pontedra gerenciar sua agenda, confirmando e lembrando clientes automaticamente." },
               { icon: TrendingUp, title: "4. Otimize com Insights", description: "Receba análises e sugestões inteligentes para escalar seu atendimento e vendas." },
             ].map((step, index) => (
               <motion.div
@@ -147,9 +147,9 @@ const LandingPage = () => {
           </motion.h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
-              { name: "Básico", price: "R$99", features: ["1 Canal de Atendimento", "Atendimento IA Básico", "500 Mensagens/mês", "Suporte por E-mail"], highlight: false },
-              { name: "Profissional", price: "R$249", features: ["3 Canais de Atendimento", "Atendimento IA Avançado", "5.000 Mensagens/mês", "Relatórios e Insights", "Suporte Prioritário"], highlight: true },
-              { name: "Empresarial", price: "R$499", features: ["Canais Ilimitados", "IA Personalizada", "Mensagens Ilimitadas", "Relatórios Avançados", "Gerente de Conta Dedicado"], highlight: false },
+              { name: "Básico", price: "R$99", features: ["1 Canal de Atendimento", "Assistente Pontedra Básica", "500 Mensagens/mês", "Suporte por E-mail"], highlight: false },
+              { name: "Profissional", price: "R$249", features: ["3 Canais de Atendimento", "Assistente Pontedra Avançada", "5.000 Mensagens/mês", "Relatórios e Insights", "Suporte Prioritário"], highlight: true },
+              { name: "Empresarial", price: "R$499", features: ["Canais Ilimitados", "Assistente Pontedra Personalizada", "Mensagens Ilimitadas", "Relatórios Avançados", "Gerente de Conta Dedicado"], highlight: false },
             ].map((plan, index) => (
               <motion.div
                 key={index}

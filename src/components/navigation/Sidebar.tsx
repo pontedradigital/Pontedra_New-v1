@@ -1,10 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet, BellRing, History } from "lucide-react"; // Adicionado History
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet, BellRing, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useMockData } from "@/context/MockContext"; // Importar useMockData
+import { useMockData } from "@/context/MockContext";
 
 interface SidebarProps {
   userRole: "master" | "client" | undefined;
@@ -13,7 +13,7 @@ interface SidebarProps {
 export const Sidebar = ({ userRole }: SidebarProps) => {
   const location = useLocation();
   const { user } = useAuth();
-  const { unreadNotificationCount } = useMockData(); // Obter o contador de notificações não lidas
+  const { unreadNotificationCount } = useMockData();
 
   const masterNavItems = [
     { name: "Dashboard", href: "/dashboard/master", icon: LayoutDashboard },
@@ -29,7 +29,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
         { name: "Facebook Messenger", href: "/dashboard/master/comunicacao/messenger", icon: MessageSquare },
       ],
     },
-    { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
+    { name: "Assistente Pontedra Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
     { name: "Financeiro", href: "/dashboard/master/financeiro", icon: DollarSign },
     { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper },
@@ -40,8 +40,8 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Minha Experiência", href: "/dashboard/cliente/minha-experiencia", icon: Star },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
-    { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History }, // Novo item
-    { name: "Atendimento Inteligente", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
+    { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History },
+    { name: "Atendimento Inteligente (Assistente Pontedra)", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
     { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet },
     { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount },
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },

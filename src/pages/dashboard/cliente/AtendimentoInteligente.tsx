@@ -117,7 +117,7 @@ const AtendimentoInteligentePage = () => {
 
   const processUserMessage = async (userText: string) => {
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate AI processing time
+    await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate Assistente Pontedra processing time
 
     let botResponse = CHATBOT_RESPONSES.find(r => r.type === "fallback")?.text || "Desculpe, não entendi. 😕";
     let newLastServiceMentioned = chatState.lastServiceMentioned;
@@ -218,7 +218,7 @@ const AtendimentoInteligentePage = () => {
     }
     // Intent: Promotions
     else if (lowerCaseText.includes("promoção") || lowerCaseText.includes("desconto") || lowerCaseText.includes("oferta")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! 🎉 A IA identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
+      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! 🎉 A Assistente Pontedra identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
     }
     // Intent: Human Assistance
     else if (lowerCaseText.includes("falar com alguém") || lowerCaseText.includes("atendente") || lowerCaseText.includes("suporte")) {
@@ -298,7 +298,7 @@ const AtendimentoInteligentePage = () => {
   return (
     <ClientDashboardLayout>
       <div className="flex items-center mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Atendimento Inteligente (IA Chat)</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Atendimento Inteligente (Assistente Pontedra)</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 h-[calc(100vh-180px)]">
@@ -318,7 +318,7 @@ const AtendimentoInteligentePage = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Online | IA Pontedra pronta para ajudar
+              Online | Assistente Pontedra pronta para ajudar
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">

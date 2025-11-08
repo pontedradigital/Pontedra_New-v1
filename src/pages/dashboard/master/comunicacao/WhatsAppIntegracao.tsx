@@ -80,7 +80,7 @@ const WhatsAppIntegracao = () => {
             <CardHeader>
               <CardTitle className="text-sm font-medium text-foreground">Mensagens Automáticas</CardTitle>
               <CardDescription className="text-muted-foreground">
-                Simula o envio de mensagens automáticas do Bot IA.
+                Simula o envio de mensagens automáticas da Assistente Pontedra.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1">

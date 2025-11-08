@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, CreditCard, Wallet, TrendingUp, RefreshCcw, Filter, Info, LineChart as LineChartIcon } from "lucide-react";
+import { DollarSign, CreditCard, Wallet, TrendingUp, RefreshCcw, Filter, Info, LineChart as LineChartIcon, Lightbulb } from "lucide-react";
 import { motion } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from "sonner";
@@ -120,6 +120,20 @@ const CarteiraDigitalPage = () => {
         return "text-destructive";
       default:
         return "text-foreground";
+    }
+  };
+
+  const getStatusDetailColor = (status: string) => {
+    switch (status) {
+      case "paid":
+      case "completed":
+        return "text-green-500";
+      case "pending":
+        return "text-yellow-500";
+      case "refunded":
+        return "text-blue-500";
+      default:
+        return "text-muted-foreground";
     }
   };
 
@@ -281,12 +295,12 @@ const CarteiraDigitalPage = () => {
           </Card>
         </motion.div>
 
-        {/* IA Pontedra Financeira — Insights Inteligentes */}
+        {/* Assistente Pontedra Financeira — Insights Inteligentes */}
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.6 }} className="lg:col-span-1">
           <Card className="bg-card border-border shadow-lg rounded-2xl h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-foreground flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-primary" /> Insights Financeiros
+                <Lightbulb className="h-5 w-5 text-primary" /> Insights Financeiros da Assistente Pontedra
               </CardTitle>
               <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={handleGenerateNewInsights}>
                 <RefreshCcw className="h-4 w-4" />
