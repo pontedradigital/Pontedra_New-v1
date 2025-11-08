@@ -8,7 +8,7 @@ import NossasSolucoes from "@/sections/NossasSolucoes";
 import Depoimentos from "@/sections/Depoimentos";
 import { Contato } from "@/sections/Contato";
 import BlogPreview from "@/sections/BlogPreview";
-import { PopupManager } from '@/components/PopupManager' // Importação adicionada
+// Removida a importação de { PopupManager } from '@/components/PopupManager'
 
 export default function LandingPage() {
   const location = useLocation();
@@ -46,7 +46,7 @@ export default function LandingPage() {
         <Contato />
       </main>
       <Footer />
-      <PopupManager /> {/* Componente PopupManager adicionado aqui */}
+      {/* Removido o componente PopupManager */}
     </div>
   );
 }
