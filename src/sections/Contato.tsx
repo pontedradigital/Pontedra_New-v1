@@ -32,18 +32,22 @@ export function Contato() {
     e.preventDefault()
     setLoading(true)
 
+    const formData = {
+      nome,
+      email,
+      telefone,
+      assunto,
+      mensagem,
+      origem: 'Formulário de Contato do Site',
+      url_captura: window.location.href,
+      ip_address: ipAddress, // Passa o IP do cliente se disponível
+    };
+
+    console.log('Enviando dados para a Edge Function:', formData);
+
     try {
       const { data, error } = await supabase.functions.invoke('send-lead-emails', {
-        body: {
-          nome,
-          email,
-          telefone,
-          assunto,
-          mensagem,
-          origem: 'Formulário de Contato do Site',
-          url_captura: window.location.href,
-          ip_address: ipAddress, // Passa o IP do cliente se disponível
-        },
+        body: formData,
       });
 
       if (error) {
@@ -51,6 +55,7 @@ export function Contato() {
       }
 
       if (data && data.success) {
+        console.log('Resposta da Edge Function:', data);
         toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.')
         // Limpar formulário
         setNome('')
@@ -63,7 +68,7 @@ export function Contato() {
         console.error('Erro na resposta da Edge Function:', data);
       }
     } catch (error: any) {
-      toast.error(`Erro ao enviar mensagem: ${error.message || 'Erro desconhecido'}`);
+      toast.error(`Não foi possível enviar sua mensagem. Tente novamente em instantes.`);
       console.error('Erro ao invocar a Edge Function:', error);
     } finally {
       setLoading(false)
@@ -199,6 +204,7 @@ export function Contato() {
                     </Label>
                     <Input
                       id="nome"
+                      name="nome" // Adicionado atributo name
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
@@ -214,6 +220,7 @@ export function Contato() {
                     </Label>
                     <Input
                       id="email"
+                      name="email" // Adicionado atributo name
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -231,6 +238,7 @@ export function Contato() {
                     </Label>
                     <Input
                       id="telefone"
+                      name="telefone" // Adicionado atributo name
                       type="tel"
                       value={telefone}
                       onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
@@ -245,6 +253,7 @@ export function Contato() {
                     </Label>
                     <Input
                       id="assunto"
+                      name="assunto" // Adicionado atributo name
                       type="text"
                       value={assunto}
                       onChange={(e) => setAssunto(e.target.value)}
@@ -260,6 +269,7 @@ export function Contato() {
                   </Label>
                   <Textarea
                     id="mensagem"
+                    name="mensagem" // Adicionado atributo name
                     value={mensagem}
                     onChange={(e) => setMensagem(e.target.value)}
                     required

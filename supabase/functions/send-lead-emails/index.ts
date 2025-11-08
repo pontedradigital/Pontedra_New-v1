@@ -15,6 +15,8 @@ serve(async (req) => {
   try {
     const { nome, email, telefone, assunto, mensagem, origem, url_captura, ip_address } = await req.json();
 
+    console.log('Dados recebidos na Edge Function:', { nome, email, telefone, assunto, mensagem, origem, url_captura, ip_address });
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendKey = Deno.env.get("RESEND_API_KEY")!;
@@ -60,12 +62,14 @@ serve(async (req) => {
       `,
     });
 
+    console.log('E-mail enviado via Resend');
+
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
-    console.error("Erro ao processar contato:", error);
+    console.error("Erro ao processar contato na Edge Function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
