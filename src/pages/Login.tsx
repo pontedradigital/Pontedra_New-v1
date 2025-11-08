@@ -11,7 +11,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login } = useAuth(); // Apenas o login é necessário aqui, o user e isAuthenticated são para redirecionamento no Index.tsx
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

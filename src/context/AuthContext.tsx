@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { loginService } from "@/services/auth";
 import { toast } from "sonner";
+import api from "@/services/api"; // Importar a instância do axios configurada
 
 export interface User {
   email: string;
@@ -17,34 +17,68 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate a quick check if a user was "previously logged in" for a fresh load
-  // Em um app real, isso seria uma chamada de API para validar um token existente
+  // Carregar usuário e token do localStorage ao iniciar a aplicação
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
+    const loadUserFromLocalStorage = () => {
+      try {
+        const storedToken = localStorage.getItem("pontedra_token");
+        const storedUser = localStorage.getItem("pontedra_user");
+
+        if (storedToken && storedUser) {
+          const parsedUser: User = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          // Configurar o token no cabeçalho padrão do axios para futuras requisições
+          api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+        }
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        // Limpar dados inválidos
+        localStorage.removeItem("pontedra_token");
+        localStorage.removeItem("pontedra_user");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserFromLocalStorage();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const loggedInUser = await loginService(email, password);
-      if (loggedInUser) {
-        setUser(loggedInUser);
-        toast.success("Login realizado com sucesso!");
-        return true;
-      } else {
-        // loginService retornou null, significa credenciais inválidas
-        toast.error("Credenciais inválidas. Verifique seu e-mail e senha.");
-        return false;
+      // Endpoint de login (ajuste conforme sua API)
+      const LOGIN_ENDPOINT = "/auth/login"; 
+      const response = await api.post(LOGIN_ENDPOINT, { email, password });
+
+      const { token, user: loggedInUser } = response.data;
+
+      if (!token || !loggedInUser) {
+        throw new Error("Token ou dados do usuário não recebidos do servidor.");
       }
+
+      // Salvar token e usuário no localStorage
+      localStorage.setItem("pontedra_token", token);
+      localStorage.setItem("pontedra_user", JSON.stringify(loggedInUser));
+
+      // Atualizar estado do contexto
+      setUser(loggedInUser);
+      setIsAuthenticated(true);
+      
+      // Configurar o token no cabeçalho padrão do axios para futuras requisições
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      toast.success("Login realizado com sucesso!");
+      return true;
     } catch (error: any) {
-      // Captura erros de rede ou outros erros rejeitados pelo loginService
-      toast.error(error.message || "Ocorreu um erro inesperado ao tentar fazer login.");
+      console.error("Erro no login:", error);
+      const errorMessage = error.response?.data?.message || "Erro ao autenticar. Verifique suas credenciais.";
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
@@ -52,11 +86,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    // Limpar localStorage
+    localStorage.removeItem("pontedra_token");
+    localStorage.removeItem("pontedra_user");
+
+    // Limpar estado do contexto
     setUser(null);
+    setIsAuthenticated(false);
+    
+    // Remover token do cabeçalho padrão do axios
+    delete api.defaults.headers.common["Authorization"];
+
     toast.info("Você foi desconectado.");
   };
-
-  const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
