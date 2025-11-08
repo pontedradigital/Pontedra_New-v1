@@ -44,7 +44,7 @@ const Hero: React.FC = () => {
         background: `
           radial-gradient(
             circle at ${gradientPosition.x}% ${gradientPosition.y}%,
-            rgba(50, 205, 100, 0.2),
+            rgba(50, 205, 100, 0.15),
             #0b111d 80%
           )
         `,
@@ -110,15 +110,15 @@ const Hero: React.FC = () => {
           className="flex flex-col justify-center space-y-6"
         >
           {[
-            { num: "1️⃣", text: "Atraia mais" },
-            { num: "2️⃣", text: "Venda melhor" },
-            { num: "3️⃣", text: "Seu sucesso acontece" },
+            { num: "1", text: "Atraia mais" },
+            { num: "2", text: "Venda melhor" },
+            { num: "3", text: "Seu sucesso acontece" },
           ].map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-4 py-6 px-8 rounded-2xl border border-green-500/20 bg-gradient-to-b from-green-400/10 to-green-400/5 shadow-lg shadow-green-400/10 hover:translate-y-[-4px] hover:shadow-green-400/20 transition-all duration-500 ease-out"
+              className="flex items-center gap-5 py-6 px-8 rounded-2xl border border-green-500/20 bg-gradient-to-b from-green-400/10 to-green-400/5 shadow-lg shadow-green-400/10 hover:translate-y-[-4px] hover:shadow-green-400/20 transition-all duration-500 ease-out"
             >
-              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#8BEB65] text-black font-bold">
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-br from-[#8BEB65] to-[#4FD479] text-black text-lg font-bold shadow-lg shadow-green-400/30">
                 {item.num}
               </div>
               <span className="text-lg text-white font-medium">{item.text}</span>
