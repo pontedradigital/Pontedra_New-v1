@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AssistantMessage } from "@/components/chat/AssistantMessage"; // Importar o novo componente
 
 interface Message {
   id: number;
@@ -308,55 +309,48 @@ const AtendimentoInteligentePage = () => {
         >
           <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center gap-2 text-foreground">
-              <BotIcon className="h-5 w-5 text-primary" /> Assistente Pontedra
+              <img
+                src="/assistant-avatar.png"
+                alt="Assistente Pontedra"
+                className="w-8 h-8 rounded-full border-2 border-primary"
+              />
+              Assistente Pontedra
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground flex items-center gap-1">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Online | Assistente Pontedra pronta para ajudar
+              Online | pronta para ajudar
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {chatState.messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex items-end gap-2",
-                  message.sender === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                {message.sender === "Assistente Pontedra" && ( // Atualizado sender
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary border border-border">
-                    <BotIcon className="h-4 w-4" />
-                  </div>
-                )}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+              message.sender === "Assistente Pontedra" ? (
+                <AssistantMessage key={message.id} message={message.text} />
+              ) : (
+                <div
+                  key={message.id}
                   className={cn(
-                    "max-w-[70%] p-3 rounded-lg relative",
-                    message.sender === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-none shadow-md"
-                      : "bg-muted text-muted-foreground rounded-bl-none border border-border shadow-sm"
+                    "flex items-end gap-2 justify-end"
                   )}
                 >
-                  {message.text}
-                  <span className={cn(
-                    "absolute text-[0.65rem] opacity-70",
-                    message.sender === "user" ? "bottom-1 -left-10 text-primary-foreground/80" : "bottom-1 -right-10 text-muted-foreground/80"
-                  )}>
-                    {formatTimestamp(message.timestamp)}
-                  </span>
-                </motion.div>
-                {message.sender === "user" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="max-w-[70%] p-3 rounded-lg relative bg-primary text-primary-foreground rounded-br-none shadow-md"
+                  >
+                    {message.text}
+                    <span className="absolute text-[0.65rem] opacity-70 bottom-1 -left-10 text-primary-foreground/80">
+                      {formatTimestamp(message.timestamp)}
+                    </span>
+                  </motion.div>
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-background flex items-center justify-center text-foreground border border-border">
                     {clientName.charAt(0).toUpperCase()}
                   </div>
-                )}
-              </div>
+                </div>
+              )
             ))}
             {isTyping && (
               <div className="flex items-end gap-2 justify-start">
@@ -370,7 +364,7 @@ const AtendimentoInteligentePage = () => {
                   className="max-w-[70%] p-3 rounded-lg bg-muted text-muted-foreground rounded-bl-none border border-border shadow-sm flex items-center gap-2"
                 >
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span>Assistente Pontedra digitando...</span> {/* Atualizado texto */}
+                  <span>Assistente Pontedra está digitando...</span>
                 </motion.div>
               </div>
             )}

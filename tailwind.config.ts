@@ -65,6 +65,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        pontedra: { // Adicionando cores personalizadas
+          green: "#00C896",
+          dark: "#0D1B2A",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
