@@ -29,11 +29,12 @@ import MessengerIntegracao from "./pages/dashboard/master/comunicacao/MessengerI
 
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
-import AtendimentoInteligentePage from "./pages/dashboard/cliente/AtendimentoInteligente"; // Importar a nova página
+import AtendimentoInteligentePage from "./pages/dashboard/cliente/AtendimentoInteligente";
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
 import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital";
+import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte"; // Importar a nova página
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -208,7 +209,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/cliente/atendimento-inteligente" // Nova rota
+                path="/dashboard/cliente/atendimento-inteligente"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><AtendimentoInteligentePage /></PageTransition>
@@ -220,6 +221,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><ClientCarteiraDigitalPage /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/cliente/notificacoes-suporte" // Nova rota
+                element={
+                  <ProtectedRoute allowedRoles={["client"]}>
+                    <PageTransition><NotificacoesSuportePage /></PageTransition>
                   </ProtectedRoute>
                 }
               />

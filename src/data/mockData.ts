@@ -158,6 +158,25 @@ export interface ClientActivitySummary {
   pendingPayment: { amount: number; dueDate: string } | null;
 }
 
+export type NotificationType = "lembrete" | "promoção" | "confirmação" | "cancelamento" | "suporte" | "info";
+
+export interface ClientNotification {
+  id: string;
+  clientEmail: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  timestamp: string; // ISO string
+  read: boolean;
+}
+
+export interface SupportMessage {
+  id: string;
+  sender: "user" | "support";
+  message: string;
+  timestamp: string;
+}
+
 
 export const MOCK_CLIENT_SERVICES: Service[] = [
   { id: "s1", name: "Corte de Cabelo Masculino", description: "Corte moderno com lavagem e finalização.", price: 55.00, category: "Cabelo", availability: "available", imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Corte" },
@@ -415,3 +434,42 @@ export const MOCK_CLIENT_ACTIVITY_SUMMARY: ClientActivitySummary = {
   loyaltyPoints: 150,
   pendingPayment: null, // { amount: 75.00, dueDate: "2024-12-10" },
 };
+
+export const MOCK_CLIENT_NOTIFICATIONS: ClientNotification[] = [
+  {
+    id: "notif1",
+    clientEmail: "cliente@teste.com",
+    type: "lembrete",
+    title: "Lembrete de Agendamento",
+    message: "Você tem um corte de cabelo agendado amanhã, 23/11, às 14h. Não se atrase! ⏰",
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    read: false,
+  },
+  {
+    id: "notif2",
+    clientEmail: "cliente@teste.com",
+    type: "promoção",
+    title: "Nova Promoção Disponível!",
+    message: "Aproveite 10% de desconto no seu próximo serviço de Massagem Relaxante. Válido até 30/11! 🎉",
+    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+    read: false,
+  },
+  {
+    id: "notif3",
+    clientEmail: "cliente@teste.com",
+    type: "confirmação",
+    title: "Agendamento Confirmado",
+    message: "Seu agendamento para Manicure e Pedicure em 22/11 às 14:30h foi confirmado com sucesso! ✅",
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
+    read: true,
+  },
+  {
+    id: "notif4",
+    clientEmail: "cliente@teste.com",
+    type: "info",
+    title: "Atualização da Plataforma",
+    message: "Novas funcionalidades foram adicionadas à sua Carteira Digital. Confira! 💳",
+    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    read: true,
+  },
+];

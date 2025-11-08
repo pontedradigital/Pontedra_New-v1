@@ -1,9 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet, BellRing } from "lucide-react"; // Adicionado BellRing
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useMockData } from "@/context/MockContext"; // Importar useMockData
 
 interface SidebarProps {
   userRole: "master" | "client" | undefined;
@@ -12,6 +13,7 @@ interface SidebarProps {
 export const Sidebar = ({ userRole }: SidebarProps) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { unreadNotificationCount } = useMockData(); // Obter o contador de notificações não lidas
 
   const masterNavItems = [
     { name: "Dashboard", href: "/dashboard/master", icon: LayoutDashboard },
@@ -38,8 +40,9 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Minha Experiência", href: "/dashboard/cliente/minha-experiencia", icon: Star },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
-    { name: "Atendimento Inteligente", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset }, // Novo item
+    { name: "Atendimento Inteligente", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
     { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet },
+    { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount }, // Novo item com badge
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
   ];
@@ -101,6 +104,11 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
               >
                 <item.icon className="h-4 w-4" />
                 {item.name}
+                {item.badge && item.badge > 0 && (
+                  <span className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             )
           ))}

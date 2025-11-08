@@ -11,6 +11,8 @@ import {
   AIInsight,
   ClientNotificationSettings,
   ClientPrivacySettings,
+  ClientNotification,
+  NotificationType,
   MOCK_CLIENT_SERVICES,
   MOCK_CLIENT_APPOINTMENTS,
   MOCK_CLIENTS,
@@ -21,7 +23,9 @@ import {
   MOCK_AI_INSIGHTS,
   MOCK_CLIENT_NOTIFICATION_SETTINGS,
   MOCK_CLIENT_PRIVACY_SETTINGS,
+  MOCK_CLIENT_NOTIFICATIONS,
 } from "@/data/mockData";
+import { useAuth } from "./AuthContext"; // Import useAuth to filter notifications by user
 
 interface MockContextType {
   // Master Data
@@ -38,6 +42,8 @@ interface MockContextType {
   clientAppointments: Appointment[];
   clientNotificationSettings: ClientNotificationSettings;
   clientPrivacySettings: ClientPrivacySettings;
+  clientNotifications: ClientNotification[];
+  unreadNotificationCount: number;
 
   // Master Actions
   addClient: (client: Omit<Client, "id" | "registrationDate">) => Promise<void>;
@@ -65,6 +71,8 @@ interface MockContextType {
   addClientAppointment: (appointment: Omit<Appointment, "id" | "clientEmail">, clientEmail: string) => Promise<void>;
   updateClientNotificationSettings: (settings: Partial<ClientNotificationSettings>) => Promise<void>;
   updateClientPrivacySettings: (settings: Partial<ClientPrivacySettings>) => Promise<void>;
+  addClientNotification: (notification: Omit<ClientNotification, "id" | "timestamp" | "read">) => Promise<void>;
+  markClientNotificationAsRead: (id: string) => Promise<void>;
 
   isLoading: boolean;
 }
@@ -72,6 +80,7 @@ interface MockContextType {
 const MockContext = createContext<MockContextType | undefined>(undefined);
 
 export const MockProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth(); // Get logged-in user from AuthContext
   const [isLoading, setIsLoading] = useState(false);
 
   // Master States
@@ -87,6 +96,14 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
   // Client States (these would typically be filtered by the logged-in user's email)
   const [clientNotificationSettings, setClientNotificationSettings] = useState<ClientNotificationSettings>(MOCK_CLIENT_NOTIFICATION_SETTINGS);
   const [clientPrivacySettings, setClientPrivacySettings] = useState<ClientPrivacySettings>(MOCK_CLIENT_PRIVACY_SETTINGS);
+  const [allClientNotifications, setAllClientNotifications] = useState<ClientNotification[]>(MOCK_CLIENT_NOTIFICATIONS);
+
+  // Filter notifications for the current user
+  const currentClientNotifications = user
+    ? allClientNotifications.filter(n => n.clientEmail === user.email)
+    : [];
+
+  const unreadNotificationCount = currentClientNotifications.filter(n => !n.read).length;
 
   const simulateApiCall = async <T>(callback: () => T, successMessage?: string, errorMessage?: string): Promise<T> => {
     setIsLoading(true);
@@ -214,8 +231,28 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
       setClientPrivacySettings((prev) => ({ ...prev, ...settings }));
     }, "Configurações de privacidade salvas!");
 
-  // Filter client-specific appointments based on the logged-in user's email
-  // This will be handled in the components using the context, not directly in the context state.
+  const addClientNotification = (notification: Omit<ClientNotification, "id" | "timestamp" | "read">) =>
+    simulateApiCall(() => {
+      if (!user) {
+        console.warn("Cannot add notification: no user logged in.");
+        return;
+      }
+      const newNotification: ClientNotification = {
+        ...notification,
+        id: `notif${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        clientEmail: user.email,
+      };
+      setAllClientNotifications((prev) => [newNotification, ...prev]);
+    }, "Nova notificação recebida!");
+
+  const markClientNotificationAsRead = (id: string) =>
+    simulateApiCall(() => {
+      setAllClientNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    }, "Notificação marcada como lida.");
 
   return (
     <MockContext.Provider
@@ -231,6 +268,8 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
         clientAppointments: appointments, // This will be filtered in client pages
         clientNotificationSettings,
         clientPrivacySettings,
+        clientNotifications: currentClientNotifications,
+        unreadNotificationCount,
         addClient,
         updateClient,
         deleteClient,
@@ -250,6 +289,8 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
         addClientAppointment,
         updateClientNotificationSettings,
         updateClientPrivacySettings,
+        addClientNotification,
+        markClientNotificationAsRead,
         isLoading,
       }}
     >
