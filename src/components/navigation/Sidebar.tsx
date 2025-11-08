@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet, BellRing } from "lucide-react"; // Adicionado BellRing
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet, BellRing, History } from "lucide-react"; // Adicionado History
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,9 +40,10 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Minha Experiência", href: "/dashboard/cliente/minha-experiencia", icon: Star },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
+    { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History }, // Novo item
     { name: "Atendimento Inteligente", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
     { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet },
-    { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount }, // Novo item com badge
+    { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount },
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
   ];

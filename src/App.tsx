@@ -34,7 +34,8 @@ import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
 import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital";
-import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte"; // Importar a nova página
+import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte";
+import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos"; // Importar a nova página
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -209,6 +210,14 @@ const App = () => {
                 }
               />
               <Route
+                path="/dashboard/cliente/historico-agendamentos" // Nova rota
+                element={
+                  <ProtectedRoute allowedRoles={["client"]}>
+                    <PageTransition><HistoricoAgendamentosPage /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard/cliente/atendimento-inteligente"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
@@ -225,7 +234,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/cliente/notificacoes-suporte" // Nova rota
+                path="/dashboard/cliente/notificacoes-suporte"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><NotificacoesSuportePage /></PageTransition>

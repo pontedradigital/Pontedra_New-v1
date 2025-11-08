@@ -177,6 +177,20 @@ export interface SupportMessage {
   timestamp: string;
 }
 
+// New interface for detailed client appointment history
+export type AppointmentStatus = "Agendado" | "Concluído" | "Cancelado" | "Pendente";
+
+export interface DetailedClientAppointment {
+  id: string;
+  clientEmail: string;
+  service: string;
+  professional: string;
+  dateTime: string; // "YYYY-MM-DD HH:mm"
+  status: AppointmentStatus;
+  value: number;
+  notes?: string;
+}
+
 
 export const MOCK_CLIENT_SERVICES: Service[] = [
   { id: "s1", name: "Corte de Cabelo Masculino", description: "Corte moderno com lavagem e finalização.", price: 55.00, category: "Cabelo", availability: "available", imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Corte" },
@@ -471,5 +485,69 @@ export const MOCK_CLIENT_NOTIFICATIONS: ClientNotification[] = [
     message: "Novas funcionalidades foram adicionadas à sua Carteira Digital. Confira! 💳",
     timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
     read: true,
+  },
+];
+
+// New mock data for "Histórico e Controle de Agendamentos"
+export const MOCK_CLIENT_DETAILED_APPOINTMENT_HISTORY: DetailedClientAppointment[] = [
+  {
+    id: "dca1",
+    clientEmail: "cliente@teste.com",
+    service: "Limpeza de Pele",
+    professional: "Dra. Ana Paula",
+    dateTime: "2024-12-10 14:00",
+    status: "Agendado",
+    value: 100.00,
+    notes: "Preparar a pele para extração, foco na zona T."
+  },
+  {
+    id: "dca2",
+    clientEmail: "cliente@teste.com",
+    service: "Corte Masculino",
+    professional: "Carlos Mendes",
+    dateTime: "2024-11-05 10:30",
+    status: "Concluído",
+    value: 55.00,
+    notes: "Corte degradê nas laterais, tesoura em cima."
+  },
+  {
+    id: "dca3",
+    clientEmail: "cliente@teste.com",
+    service: "Massagem Relaxante",
+    professional: "Marina Souza",
+    dateTime: "2024-12-12 09:00",
+    status: "Pendente",
+    value: 130.00,
+    notes: "Foco em ombros e pescoço, usar óleo de lavanda."
+  },
+  {
+    id: "dca4",
+    clientEmail: "cliente@teste.com",
+    service: "Tratamento Capilar",
+    professional: "Camila Alves",
+    dateTime: "2024-11-03 15:00",
+    status: "Cancelado",
+    value: 180.00,
+    notes: "Cliente cancelou por imprevisto, reagendar."
+  },
+  {
+    id: "dca5",
+    clientEmail: "cliente@teste.com",
+    service: "Manicure e Pedicure",
+    professional: "Beatriz Costa",
+    dateTime: "2024-11-25 16:00",
+    status: "Concluído",
+    value: 85.00,
+    notes: "Esmalte vermelho, unhas quadradas."
+  },
+  {
+    id: "dca6",
+    clientEmail: "cliente@teste.com",
+    service: "Coloração Feminina",
+    professional: "Fernanda Dias",
+    dateTime: "2024-12-20 10:00",
+    status: "Agendado",
+    value: 200.00,
+    notes: "Retoque de raiz, tom loiro acinzentado."
   },
 ];
