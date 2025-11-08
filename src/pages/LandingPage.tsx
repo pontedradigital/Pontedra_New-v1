@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import QuemSomos from "@/components/landing/QuemSomos";
 import NossasSolucoes from "@/sections/NossasSolucoes";
 import Depoimentos from "@/sections/Depoimentos"; // Importar o novo componente Depoimentos
+import Contato from "@/sections/Contato"; // Importar o novo componente Contato
 
 export default function LandingPage() {
   const location = useLocation();
@@ -47,12 +48,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="contato" className="py-24 bg-card border-t border-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-foreground mb-6">Contato</h2>
-            <p className="text-textSecondary max-w-3xl">Entre em contato conosco para saber como podemos ajudar seu negócio a crescer.</p>
-          </div>
-        </section>
+        {/* Nova seção de Contato */}
+        <Contato />
       </main>
       <Footer />
     </div>
