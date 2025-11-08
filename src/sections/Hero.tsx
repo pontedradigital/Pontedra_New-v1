@@ -277,7 +277,8 @@ const Hero = () => {
           animate={controls}
           transition={{ delay: 1.0, duration: 1 }}
         >
-          <div className="bg-pontedra-checklist-card-bg px-5 py-3 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group w-[260px] h-[64px] flex items-center">
+          {/* Card 1 */}
+          <div className="bg-gradient-to-b from-[#5FF077]/15 to-[#45D060]/15 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] animate-float-delay-0 shadow-inner shadow-[#5FF077]/10 border border-pontedra-line-green-dark relative overflow-hidden group flex items-center">
             <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
@@ -286,7 +287,8 @@ const Hero = () => {
               <span className="text-white text-xl font-semibold">Atraia mais</span>
             </div>
           </div>
-          <div className="bg-pontedra-checklist-card-bg px-5 py-3 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group w-[260px] h-[64px] flex items-center">
+          {/* Card 2 */}
+          <div className="bg-gradient-to-b from-[#45D060]/15 to-[#35A050]/15 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] animate-float-delay-1 shadow-inner shadow-[#5FF077]/10 border border-pontedra-line-green-dark relative overflow-hidden group flex items-center">
             <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
@@ -295,7 +297,8 @@ const Hero = () => {
               <span className="text-white text-xl font-semibold">Venda melhor</span>
             </div>
           </div>
-          <div className="bg-pontedra-checklist-card-bg px-5 py-3 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group w-[260px] h-[64px] flex items-center">
+          {/* Card 3 */}
+          <div className="bg-gradient-to-b from-[#35A050]/15 to-[#2A7B49]/15 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] animate-float-delay-2 shadow-inner shadow-[#5FF077]/10 border border-pontedra-line-green-dark relative overflow-hidden group flex items-center">
             <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
