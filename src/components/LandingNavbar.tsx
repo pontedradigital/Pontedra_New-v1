@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Menu } from "lucide-react";
 
 export default function LandingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
-      const quemSomosSection = document.getElementById("quem-somos");
-      if (quemSomosSection) {
-        const rect = quemSomosSection.getBoundingClientRect();
-        setIsScrolled(rect.top <= 100);
-      }
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 50); // Define isScrolled se a página rolar mais de 50px
     };
 
     window.addEventListener("scroll", handleScroll);
-    handleScroll();
+    handleScroll(); // Chama uma vez para definir o estado inicial
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -36,12 +35,15 @@ export default function LandingNavbar() {
       behavior: "smooth",
     });
     setIsMobileMenuOpen(false);
+    if (location.pathname !== "/landing") {
+      navigate("/landing"); // Navega para a landing page se não estiver nela
+    }
   };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const navbarHeight = 80;
+      const navbarHeight = 80; // Altura fixa da navbar
       const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = elementPosition - navbarHeight;
 
@@ -53,12 +55,29 @@ export default function LandingNavbar() {
     setIsMobileMenuOpen(false);
   };
 
+  // Função para detectar se a navegação é interna (âncora) ou externa (rota)
+  const handleNavigation = (target: string) => {
+    if (target.startsWith("#")) {
+      // Se já estiver na landing page, rola para a seção
+      if (location.pathname === "/landing") {
+        scrollToSection(target.substring(1));
+      } else {
+        // Caso contrário, navega para a landing page com a âncora
+        navigate(`/landing${target}`);
+      }
+    } else {
+      // Navegação para uma rota externa
+      navigate(target);
+    }
+    setIsMobileMenuOpen(false); // Fecha o menu mobile após a navegação
+  };
+
   const menuItems = [
-    { label: "Quem Somos", section: "quem-somos" },
-    { label: "Soluções", section: "solucoes" },
-    { label: "Depoimentos", section: "depoimentos" },
-    { label: "Blog", section: "blog" },
-    { label: "Contato", section: "contato" },
+    { label: "Quem Somos", target: "#quem-somos" },
+    { label: "Soluções", target: "#solucoes" },
+    { label: "Depoimentos", target: "#depoimentos" },
+    { label: "Blog", target: "/blog" }, // Rota externa
+    { label: "Contato", target: "#contato" },
   ];
 
   return (
@@ -101,8 +120,8 @@ export default function LandingNavbar() {
             <div className="hidden lg:flex items-center gap-8">
               {menuItems.map((item, index) => (
                 <motion.button
-                  key={item.section}
-                  onClick={() => scrollToSection(item.section)}
+                  key={item.target}
+                  onClick={() => handleNavigation(item.target)}
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -116,18 +135,18 @@ export default function LandingNavbar() {
 
             {/* Desktop CTA Buttons */}
             <div className="hidden lg:flex items-center gap-4">
-              <Link
-                to="/login"
+              <button
+                onClick={() => handleNavigation("/login")}
                 className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300"
               >
                 Entrar
-              </Link>
-              <Link
-                to="/login"
+              </button>
+              <button
+                onClick={() => handleNavigation("/login")}
                 className="px-6 py-2.5 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 hover:scale-105 shadow-lg shadow-[#57e389]/30"
               >
                 Acessar Plataforma
-            </Link>
+            </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -168,8 +187,8 @@ export default function LandingNavbar() {
                 <div className="flex flex-col gap-6 mb-8">
                   {menuItems.map((item, index) => (
                     <motion.button
-                      key={item.section}
-                      onClick={() => scrollToSection(item.section)}
+                      key={item.target}
+                      onClick={() => handleNavigation(item.target)}
                       initial={{ opacity: 0, x: 50 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
@@ -187,16 +206,14 @@ export default function LandingNavbar() {
                   transition={{ delay: 0.5 }}
                   className="flex flex-col gap-4 mt-auto mb-8"
                 >
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                  <button
+                    onClick={() => handleNavigation("/login")}
                     className="w-full text-center px-6 py-3 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
                   >
                     Entrar
-                  </Link>
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                  </button>
+                  <button
+                    onClick={() => handleNavigation("/login")}
                     className="w-full text-center px-6 py-3 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 shadow-lg shadow-[#57e389]/30"
                   >
                     Acessar Plataforma
