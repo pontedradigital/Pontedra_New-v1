@@ -8,13 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, CheckCircle2, XCircle } from "lucide-react"; // Importar ícones
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useMockData } from "@/context/MockContext";
 import { format } from "date-fns";
 import { MOCK_AVAILABLE_TIMES } from "@/data/mockData";
+import AgendaCalendar from "@/components/AgendaCalendar"; // Importar o novo componente de calendário
 
 interface Appointment {
   id: string;
@@ -81,7 +81,6 @@ const AppointmentsPage = () => {
         status: "pending",
       });
     } catch (error: any) {
-      // A toast de erro já é exibida pelo MockContext
       console.error("Erro ao adicionar agendamento:", error.message);
     }
   };
@@ -162,21 +161,8 @@ const AppointmentsPage = () => {
           <CardContent>
             <div className="flex flex-col lg:flex-row gap-6 mb-6">
               <div className="flex-1 flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border border-border bg-background text-foreground"
-                  classNames={{
-                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                    day_today: "bg-muted text-foreground",
-                    day_outside: "text-muted-foreground opacity-50",
-                    day_disabled: "text-muted-foreground opacity-50",
-                    nav_button: "text-foreground hover:bg-muted",
-                    caption_label: "text-foreground",
-                    head_cell: "text-muted-foreground",
-                  }}
-                />
+                {/* Mantendo o shadcn/ui Calendar para a visualização principal, mas com aprimoramentos */}
+                <AgendaCalendar onSelectDate={setSelectedDate} selectedDate={selectedDate} />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-4 text-foreground">Agendamentos para {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "a data selecionada"}</h3>
@@ -310,34 +296,34 @@ const AppointmentsPage = () => {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="date" className="text-foreground">Data</Label>
-              <Input
-                id="date"
-                type="date"
-                value={newAppointment.date}
-                onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
-                required
-                className="bg-background border-border text-foreground focus:ring-primary"
-              />
+              <AgendaCalendar onSelectDate={(date) => setNewAppointment({ ...newAppointment, date: format(date, "yyyy-MM-dd") })} selectedDate={new Date(newAppointment.date)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="time" className="text-foreground">Hora</Label>
-              <Select onValueChange={(value) => setNewAppointment({ ...newAppointment, time: value })} value={newAppointment.time}>
-                <SelectTrigger id="time" className="bg-background border-border text-foreground focus:ring-primary">
-                  <SelectValue placeholder="Selecione um horário" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border text-foreground">
-                  {MOCK_AVAILABLE_TIMES.map((time) => (
-                    <SelectItem
+              <div className="grid grid-cols-3 gap-2">
+                {MOCK_AVAILABLE_TIMES.map((time) => {
+                  const isBooked = bookedTimesForNewAppointment.includes(time);
+                  const isSelected = newAppointment.time === time;
+                  return (
+                    <Button
                       key={time}
-                      value={time}
-                      className="hover:bg-muted cursor-pointer"
-                      disabled={bookedTimesForNewAppointment.includes(time)}
+                      variant={isSelected ? "default" : "outline"}
+                      className={`flex items-center justify-center gap-1 ${
+                        isBooked
+                          ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed border-border"
+                          : isSelected
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "bg-background border-border text-foreground hover:bg-muted"
+                      }`}
+                      onClick={() => !isBooked && setNewAppointment({ ...newAppointment, time: time })}
+                      disabled={isBooked}
                     >
-                      {time} {bookedTimesForNewAppointment.includes(time) && "(Indisponível)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      {isBooked ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {time}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status" className="text-foreground">Status Inicial</Label>

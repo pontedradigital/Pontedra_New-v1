@@ -2,20 +2,21 @@ import React, { useState } from "react";
 import ClientDashboardLayout from "@/components/layouts/ClientDashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { MOCK_CLIENT_SERVICES, MOCK_CLIENT_APPOINTMENTS, MOCK_AVAILABLE_TIMES, Service, Appointment } from "@/data/mockData";
+import { MOCK_CLIENT_SERVICES, MOCK_AVAILABLE_TIMES, Service, Appointment } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { Label } from "@/components/ui/label"; // Importar Label
-import { useMockData } from "@/context/MockContext"; // Importar useMockData
+import { Label } from "@/components/ui/label";
+import { useMockData } from "@/context/MockContext";
+import AgendaCalendar from "@/components/AgendaCalendar"; // Importar o novo componente de calendário
+import { CheckCircle2, XCircle } from "lucide-react"; // Importar ícones
 
 const AgendaPage = () => {
   const { user } = useAuth();
-  const { addClientAppointment, appointments } = useMockData(); // Usar appointments do MockContext
+  const { addClientAppointment, appointments } = useMockData();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [selectedService, setSelectedService] = useState<string | undefined>(undefined);
@@ -23,7 +24,6 @@ const AgendaPage = () => {
     appointments.filter(app => app.clientEmail === user?.email)
   );
 
-  // Atualizar clientAppointments quando 'appointments' do contexto mudar
   React.useEffect(() => {
     setClientAppointments(appointments.filter(app => app.clientEmail === user?.email));
   }, [appointments, user]);
@@ -51,11 +51,9 @@ const AgendaPage = () => {
 
     try {
       await addClientAppointment(newAppointmentData, user.email);
-      // A toast de sucesso já é exibida pelo MockContext
       setSelectedTime(undefined);
       setSelectedService(undefined);
     } catch (error: any) {
-      // A toast de erro já é exibida pelo MockContext
       console.error("Erro ao agendar:", error.message);
     }
   };
@@ -90,41 +88,34 @@ const AgendaPage = () => {
             <CardContent className="grid gap-4">
               <div className="flex flex-col items-center space-y-4">
                 <Label htmlFor="date-picker" className="text-foreground">Selecione a Data</Label>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border border-border bg-background text-foreground"
-                  classNames={{
-                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                    day_today: "bg-muted text-foreground",
-                    day_outside: "text-muted-foreground opacity-50",
-                    day_disabled: "text-muted-foreground opacity-50",
-                    nav_button: "text-foreground hover:bg-muted",
-                    caption_label: "text-foreground",
-                    head_cell: "text-muted-foreground",
-                  }}
-                />
+                <AgendaCalendar onSelectDate={setSelectedDate} selectedDate={selectedDate} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="time-select" className="text-foreground">Selecione a Hora</Label>
-                <Select onValueChange={setSelectedTime} value={selectedTime}>
-                  <SelectTrigger id="time-select" className="bg-background border-border text-foreground focus:ring-primary">
-                    <SelectValue placeholder="Selecione um horário" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border text-foreground">
-                    {MOCK_AVAILABLE_TIMES.map((time) => (
-                      <SelectItem
+                <div className="grid grid-cols-3 gap-2">
+                  {MOCK_AVAILABLE_TIMES.map((time) => {
+                    const isBooked = bookedTimes.includes(time);
+                    const isSelected = selectedTime === time;
+                    return (
+                      <Button
                         key={time}
-                        value={time}
-                        className="hover:bg-muted cursor-pointer"
-                        disabled={bookedTimes.includes(time)}
+                        variant={isSelected ? "default" : "outline"}
+                        className={`flex items-center justify-center gap-1 ${
+                          isBooked
+                            ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed border-border"
+                            : isSelected
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-background border-border text-foreground hover:bg-muted"
+                        }`}
+                        onClick={() => !isBooked && setSelectedTime(time)}
+                        disabled={isBooked}
                       >
-                        {time} {bookedTimes.includes(time) && "(Indisponível)"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        {isBooked ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                        {time}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="service-select" className="text-foreground">Selecione o Serviço</Label>
