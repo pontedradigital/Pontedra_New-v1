@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 md:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {/* Coluna 1 - Logo e Slogan */}
-          <div className="space-y-4 flex flex-col items-start"> {/* Adicionado flex-col items-start para alinhamento */}
+          <div className="space-y-4 flex flex-col items-start">
             {/* Logotipo da Pontedra - Aumentado em 300% (h-10 para h-40) */}
             <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-40 w-auto" />
             <p className="text-[#9ba8b5] text-sm leading-relaxed">
@@ -109,8 +109,8 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Linha divisória */}
-        <div className="border-t border-[#1d2c3f] mt-12 pt-8">
+        {/* Área de direitos autorais */}
+        <div className="mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#9ba8b5]">
             <p>© {currentYear} Pontedra. Todos os direitos reservados.</p>
             <div className="flex gap-6">
