@@ -1,3 +1,4 @@
+// Este arquivo foi atualizado para resolver um erro de sintaxe.
 import React, { useEffect, useRef } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -259,11 +260,10 @@ const Hero = () => {
             <motion.div
               key={item.id}
               className={`group flex items-center gap-4 relative overflow-hidden rounded-2xl px-8 py-6
-                         bg-gradient-to-b ${gradientColors[index].from} ${gradientColors[index].to}
+                         bg-gradient-to-b from-lime-500/20 via-lime-600/20 to-lime-700/20
                          border border-lime-400/30 shadow-[0_0_20px_rgba(163,230,53,0.15)]
                          backdrop-blur-sm transition-all duration-500 ease-in-out
-                         animate-gradient-flow animate-float-delay-${index}
-                         w-[360px] h-[108px]`} {/* Aumentado em ~20% */}
+                         hover:scale-[1.04] hover:shadow-[0_0_25px_rgba(163,230,53,0.4)] animate-gradient-flow animate-glow`}
               whileHover={{ scale: 1.05, y: -5, boxShadow: "0 0 20px rgba(95, 240, 119, 0.25)" }}
               transition={{ ease: "easeOut", duration: 0.3 }}
             >
@@ -271,6 +271,9 @@ const Hero = () => {
                 {item.id}
               </div>
               <p className="text-white font-semibold text-lg">{item.text}</p>
+
+              {/* camada de brilho pulsante sutil */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-lime-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
             </motion.div>
           ))}
         </div>
