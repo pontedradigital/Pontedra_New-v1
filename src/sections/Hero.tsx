@@ -277,7 +277,7 @@ const Hero = () => {
           animate={controls}
           transition={{ delay: 1.0, duration: 1 }}
         >
-          <div className="bg-pontedra-checklist-card-bg p-6 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group">
+          <div className="bg-pontedra-checklist-card-bg px-5 py-3 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group w-[260px] h-[64px] flex items-center">
             <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
@@ -286,7 +286,7 @@ const Hero = () => {
               <span className="text-white text-xl font-semibold">Atraia mais</span>
             </div>
           </div>
-          <div className="bg-pontedra-checklist-card-bg p-6 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group">
+          <div className="bg-pontedra-checklist-card-bg px-5 py-3 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group w-[260px] h-[64px] flex items-center">
             <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
@@ -295,7 +295,7 @@ const Hero = () => {
               <span className="text-white text-xl font-semibold">Venda melhor</span>
             </div>
           </div>
-          <div className="bg-pontedra-checklist-card-bg p-6 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group">
+          <div className="bg-pontedra-checklist-card-bg px-5 py-3 rounded-2xl shadow-xl border border-pontedra-line-green-dark relative overflow-hidden group w-[260px] h-[64px] flex items-center">
             <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
