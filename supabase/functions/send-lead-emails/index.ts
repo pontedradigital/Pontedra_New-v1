@@ -1,6 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts"; // Usando a versão mais recente do Deno std
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0"; // Usando a versão mais recente do Supabase JS
-import { Resend } from "npm:resend";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+// Removendo a importação do cliente Resend, pois usaremos fetch diretamente.
+// import { Resend } from "npm:resend";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,15 +16,16 @@ serve(async (req) => {
   try {
     const { nome, email, telefone, assunto, mensagem, origem, url_captura, ip_address } = await req.json();
 
-    console.log('Dados recebidos na Edge Function:', { nome, email, telefone, assunto, mensagem, origem, url_captura, ip_address });
+    console.log("📨 Dados recebidos do formulário:", { nome, email, telefone, assunto, mensagem, origem, url_captura, ip_address });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendKey = Deno.env.get("RESEND_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const resend = new Resend(resendKey);
+    // const resend = new Resend(resendKey); // Não é mais necessário
 
+    // Inserir dados no Supabase (mantido da implementação anterior)
     const { error: insertError } = await supabase.from("site_contato").insert([
       {
         nome,
@@ -39,28 +41,45 @@ serve(async (req) => {
     ]);
 
     if (insertError) {
-      console.error("Supabase insert error:", insertError);
-      throw new Error(`Falha ao inserir contato: ${insertError.message}`);
+      console.error("❌ Erro ao inserir contato no Supabase:", insertError);
+      throw new Error(`Falha ao inserir contato no banco de dados: ${insertError.message}`);
     }
 
-    await resend.emails.send({
-      from: "contato@pontedra.com", // Certifique-se de que este e-mail é verificado no Resend
-      to: "contato@pontedra.com", // E-mail para onde os leads serão enviados
-      subject: `Novo contato recebido: ${assunto}`,
-      html: `
-        <h2>Novo contato recebido</h2>
-        <p><strong>Nome:</strong> ${nome}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Telefone:</strong> ${telefone}</p>
-        <p><strong>Assunto:</strong> ${assunto}</p>
-        <p><strong>Mensagem:</strong></p>
-        <p>${mensagem}</p>
-        <hr/>
-        <p><strong>Origem:</strong> ${origem}</p>
-        <p><strong>URL Captura:</strong> ${url_captura}</p>
-        <p><strong>IP:</strong> ${ip_address}</p>
-      `,
+    // Enviar e-mail via API do Resend
+    const resendResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Pontedra Contato <no-reply@pontedra.com>",
+        to: [
+          "contato@pontedra.com",
+          "heitor_contato@hotmail.com",
+          "pontedradigital@gmail.com",
+        ],
+        subject: "Nova mensagem do formulário Pontedra",
+        text: `
+Nome: ${nome}
+E-mail: ${email}
+Telefone: ${telefone}
+Assunto: ${assunto}
+Mensagem: ${mensagem}
+        `,
+      }),
     });
+
+    const resendResult = await resendResponse.json();
+    console.log("✅ Resposta do Resend:", resendResult);
+
+    if (!resendResponse.ok) {
+      console.error("❌ Erro ao enviar e-mail via Resend:", resendResult);
+      return new Response(JSON.stringify({ success: false, error: resendResult }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
 
     console.log('E-mail enviado via Resend');
 
@@ -68,9 +87,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
-  } catch (error) {
-    console.error("Erro ao processar contato na Edge Function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    console.error("⚠️ Erro inesperado na Edge Function:", error);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
