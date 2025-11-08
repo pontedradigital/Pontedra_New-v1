@@ -14,10 +14,11 @@ import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AssistantMessage } from "@/components/chat/AssistantMessage";
-import { assistentePontedraBase } from "@/data/assistentePontedraBase"; // Importar a base de conhecimento
-import { registrarInteracao } from "@/utils/registroChat"; // Importar utilitário de registro
-import { registrarAgendamento } from "@/utils/agendamentosFake"; // Importar utilitário de agendamento
-import { atualizarBaseDeConhecimento, analisarPadroes } from "@/utils/assistentePontedraAprendizado"; // Importar módulo de aprendizado
+import { assistentePontedraBase } from "@/data/assistentePontedraBase";
+import { registrarInteracao } from "@/utils/registroChat";
+import { registrarAgendamento } from "@/utils/agendamentosFake";
+import { atualizarBaseDeConhecimento, analisarPadroes } from "@/utils/assistentePontedraAprendizado";
+import { obterUltimoRelatorio } from "@/utils/assistentePontedraAnalise"; // Importar utilitário de análise
 
 interface Message {
   id: number;
@@ -263,6 +264,14 @@ const AtendimentoInteligentePage = () => {
         );
       } else {
         botResponse = assistentePontedraBase.sem_agendamento_futuro;
+      }
+    }
+    else if (lowerCaseText.includes("relatório") || lowerCaseText.includes("análise inteligente")) {
+      const ultimo = obterUltimoRelatorio();
+      if (ultimo) {
+        botResponse = `📊 Último relatório (gerado em ${ultimo.dataGeracao}):\n- Clientes: ${ultimo.totalClientes}\n- Agendamentos: ${ultimo.totalAgendamentos}\n- Conversão: ${ultimo.taxaConversao}%\n💡 Sugestão: ${ultimo.sugestoes[0]}`;
+      } else {
+        botResponse = "Ainda não há relatórios disponíveis. Gere um na área de Análise Inteligente do painel Master.";
       }
     }
 

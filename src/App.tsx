@@ -21,7 +21,8 @@ import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
 import BlogPage from "./pages/dashboard/master/BlogPage";
 import FinanceiroPage from "./pages/dashboard/master/Financeiro";
-import AprendizadoPontedra from "./pages/dashboard/master/AprendizadoPontedra"; // Importar nova página
+import AprendizadoPontedra from "./pages/dashboard/master/AprendizadoPontedra";
+import AnaliseInteligente from "./pages/dashboard/master/AnaliseInteligente"; // Importar nova página
 
 import WhatsAppIntegracao from "./pages/dashboard/master/comunicacao/WhatsAppIntegracao";
 import InstagramIntegracao from "./pages/dashboard/master/comunicacao/InstagramIntegracao";
@@ -38,7 +39,7 @@ import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital
 import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte";
 import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos";
 
-import { AuthProvider } from "./context/AuthContext"; // Manter import para tipagem, mas não usar o componente aqui
+import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -63,7 +64,6 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {/* AuthProvider foi movido para main.tsx */}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<PageTransition><Index /></PageTransition>} />
@@ -149,6 +149,14 @@ const App = () => {
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
                   <PageTransition><AprendizadoPontedra /></PageTransition>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/analise-inteligente" // Nova rota
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <PageTransition><AnaliseInteligente /></PageTransition>
                 </ProtectedRoute>
               }
             />
