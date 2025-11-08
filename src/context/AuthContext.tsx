@@ -21,13 +21,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // No localStorage usage for session persistence, purely in-memory for demo
+  // Simulate a quick check if a user was "previously logged in" for a fresh load
+  // In a real app, this would be an API call to validate a token
   useEffect(() => {
-    // Simulate a quick check if a user was "previously logged in" for a fresh load
-    // In a real app, this would be an API call to validate a token
     setTimeout(() => {
       setIsLoading(false);
-    }, 100); 
+    }, 100);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
