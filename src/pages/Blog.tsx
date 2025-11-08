@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react"; // Removido 'React,'
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Calendar, Clock, ArrowRight } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
-import LandingNavbar from "@/components/LandingNavbar"; // Importar LandingNavbar
-import Footer from "@/sections/Footer"; // Importar Footer
+import LandingNavbar from "@/components/LandingNavbar";
+import Footer from "@/sections/Footer";
 
 // Função para remover acentos
 const removeAccents = (str: string) => {
@@ -37,8 +37,8 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-[#0D1B2A]">
-      <LandingNavbar /> {/* Adicionado LandingNavbar */}
-      <main className="pt-24 pb-16"> {/* Ajustado padding-top para a Navbar fixa */}
+      <LandingNavbar />
+      <main className="pt-24 pb-16">
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 bg-gradient-to-b from-[#0a1520] to-[#0D1B2A]">
           <div className="container mx-auto px-4 md:px-8">
@@ -221,23 +221,22 @@ export default function Blog() {
                             </div>
                           </Link>
                         </motion.div>
-                      </motion.div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-[#9ba8b5] text-lg">
-                Nenhum artigo encontrado para "{searchTerm}" na categoria "{activeCategory}".
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-20">
+                <p className="text-[#9ba8b5] text-lg">
+                  Nenhum artigo encontrado para "{searchTerm}" na categoria "{activeCategory}".
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
       </main>
-      <Footer /> {/* Adicionado Footer */}
+      <Footer />
     </div>
   );
 }
