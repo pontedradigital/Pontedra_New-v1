@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { Resend } from 'https://esm.sh/resend@3.5.0' // Usando esm.sh para importar Resend
+import { Resend } from 'https://esm.sh/resend@3.5.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +19,14 @@ serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+  }
+
+  // Ensure only POST requests are processed
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: "Método não permitido" }), { 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 405 
+    })
   }
 
   try {
@@ -49,7 +57,7 @@ serve(async (req) => {
     const emailCliente = {
       from: 'Pontedra <contato@pontedra.com>',
       to: leadData.email,
-      subject: '✅ Recebemos seu contato - Pontedra',
+      subject: '✅ Recebemos sua mensagem!',
       html: `
         <!DOCTYPE html>
         <html>
@@ -83,17 +91,17 @@ serve(async (req) => {
                     <tr>
                       <td style="padding: 40px;">
                         <p style="margin: 0 0 20px 0; color: #e1e8f0; font-size: 18px; line-height: 1.6;">
-                          Olá <strong style="color: #00C896;">${leadData.nome}</strong>,
+                          Olá <strong style="color: #00C896;">${leadData.nome || ""}</strong>,
                         </p>
                         
                         <p style="margin: 0 0 20px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
-                          Recebemos sua mensagem através do <strong>${origemTexto}</strong> e agradecemos pelo interesse em nossos serviços!
+                          Recebemos sua mensagem e entraremos em contato em breve.
                         </p>
 
                         ${leadData.mensagem ? `
                         <div style="background-color: #0B1420; border-left: 4px solid #00C896; padding: 20px; margin: 30px 0; border-radius: 8px;">
                           <p style="margin: 0 0 10px 0; color: #00C896; font-size: 14px; text-transform: uppercase; font-weight: bold;">
-                            Sua mensagem:
+                            Resumo da sua mensagem:
                           </p>
                           <p style="margin: 0; color: #e1e8f0; font-size: 15px; line-height: 1.6;">
                             ${leadData.mensagem}
@@ -102,7 +110,7 @@ serve(async (req) => {
                         ` : ''}
 
                         <p style="margin: 30px 0 20px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
-                          Nossa equipe analisará sua solicitação e retornaremos em breve com uma proposta personalizada para suas necessidades.
+                          Atenciosamente,<br/>Equipe Pontedra
                         </p>
 
                         <div style="background: linear-gradient(135deg, #00C896 0%, #00E0A0 100%); border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
