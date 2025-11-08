@@ -24,6 +24,11 @@ import {
   MOCK_CLIENT_NOTIFICATION_SETTINGS,
   MOCK_CLIENT_PRIVACY_SETTINGS,
   MOCK_CLIENT_NOTIFICATIONS,
+  // Removidas as importações de ClientFinancialSummary, ClientTransaction, ClientFinancialInsight, ClientSpendingChartData
+  // MOCK_CLIENT_FINANCIAL_SUMMARY,
+  // MOCK_CLIENT_TRANSACTIONS,
+  // MOCK_CLIENT_FINANCIAL_INSIGHTS,
+  // MOCK_CLIENT_SPENDING_CHART_DATA,
 } from "@/data/mockData";
 import { useAuth } from "./AuthContext"; // Import useAuth to filter notifications by user
 
@@ -44,6 +49,11 @@ interface MockContextType {
   clientPrivacySettings: ClientPrivacySettings;
   clientNotifications: ClientNotification[];
   unreadNotificationCount: number;
+  // Removidos os tipos de estado da carteira digital
+  // clientFinancialSummary: ClientFinancialSummary;
+  // clientTransactions: ClientTransaction[];
+  // clientFinancialInsights: ClientFinancialInsight[];
+  // clientSpendingChartData: ClientSpendingChartData[];
 
   // Master Actions
   addClient: (client: Omit<Client, "id" | "registrationDate">) => Promise<void>;
@@ -73,6 +83,10 @@ interface MockContextType {
   updateClientPrivacySettings: (settings: Partial<ClientPrivacySettings>) => Promise<void>;
   addClientNotification: (notification: Omit<ClientNotification, "id" | "timestamp" | "read">) => Promise<void>;
   markClientNotificationAsRead: (id: string) => Promise<void>;
+  // Removidas as ações da carteira digital
+  // addClientCredit: (amount: number, method: string) => Promise<void>;
+  // updateClientTransaction: (id: string, updatedTransaction: Partial<ClientTransaction>) => Promise<void>;
+  // generateNewClientFinancialInsights: () => Promise<void>;
 
   isLoading: boolean;
 }
@@ -97,6 +111,12 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
   const [clientNotificationSettings, setClientNotificationSettings] = useState<ClientNotificationSettings>(MOCK_CLIENT_NOTIFICATION_SETTINGS);
   const [clientPrivacySettings, setClientPrivacySettings] = useState<ClientPrivacySettings>(MOCK_CLIENT_PRIVACY_SETTINGS);
   const [allClientNotifications, setAllClientNotifications] = useState<ClientNotification[]>(MOCK_CLIENT_NOTIFICATIONS);
+  // Removidos os estados da carteira digital
+  // const [clientFinancialSummary, setClientFinancialSummary] = useState<ClientFinancialSummary>(MOCK_CLIENT_FINANCIAL_SUMMARY);
+  // const [clientTransactions, setClientTransactions] = useState<ClientTransaction[]>(MOCK_CLIENT_TRANSACTIONS);
+  // const [clientFinancialInsights, setClientFinancialInsights] = useState<ClientFinancialInsight[]>(MOCK_CLIENT_FINANCIAL_INSIGHTS);
+  // const [clientSpendingChartData, setClientSpendingChartData] = useState<ClientSpendingChartData[]>(MOCK_CLIENT_SPENDING_CHART_DATA);
+
 
   // Filter notifications for the current user
   const currentClientNotifications = user
@@ -254,6 +274,40 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
       );
     }, "Notificação marcada como lida.");
 
+  // Removidas as ações da carteira digital
+  // const addClientCredit = (amount: number, method: string) =>
+  //   simulateApiCall(() => {
+  //     const newTransaction: ClientTransaction = {
+  //       id: `t${Date.now()}`,
+  //       date: new Date().toISOString().slice(0, 10),
+  //       description: `Recarga de Saldo via ${method.toUpperCase()}`,
+  //       type: "credit",
+  //       amount: amount,
+  //       status: "completed",
+  //     };
+  //     setClientFinancialSummary(prev => ({
+  //       ...prev,
+  //       currentBalance: prev.currentBalance + amount,
+  //       availableCredits: prev.availableCredits + amount,
+  //     }));
+  //     setClientTransactions(prev => [newTransaction, ...prev]);
+  //   }, `R$${amount.toFixed(2)} adicionados com sucesso via ${method.toUpperCase()}!`);
+
+  // const updateClientTransaction = (id: string, updatedTransaction: Partial<ClientTransaction>) =>
+  //   simulateApiCall(() => {
+  //     setClientTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedTransaction } : t));
+  //   }, "Transação atualizada com sucesso!");
+
+  // const generateNewClientFinancialInsights = () =>
+  //   simulateApiCall(() => {
+  //     const newInsights: ClientFinancialInsight[] = [
+  //       { id: `fi${Date.now()}`, message: "Você gastou 10% menos este mês em comparação com o anterior. Bom trabalho!", category: "Economia" },
+  //       { id: `fi${Date.now() + 1}`, message: "Considere usar seus créditos disponíveis para o próximo agendamento.", category: "Oportunidade" },
+  //     ];
+  //     setClientFinancialInsights(newInsights);
+  //   }, "Novos insights financeiros gerados!");
+
+
   return (
     <MockContext.Provider
       value={{
@@ -270,6 +324,11 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
         clientPrivacySettings,
         clientNotifications: currentClientNotifications,
         unreadNotificationCount,
+        // Removidos os valores da carteira digital
+        // clientFinancialSummary,
+        // clientTransactions,
+        // clientFinancialInsights,
+        // clientSpendingChartData,
         addClient,
         updateClient,
         deleteClient,
@@ -291,6 +350,10 @@ export const MockProvider = ({ children }: { children: ReactNode }) => {
         updateClientPrivacySettings,
         addClientNotification,
         markClientNotificationAsRead,
+        // Removidas as ações da carteira digital
+        // addClientCredit,
+        // updateClientTransaction,
+        // generateNewClientFinancialInsights,
         isLoading,
       }}
     >

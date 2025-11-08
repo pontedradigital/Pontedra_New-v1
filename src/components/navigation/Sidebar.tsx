@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet, BellRing, History, Brain, Lightbulb } from "lucide-react"; // Adicionado Lightbulb para o ícone
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, BellRing, History, Brain, Lightbulb } from "lucide-react"; // Removido Wallet
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,7 +31,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     },
     { name: "Assistente Pontedra Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
-    { name: "Análise Inteligente", href: "/dashboard/master/analise-inteligente", icon: Lightbulb }, // Novo item de menu
+    { name: "Análise Inteligente", href: "/dashboard/master/analise-inteligente", icon: Lightbulb },
     { name: "Financeiro", href: "/dashboard/master/financeiro", icon: DollarSign },
     { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper },
     { name: "Aprendizado Pontedra", href: "/dashboard/master/aprendizado", icon: Brain },
@@ -44,7 +44,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
     { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History },
     { name: "Atendimento Inteligente (Assistente Pontedra)", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
-    { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet },
+    // { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet }, // Removido
     { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount },
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },

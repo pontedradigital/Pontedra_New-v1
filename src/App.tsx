@@ -22,7 +22,7 @@ import SettingsPage from "./pages/dashboard/master/Settings";
 import BlogPage from "./pages/dashboard/master/BlogPage";
 import FinanceiroPage from "./pages/dashboard/master/Financeiro";
 import AprendizadoPontedra from "./pages/dashboard/master/AprendizadoPontedra";
-import AnaliseInteligente from "./pages/dashboard/master/AnaliseInteligente"; // Importar nova página
+import AnaliseInteligente from "./pages/dashboard/master/AnaliseInteligente";
 
 import WhatsAppIntegracao from "./pages/dashboard/master/comunicacao/WhatsAppIntegracao";
 import InstagramIntegracao from "./pages/dashboard/master/comunicacao/InstagramIntegracao";
@@ -35,7 +35,6 @@ import AtendimentoInteligentePage from "./pages/dashboard/cliente/AtendimentoInt
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
-import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital";
 import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte";
 import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos";
 
@@ -153,7 +152,7 @@ const App = () => {
               }
             />
             <Route
-              path="/dashboard/master/analise-inteligente" // Nova rota
+              path="/dashboard/master/analise-inteligente"
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
                   <PageTransition><AnaliseInteligente /></PageTransition>
@@ -242,14 +241,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/dashboard/cliente/carteira-digital"
-              element={
-                <ProtectedRoute allowedRoles={["client"]}>
-                  <PageTransition><ClientCarteiraDigitalPage /></PageTransition>
-                </ProtectedRoute>
-              }
-            />
+            {/* Rota da Carteira Digital removida */}
             <Route
               path="/dashboard/cliente/notificacoes-suporte"
               element={
