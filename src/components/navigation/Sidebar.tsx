@@ -40,8 +40,8 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
     { name: "Minha Experiência", href: "/dashboard/cliente/minha-experiencia", icon: Star },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
-    { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History }, // Novo item
-    { name: "Atendimento Inteligente", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
+    { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History },
+    { name: "Atendimento Inteligente (Assistente Pontedra)", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
     { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet },
     { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount },
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },

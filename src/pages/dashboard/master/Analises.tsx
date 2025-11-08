@@ -34,7 +34,7 @@ const AnalisesPage = () => {
   return (
     <MasterDashboardLayout>
       <div className="flex items-center mb-6">
-        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Relatórios e Sugestões IA</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-foreground">Relatórios e Sugestões Assistente Pontedra</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

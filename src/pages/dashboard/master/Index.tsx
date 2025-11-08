@@ -102,7 +102,7 @@ const MasterDashboardPage = () => {
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
           <Card className="bg-card border-border shadow-lg rounded-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Integrações IA</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Integrações Assistente Pontedra</CardTitle>
               <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -114,12 +114,12 @@ const MasterDashboardPage = () => {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3 mt-6">
-        {/* IA Insights e Planejamento Inteligente */}
+        {/* Assistente Pontedra Insights e Planejamento Inteligente */}
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.5 }} className="lg:col-span-2">
           <Card className="bg-card border-border shadow-lg rounded-2xl h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-primary" /> IA Insights e Planejamento Inteligente
+                <Lightbulb className="h-5 w-5 text-primary" /> Assistente Pontedra Insights e Planejamento Inteligente
               </CardTitle>
               <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={handleGenerateNewAISuggestion}>
                 <RefreshCcw className="h-4 w-4 mr-2" /> Nova Análise
@@ -127,7 +127,7 @@ const MasterDashboardPage = () => {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-between">
               <CardDescription className="text-muted-foreground mb-4">
-                Análises e recomendações automáticas geradas pela IA Pontedra com base no desempenho geral do sistema.
+                Análises e recomendações automáticas geradas pela Assistente Pontedra com base no desempenho geral do sistema.
               </CardDescription>
               <motion.div
                 key={currentSuggestion.id}

@@ -55,7 +55,7 @@ const MinhaExperienciaPage = () => {
   const handleGenerateNewSuggestions = () => {
     const newRecommendations = MOCK_CLIENT_AI_RECOMMENDATIONS.sort(() => 0.5 - Math.random()).slice(0, 3);
     setAiRecommendations(newRecommendations);
-    toast.info("Novas sugestões de IA geradas!");
+    toast.info("Novas sugestões da Assistente Pontedra geradas!");
   };
 
   const handleViewDetails = (appointment: any) => {
@@ -110,7 +110,7 @@ const MinhaExperienciaPage = () => {
         </motion.div>
       </div>
 
-      {/* Histórico Detalhado e IA Pontedra — Recomendações e Insights */}
+      {/* Histórico Detalhado e Assistente Pontedra — Recomendações e Insights */}
       <div className="grid gap-6 lg:grid-cols-3">
         <motion.div variants={cardVariants} initial="hidden" animate="visible" transition={{ delay: 0.3 }} className="lg:col-span-2">
           <Card className="bg-card border-border shadow-lg rounded-2xl h-full flex flex-col">
@@ -163,7 +163,7 @@ const MinhaExperienciaPage = () => {
           <Card className="bg-card border-border shadow-lg rounded-2xl h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-foreground flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-primary" /> IA Pontedra — Recomendações
+                <Lightbulb className="h-5 w-5 text-primary" /> Assistente Pontedra — Recomendações
               </CardTitle>
               <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={handleGenerateNewSuggestions}>
                 <RefreshCcw className="h-4 w-4" />
