@@ -1,9 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper } from "lucide-react"; // Adicionado Newspaper para o Blog
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/AuthContext"; // Importar useAuth
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Importar Avatar
+import { useAuth } from "@/context/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarProps {
   userRole: "master" | "client" | undefined;
@@ -11,7 +11,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ userRole }: SidebarProps) => {
   const location = useLocation();
-  const { user } = useAuth(); // Usar useAuth para obter informações do usuário
+  const { user } = useAuth();
 
   const masterNavItems = [
     { name: "Dashboard", href: "/dashboard/master", icon: LayoutDashboard },
@@ -21,6 +21,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Canais de Atendimento", href: "/dashboard/master/canais-atendimento", icon: MessageSquare },
     { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
+    { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper }, // Novo item de navegação
     { name: "Configurações", href: "/dashboard/master/settings", icon: Settings },
   ];
 

@@ -21,17 +21,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // No localStorage usage for session persistence, purely in-memory for demo
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse user from localStorage", error);
-        localStorage.removeItem("user");
-      }
-    }
-    setIsLoading(false);
+    // Simulate a quick check if a user was "previously logged in" for a fresh load
+    // In a real app, this would be an API call to validate a token
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 100); 
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -40,7 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
     if (loggedInUser) {
       setUser(loggedInUser);
-      localStorage.setItem("user", JSON.stringify(loggedInUser));
       toast.success("Login realizado com sucesso!");
       return true;
     } else {
@@ -51,7 +46,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
     toast.info("Você foi desconectado.");
   };
 
