@@ -24,6 +24,13 @@ serve(async (req) => {
   try {
     const { data: leadData } = await req.json() as { data: EmailLeadData }
 
+    if (!leadData.email || !leadData.mensagem) {
+      return new Response(JSON.stringify({ error: "Campos obrigatórios (e-mail e mensagem) ausentes" }), { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400 
+      })
+    }
+
     if (!Deno.env.get('RESEND_API_KEY')) {
       throw new Error('RESEND_API_KEY is not set in environment variables.')
     }
@@ -146,9 +153,15 @@ serve(async (req) => {
     }
 
     // E-mail para a equipe Pontedra (notificação)
+    const internalRecipients = [
+      "contato@pontedra.com",
+      "pontedradigital@gmail.com",
+      "heitor_contato@hotmail.com"
+    ]
+
     const emailEquipe = {
       from: 'Pontedra <contato@pontedra.com>',
-      to: ['contato@pontedra.com', 'pontedradigital@gmail.com', 'heitor_contato@hotmail.com'],
+      to: internalRecipients,
       subject: `🔔 Novo Lead: ${leadData.nome} - ${origemTexto}`,
       html: `
         <!DOCTYPE html>
