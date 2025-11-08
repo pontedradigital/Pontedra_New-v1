@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User } from "lucide-react"; // Importar User
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart } from "lucide-react"; // Importar User e BarChart
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -15,8 +15,9 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Clientes", href: "/dashboard/master/users", icon: Users },
     { name: "Serviços", href: "/dashboard/master/services", icon: Briefcase },
     { name: "Agendamentos", href: "/dashboard/master/appointments", icon: CalendarDays },
-    { name: "Comunicação", href: "/dashboard/master/communication", icon: MessageSquare },
+    { name: "Canais de Atendimento", href: "/dashboard/master/canais-atendimento", icon: MessageSquare }, // Renomeado
     { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
+    { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart }, // Novo item
     { name: "Configurações", href: "/dashboard/master/settings", icon: Settings },
   ];
 
@@ -25,7 +26,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
     { name: "Chat IA", href: "/dashboard/cliente/chat", icon: Bot },
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
-    { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings }, // Mantendo configurações para o cliente
+    { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
   ];
 
   const navItems = userRole === "master" ? masterNavItems : clientNavItems;

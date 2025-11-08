@@ -12,13 +12,14 @@ import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import UsersPage from "./pages/dashboard/master/Users";
 import ServicesPage from "./pages/dashboard/master/Services";
 import AppointmentsPage from "./pages/dashboard/master/Appointments";
-import CommunicationPage from "./pages/dashboard/master/Communication";
+import CanaisAtendimentoPage from "./pages/dashboard/master/CanaisAtendimento"; // Renomeado
 import AIInsightsPage from "./pages/dashboard/master/AIInsights";
+import AnalisesPage from "./pages/dashboard/master/Analises"; // Nova página
 import SettingsPage from "./pages/dashboard/master/Settings";
-import ClientAgendaPage from "./pages/dashboard/cliente/Agenda"; // Nova página
-import ClientChatPage from "./pages/dashboard/cliente/Chat";     // Nova página
-import ClientPerfilPage from "./pages/dashboard/cliente/Perfil"; // Nova página
-import ClientSettingsPage from "./pages/dashboard/cliente/Settings"; // Nova página
+import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
+import ClientChatPage from "./pages/dashboard/cliente/Chat";
+import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
+import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -70,10 +71,10 @@ const App = () => (
               }
             />
             <Route
-              path="/dashboard/master/communication"
+              path="/dashboard/master/canais-atendimento" // Rota atualizada
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
-                  <CommunicationPage />
+                  <CanaisAtendimentoPage />
                 </ProtectedRoute>
               }
             />
@@ -82,6 +83,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["master"]}>
                   <AIInsightsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/master/analises" // Nova rota
+              element={
+                <ProtectedRoute allowedRoles={["master"]}>
+                  <AnalisesPage />
                 </ProtectedRoute>
               }
             />
