@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon } from "lucide-react"; // Removido Bot
+import { MenuIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
 const LandingNavbar = () => {
@@ -29,7 +29,7 @@ const LandingNavbar = () => {
         {navLinks.map((link) => (
           <a
             key={link.name}
-            href={link.href}
+            href={`/landing${link.href}`} {/* Ajustado para navegar para /landing primeiro */}
             className="text-foreground hover:text-primary text-sm font-medium uppercase"
           >
             {link.name}
@@ -53,7 +53,7 @@ const LandingNavbar = () => {
               {navLinks.map((link) => (
                 <a
                   key={link.name}
-                  href={link.href}
+                  href={`/landing${link.href}`} {/* Ajustado para navegar para /landing primeiro */}
                   className="text-foreground hover:text-primary text-lg font-medium uppercase py-2"
                 >
                   {link.name}
