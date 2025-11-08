@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import QuemSomos from "@/components/landing/QuemSomos";
 import NossasSolucoes from "@/sections/NossasSolucoes";
 import Depoimentos from "@/sections/Depoimentos";
-import Contato from "@/sections/Contato";
+import { Contato } from "@/sections/Contato"; // Importação corrigida
 import BlogPreview from "@/sections/BlogPreview";
 
 export default function LandingPage() {
