@@ -2,7 +2,7 @@ import React from "react";
 import MasterDashboardLayout from "@/components/layouts/MasterDashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Bot, Instagram, Whatsapp } from "lucide-react";
+import { MessageSquare, Bot, Camera, MessageCircle } from "lucide-react"; // Alterado Instagram para Camera, Whatsapp para MessageCircle
 import { toast } from "sonner";
 
 const CommunicationPage = () => {
@@ -16,7 +16,7 @@ const CommunicationPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">WhatsApp</CardTitle>
-            <Whatsapp className="h-4 w-4 text-muted-foreground" />
+            <MessageCircle className="h-4 w-4 text-muted-foreground" /> {/* Alterado para MessageCircle */}
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -46,7 +46,7 @@ const CommunicationPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Instagram Direct</CardTitle>
-            <Instagram className="h-4 w-4 text-muted-foreground" />
+            <Camera className="h-4 w-4 text-muted-foreground" /> {/* Alterado para Camera */}
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
