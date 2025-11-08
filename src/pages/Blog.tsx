@@ -1,10 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
+import { Search, Calendar, Clock, ArrowRight } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
-import LandingNavbar from "@/components/LandingNavbar";
-import Footer from "@/sections/Footer";
 
 // Função para remover acentos
 const removeAccents = (str: string) => {
@@ -36,11 +34,9 @@ export default function Blog() {
   }, [searchTerm, activeCategory]);
 
   return (
-    <div className="min-h-screen bg-pontedra-dark text-foreground">
-      <LandingNavbar />
-      
+    <div className="min-h-screen bg-[#0D1B2A]">
       {/* Hero Section */}
-      <section className="relative w-full py-20 md:py-32 bg-gradient-to-b from-[#0a1520] to-pontedra-dark pt-32">
+      <section className="relative w-full py-20 md:py-32 bg-gradient-to-b from-[#0a1520] to-[#0D1B2A]">
         <div className="container mx-auto px-4 md:px-8">
           <motion.div
             className="text-center max-w-4xl mx-auto"
@@ -48,22 +44,22 @@ export default function Blog() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 bg-gradient-to-r from-pontedra-neon-green via-primary to-pontedra-neon-blue bg-clip-text text-transparent">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 bg-gradient-to-r from-[#00ffae] via-[#57e389] to-[#00b4ff] bg-clip-text text-transparent">
               BLOG
             </h1>
-            <p className="text-muted-foreground text-lg mb-12">
+            <p className="text-[#9ba8b5] text-lg mb-12">
               Artigos, dicas e insights sobre desenvolvimento web, sistemas personalizados, marketing digital e tudo que você precisa para fazer seu negócio crescer online.
             </p>
 
             {/* Barra de Busca */}
             <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5" />
               <input
                 type="text"
                 placeholder="Buscar artigos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-card border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="w-full pl-12 pr-4 py-4 bg-[#111d2e] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] transition-colors"
               />
             </div>
           </motion.div>
@@ -71,7 +67,7 @@ export default function Blog() {
       </section>
 
       {/* Filtros de Categoria */}
-      <section className="bg-card/50 border-y border-border">
+      <section className="bg-white/5 border-y border-[#1d2c3f]">
         <div className="container mx-auto px-4 md:px-8 py-6">
           <div className="flex flex-wrap justify-center gap-3">
             {categories.map((cat) => (
@@ -80,8 +76,8 @@ export default function Blog() {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${
                   activeCategory === cat
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
-                    : "bg-card text-muted-foreground border border-border hover:border-primary"
+                    ? "bg-[#57e389] text-[#0D1B2A] shadow-lg shadow-[#57e389]/30"
+                    : "bg-[#111d2e] text-[#9ba8b5] border border-[#1d2c3f] hover:border-[#57e389]"
                 }`}
               >
                 {cat}
@@ -104,9 +100,9 @@ export default function Blog() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <h2 className="text-2xl font-bold text-foreground mb-8">Destaque</h2>
+                  <h2 className="text-2xl font-bold text-white mb-8">Destaque</h2>
                   <Link to={`/blog/${filteredPosts[0].slug}`}>
-                    <div className="group bg-card/80 backdrop-blur-xl border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300">
+                    <div className="group bg-[#111d2e]/80 backdrop-blur-xl border border-[#1d2c3f] rounded-2xl overflow-hidden hover:border-[#57e389]/50 transition-all duration-300">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="relative h-64 md:h-full overflow-hidden">
                           <img
@@ -114,15 +110,15 @@ export default function Blog() {
                             alt={filteredPosts[0].title}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-pontedra-dark to-transparent opacity-60" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A] to-transparent opacity-60" />
                           <div className="absolute top-4 left-4">
-                            <span className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                            <span className="px-4 py-2 rounded-full bg-[#57e389] text-[#0D1B2A] text-sm font-semibold">
                               {filteredPosts[0].category}
                             </span>
                           </div>
                         </div>
                         <div className="p-8 flex flex-col justify-center">
-                          <div className="flex items-center gap-4 text-muted-foreground text-sm mb-4">
+                          <div className="flex items-center gap-4 text-[#9ba8b5] text-sm mb-4">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4" />
                               <span>{filteredPosts[0].date}</span>
@@ -132,23 +128,23 @@ export default function Blog() {
                               <span>{filteredPosts[0].readTime}</span>
                             </div>
                           </div>
-                          <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
+                          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 group-hover:text-[#57e389] transition-colors">
                             {filteredPosts[0].title}
                           </h3>
-                          <p className="text-muted-foreground leading-relaxed mb-6">
+                          <p className="text-[#9ba8b5] leading-relaxed mb-6">
                             {filteredPosts[0].excerpt}
                           </p>
                           <div className="flex flex-wrap gap-2 mb-6">
                             {filteredPosts[0].tags.map((tag, index) => (
                               <span
                                 key={index}
-                                className="px-3 py-1 rounded-full bg-background border border-border text-primary text-xs"
+                                className="px-3 py-1 rounded-full bg-[#0a1520] border border-[#1d2c3f] text-[#57e389] text-xs"
                               >
                                 {tag}
                               </span>
                             ))}
                           </div>
-                          <div className="flex items-center gap-2 text-primary font-semibold group-hover:gap-4 transition-all">
+                          <div className="flex items-center gap-2 text-[#57e389] font-semibold group-hover:gap-4 transition-all">
                             <span>Ler Artigo</span>
                             <ArrowRight className="w-5 h-5" />
                           </div>
@@ -162,7 +158,7 @@ export default function Blog() {
               {/* Todos os Artigos */}
               {filteredPosts.length > 1 && (
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-8">Todos os Artigos</h2>
+                  <h2 className="text-2xl font-bold text-white mb-8">Todos os Artigos</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredPosts.slice(1).map((post, index) => (
                       <motion.div
@@ -172,22 +168,22 @@ export default function Blog() {
                         transition={{ delay: index * 0.1 }}
                       >
                         <Link to={`/blog/${post.slug}`}>
-                          <div className="group bg-card/80 backdrop-blur-xl border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 h-full flex flex-col">
+                          <div className="group bg-[#111d2e]/80 backdrop-blur-xl border border-[#1d2c3f] rounded-2xl overflow-hidden hover:border-[#57e389]/50 transition-all duration-300 h-full flex flex-col">
                             <div className="relative h-48 overflow-hidden">
                               <img
                                 src={post.image}
                                 alt={post.title}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-pontedra-dark to-transparent opacity-60" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A] to-transparent opacity-60" />
                               <div className="absolute top-4 left-4">
-                                <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                                <span className="px-3 py-1 rounded-full bg-[#57e389] text-[#0D1B2A] text-xs font-semibold">
                                   {post.category}
                                 </span>
                               </div>
                             </div>
                             <div className="p-6 flex flex-col flex-grow">
-                              <div className="flex items-center gap-4 text-muted-foreground text-xs mb-3">
+                              <div className="flex items-center gap-4 text-[#9ba8b5] text-xs mb-3">
                                 <div className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   <span>{post.date}</span>
@@ -197,23 +193,23 @@ export default function Blog() {
                                   <span>{post.readTime}</span>
                                 </div>
                               </div>
-                              <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#57e389] transition-colors line-clamp-2">
                                 {post.title}
                               </h3>
-                              <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
+                              <p className="text-[#9ba8b5] text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
                                 {post.excerpt}
                               </p>
                               <div className="flex flex-wrap gap-2 mb-4">
                                 {post.tags.slice(0, 2).map((tag, idx) => (
                                   <span
                                     key={idx}
-                                    className="px-2 py-1 rounded-full bg-background border border-border text-primary text-xs"
+                                    className="px-2 py-1 rounded-full bg-[#0a1520] border border-[#1d2c3f] text-[#57e389] text-xs"
                                   >
                                     {tag}
                                   </span>
                                 ))}
                               </div>
-                              <div className="flex items-center gap-2 text-primary text-sm font-semibold group-hover:gap-4 transition-all">
+                              <div className="flex items-center gap-2 text-[#57e389] text-sm font-semibold group-hover:gap-4 transition-all">
                                 <span>Ler Artigo</span>
                                 <ArrowRight className="w-4 h-4" />
                               </div>
@@ -228,14 +224,13 @@ export default function Blog() {
             </>
           ) : (
             <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">
+              <p className="text-[#9ba8b5] text-lg">
                 Nenhum artigo encontrado para "{searchTerm}" na categoria "{activeCategory}".
               </p>
             </div>
           )}
         </div>
       </section>
-      <Footer />
     </div>
   );
 }
