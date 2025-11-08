@@ -10,6 +10,7 @@ import { MOCK_CLIENT_SERVICES, MOCK_CLIENT_APPOINTMENTS, MOCK_AVAILABLE_TIMES, S
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { Label } from "@/components/ui/label"; // Importar Label
 
 const AgendaPage = () => {
   const { user } = useAuth();
