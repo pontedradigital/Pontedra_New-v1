@@ -9,11 +9,11 @@ export function PopupManager() {
   const popupJaExibido = useRef(false) // Variável em memória para controlar exibição única por sessão
   const location = useLocation()
 
-  // Regra 6: Não aparecer nas páginas de Login e Cadastro
+  // Regra: Não aparecer nas páginas de Login e Cadastro
   const isPaginaBloqueada = location.pathname.includes('/login') || 
                             location.pathname.includes('/cadastro')
 
-  // Teste manual do pop-up
+  // Teste manual do pop-up (mantido para facilitar o desenvolvimento)
   useEffect(() => {
     const handleTestPopup = () => {
       if (popupJaExibido.current || isPaginaBloqueada) {
@@ -27,27 +27,27 @@ export function PopupManager() {
 
     window.addEventListener('test-popup', handleTestPopup)
     return () => window.removeEventListener('test-popup', handleTestPopup)
-  }, [exibirPopup, isPaginaBloqueada]) // Adicionado isPaginaBloqueada como dependência
+  }, [exibirPopup, isPaginaBloqueada])
 
+  // Regra: Exibir após 8 segundos navegando
   useEffect(() => {
     if (isPaginaBloqueada || popupJaExibido.current) return
 
-    console.log('PopupManager: Iniciando detecção de pop-up')
+    console.log('PopupManager: Iniciando detecção de pop-up por tempo')
 
-    // Regra 2: Exibir após 15 segundos navegando
     const timerTempo = setTimeout(() => {
       if (!popupJaExibido.current && !isPaginaBloqueada) {
-        console.log('PopupManager: Exibindo por tempo (15s)')
+        console.log('PopupManager: Exibindo por tempo (8s)')
         const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
         exibirPopup('tempo', tempoDecorrido)
         popupJaExibido.current = true // Marca como exibido
       }
-    }, 15000)
+    }, 8000) // Alterado de 15000ms para 8000ms
 
     return () => clearTimeout(timerTempo)
   }, [exibirPopup, tempoInicio, isPaginaBloqueada])
 
-  // Regra 1: Exibir quando visualizar seção de Soluções
+  // Regra: Exibir quando visualizar seção de Soluções
   useEffect(() => {
     if (isPaginaBloqueada || popupJaExibido.current) return
 
@@ -104,51 +104,8 @@ export function PopupManager() {
     }
   }, [exibirPopup, tempoInicio, isPaginaBloqueada, location.pathname])
 
-  // Regra 3: Exibir quando tentar sair da página
-  useEffect(() => {
-    if (isPaginaBloqueada || popupJaExibido.current) return
-
-    console.log('PopupManager: Configurando detecção de saída')
-
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0 && !popupJaExibido.current && !isPaginaBloqueada) {
-        console.log('PopupManager: Mouse saindo do topo! Exibindo pop-up')
-        const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
-        exibirPopup('saida', tempoDecorrido)
-        popupJaExibido.current = true // Marca como exibido
-      }
-    }
-
-    document.addEventListener('mouseleave', handleMouseLeave)
-
-    return () => {
-      document.removeEventListener('mouseleave', handleMouseLeave)
-    }
-  }, [exibirPopup, tempoInicio, isPaginaBloqueada])
-
-  // Regra 4: Exibir quando voltar para a página
-  useEffect(() => {
-    if (isPaginaBloqueada || popupJaExibido.current) return
-
-    console.log('PopupManager: Configurando detecção de retorno')
-
-    const handleVisibilityChange = () => {
-      console.log('PopupManager: Mudança de visibilidade:', document.visibilityState)
-      
-      if (document.visibilityState === 'visible' && !popupJaExibido.current && !isPaginaBloqueada) {
-        console.log('PopupManager: Usuário retornou! Exibindo pop-up')
-        const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
-        exibirPopup('retorno', tempoDecorrido)
-        popupJaExibido.current = true // Marca como exibido
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [exibirPopup, tempoInicio, isPaginaBloqueada])
+  // Regra de saída da página (anteriormente Regra 3) - REMOVIDA
+  // Regra de retorno à página (anteriormente Regra 4) - REMOVIDA
 
   if (!shouldShowPopup || !popupTipo || isPaginaBloqueada) return null
 
