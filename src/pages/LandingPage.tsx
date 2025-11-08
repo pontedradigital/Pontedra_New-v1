@@ -6,8 +6,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import QuemSomos from "@/components/landing/QuemSomos";
 import NossasSolucoes from "@/sections/NossasSolucoes";
 import Depoimentos from "@/sections/Depoimentos";
-import { Contato } from "@/sections/Contato"; // Importação corrigida
+import { Contato } from "@/sections/Contato";
 import BlogPreview from "@/sections/BlogPreview";
+import { PopupManager } from '@/components/PopupManager' // Importação adicionada
 
 export default function LandingPage() {
   const location = useLocation();
@@ -45,6 +46,7 @@ export default function LandingPage() {
         <Contato />
       </main>
       <Footer />
+      <PopupManager /> {/* Componente PopupManager adicionado aqui */}
     </div>
   );
 }
