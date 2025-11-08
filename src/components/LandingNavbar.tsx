@@ -88,13 +88,12 @@ export default function LandingNavbar() {
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
               
-              <div className="relative z-10 flex items-center gap-2">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center shadow-lg shadow-[#57e389]/30">
-                  <span className="text-[#0D1B2A] font-bold text-base md:text-lg">P</span>
-                </div>
-                <span className="text-lg md:text-xl font-bold text-[#e1e8f0] drop-shadow-[0_0_10px_rgba(87,227,137,0.3)]">
-                  Pontedra
-                </span>
+              <div className="relative z-10 flex items-center gap-3">
+                <img
+                  src="/pontedra-logo.webp"
+                  alt="Pontedra Logo"
+                  className="h-12 md:h-16 w-auto drop-shadow-[0_0_15px_rgba(87,227,137,0.5)]"
+                />
               </div>
             </motion.button>
 
