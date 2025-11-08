@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Simulate a quick check if a user was "previously logged in" for a fresh load
-  // In a real app, this would be an API call to validate a token
+  // Em um app real, isso seria uma chamada de API para validar um token existente
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
@@ -31,15 +31,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    const loggedInUser = await loginService(email, password);
-    setIsLoading(false);
-    if (loggedInUser) {
-      setUser(loggedInUser);
-      toast.success("Login realizado com sucesso!");
-      return true;
-    } else {
-      toast.error("Credenciais inválidas.");
+    try {
+      const loggedInUser = await loginService(email, password);
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        toast.success("Login realizado com sucesso!");
+        return true;
+      } else {
+        // loginService retornou null, significa credenciais inválidas
+        toast.error("Credenciais inválidas. Verifique seu e-mail e senha.");
+        return false;
+      }
+    } catch (error: any) {
+      // Captura erros de rede ou outros erros rejeitados pelo loginService
+      toast.error(error.message || "Ocorreu um erro inesperado ao tentar fazer login.");
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
