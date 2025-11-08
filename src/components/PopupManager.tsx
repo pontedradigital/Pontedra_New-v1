@@ -6,7 +6,7 @@ import { LeadCapturePopup } from './LeadCapturePopup'
 export function PopupManager() {
   const { shouldShowPopup, popupTipo, exibirPopup, fecharPopup } = usePopupControl()
   const [tempoInicio] = useState(Date.now())
-  const popupJaExibido = useRef(false)
+  const popupJaExibido = useRef(false) // Variável em memória para controlar exibição única por sessão
   const location = useLocation()
 
   // Regra 6: Não aparecer nas páginas de Login e Cadastro
@@ -16,14 +16,18 @@ export function PopupManager() {
   // Teste manual do pop-up
   useEffect(() => {
     const handleTestPopup = () => {
+      if (popupJaExibido.current || isPaginaBloqueada) {
+        console.log('Teste manual: Pop-up já exibido ou página bloqueada, não forçar abertura.')
+        return
+      }
       console.log('Teste manual: Forçando abertura do pop-up')
       exibirPopup('solucoes', 0)
-      popupJaExibido.current = false // Permite reabrir para testes
+      popupJaExibido.current = true // Marca como exibido
     }
 
     window.addEventListener('test-popup', handleTestPopup)
     return () => window.removeEventListener('test-popup', handleTestPopup)
-  }, [exibirPopup])
+  }, [exibirPopup, isPaginaBloqueada]) // Adicionado isPaginaBloqueada como dependência
 
   useEffect(() => {
     if (isPaginaBloqueada || popupJaExibido.current) return
@@ -36,7 +40,7 @@ export function PopupManager() {
         console.log('PopupManager: Exibindo por tempo (15s)')
         const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
         exibirPopup('tempo', tempoDecorrido)
-        popupJaExibido.current = true
+        popupJaExibido.current = true // Marca como exibido
       }
     }, 15000)
 
@@ -65,7 +69,7 @@ export function PopupManager() {
               console.log('PopupManager: Seção #solucoes visível! Exibindo pop-up')
               const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
               exibirPopup('solucoes', tempoDecorrido)
-              popupJaExibido.current = true
+              popupJaExibido.current = true // Marca como exibido
               observer.disconnect()
             }
           })
@@ -111,7 +115,7 @@ export function PopupManager() {
         console.log('PopupManager: Mouse saindo do topo! Exibindo pop-up')
         const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
         exibirPopup('saida', tempoDecorrido)
-        popupJaExibido.current = true
+        popupJaExibido.current = true // Marca como exibido
       }
     }
 
@@ -132,19 +136,10 @@ export function PopupManager() {
       console.log('PopupManager: Mudança de visibilidade:', document.visibilityState)
       
       if (document.visibilityState === 'visible' && !popupJaExibido.current && !isPaginaBloqueada) {
-        const visitouAntes = sessionStorage.getItem('pontedra_visitou_antes')
-        console.log('PopupManager: Visitou antes?', visitouAntes)
-        
-        if (visitouAntes === 'true') {
-          console.log('PopupManager: Usuário retornou! Exibindo pop-up')
-          const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
-          exibirPopup('retorno', tempoDecorrido)
-          popupJaExibido.current = true
-        } else {
-          sessionStorage.setItem('pontedra_visitou_antes', 'true')
-        }
-      } else if (document.visibilityState === 'hidden') {
-        sessionStorage.setItem('pontedra_visitou_antes', 'true')
+        console.log('PopupManager: Usuário retornou! Exibindo pop-up')
+        const tempoDecorrido = Math.floor((Date.now() - tempoInicio) / 1000)
+        exibirPopup('retorno', tempoDecorrido)
+        popupJaExibido.current = true // Marca como exibido
       }
     }
 
