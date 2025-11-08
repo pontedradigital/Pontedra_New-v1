@@ -68,6 +68,9 @@ export default {
         pontedra: { // Adicionando cores personalizadas
           green: "#00C896",
           dark: "#0D1B2A",
+          'shader-bg': '#0a0f1c', // Cor de fundo para o shader
+          'neon-green': '#00ffae', // Cor de linha 1
+          'neon-blue': '#00b4ff', // Cor de linha 2
         },
       },
       borderRadius: {

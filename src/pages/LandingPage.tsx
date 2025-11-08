@@ -6,6 +6,7 @@ import Footer from "@/components/navigation/Footer";
 import { motion } from "framer-motion";
 import { MessageCircle, MessageSquare, Camera, CalendarDays, BarChart, Bot, Zap, ShieldCheck, Clock, TrendingUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ShaderLinesBackground from "@/components/ShaderLinesBackground"; // Importar o novo componente
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -27,6 +28,7 @@ const LandingPage = () => {
         id="hero"
         className="relative h-[calc(100vh-64px)] flex items-center justify-center text-center overflow-hidden bg-gradient-to-br from-background to-card"
       >
+        <ShaderLinesBackground /> {/* Integrar o fundo animado aqui */}
         <div className="absolute inset-0 bg-radial-gradient from-background via-card to-transparent opacity-70"></div>
         <div className="relative z-10 max-w-4xl px-4">
           <motion.h1
