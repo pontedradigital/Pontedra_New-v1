@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"; // Importar useLocation
-import { AnimatePresence, motion } from "framer-motion"; // Importar AnimatePresence e motion
+import { Routes, Route, useLocation } from "react-router-dom"; // Removido BrowserRouter
+import { AnimatePresence, motion } from "framer-motion";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -19,7 +19,7 @@ import CanaisAtendimentoPage from "./pages/dashboard/master/CanaisAtendimento";
 import AIInsightsPage from "./pages/dashboard/master/AIInsights";
 import AnalisesPage from "./pages/dashboard/master/Analises";
 import SettingsPage from "./pages/dashboard/master/Settings";
-import BlogPage from "./pages/dashboard/master/BlogPage"; // Importar BlogPage
+import BlogPage from "./pages/dashboard/master/BlogPage";
 
 import ClientDashboardPage from "./pages/dashboard/cliente/Index";
 import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
@@ -38,14 +38,14 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => (
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -20 }}
     transition={{ duration: 0.3 }}
-    className="h-full w-full" // Garante que a div de transição ocupe o espaço
+    className="h-full w-full"
   >
     {children}
   </motion.div>
 );
 
 const App = () => {
-  const location = useLocation(); // Hook para obter a localização atual
+  const location = useLocation();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -53,8 +53,8 @@ const App = () => {
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <AnimatePresence mode="wait"> {/* Adicionado AnimatePresence */}
-            <Routes location={location} key={location.pathname}> {/* Passar location e key */}
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
               <Route path="/" element={<PageTransition><Index /></PageTransition>} />
               <Route path="/landing" element={<PageTransition><LandingPage /></PageTransition>} />
               <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
@@ -118,7 +118,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/master/blog" // Nova rota para Blog
+                path="/dashboard/master/blog"
                 element={
                   <ProtectedRoute allowedRoles={["master"]}>
                     <PageTransition><BlogPage /></PageTransition>
@@ -133,7 +133,6 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              {/* Catch-all para sub-rotas do Master, se necessário */}
               <Route
                 path="/dashboard/master/*"
                 element={
@@ -184,7 +183,6 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              {/* Catch-all para sub-rotas do Cliente, se necessário */}
               <Route
                 path="/dashboard/cliente/*"
                 element={
@@ -194,7 +192,6 @@ const App = () => {
                 }
               />
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
             </Routes>
           </AnimatePresence>
