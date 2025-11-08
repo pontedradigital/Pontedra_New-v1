@@ -212,46 +212,28 @@ const Hero = () => {
             💡 Soluções Web para PMEs e Profissionais
           </motion.p>
 
-          <motion.h1
-            className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight drop-shadow-lg"
-            variants={{
-              hidden: { opacity: 0, y: 50 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            initial="hidden"
-            animate={controls}
-            transition={{ duration: 1, delay: 0.2 }}
+          <h1
+            className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight drop-shadow-lg opacity-0 animate-fadeInUp animate-pulse-slow"
+            style={{ animationDelay: '0.2s' }}
           >
             Conectamos sua empresa a <span className="text-pontedra-title-green">pessoas</span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            className="text-base md:text-lg text-pontedra-subtitle-gray mt-4 max-w-xl mx-auto lg:mx-0"
-            variants={{
-              hidden: { opacity: 0, y: 30 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            initial="hidden"
-            animate={controls}
-            transition={{ delay: 0.5, duration: 1 }}
+          <p
+            className="text-base md:text-lg text-pontedra-subtitle-gray mt-4 max-w-xl mx-auto lg:mx-0 opacity-0 animate-fadeInUp animate-pulse-slow"
+            style={{ animationDelay: '0.4s' }}
           >
             Construímos pontes digitais que conectam sua marca a clientes reais, impulsionando resultados com autenticidade, tecnologia e inteligência estratégica.
-          </motion.p>
+          </p>
 
-          <motion.div
-            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            initial="hidden"
-            animate={controls}
-            transition={{ delay: 0.8, duration: 0.8 }}
+          <div
+            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start opacity-0 animate-fadeIn"
+            style={{ animationDelay: '0.6s' }}
           >
             <a
               href="#solucoes"
               onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
-              className="bg-pontedra-button-green hover:bg-pontedra-button-green-hover text-pontedra-dark-text px-6 py-3 rounded-xl font-semibold transition-colors duration-300 shadow-lg"
+              className="bg-pontedra-button-green hover:bg-pontedra-button-green-hover text-pontedra-dark-text px-6 py-3 rounded-xl font-semibold transition-all duration-700 ease-out shadow-lg hover:scale-105 hover:shadow-[0_0_15px_#5FF07780]"
             >
               Ver Soluções
             </a>
@@ -259,11 +241,11 @@ const Hero = () => {
               href="https://www.instagram.com/digitalpontevra/"
               target="_blank"
               rel="noreferrer"
-              className="border border-white hover:bg-pontedra-title-green hover:text-pontedra-dark-text text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300 shadow-lg"
+              className="border border-white hover:bg-pontedra-title-green hover:text-pontedra-dark-text text-white px-6 py-3 rounded-xl font-semibold transition-all duration-700 ease-out shadow-lg hover:scale-105 hover:shadow-[0_0_15px_#5FF07780]"
             >
               Ver Portfólio
             </a>
-          </motion.div>
+          </div>
         </div>
 
         {/* Checklist lateral (direita) */}
