@@ -7,6 +7,7 @@ import QuemSomos from "@/components/landing/QuemSomos";
 import NossasSolucoes from "@/sections/NossasSolucoes";
 import Depoimentos from "@/sections/Depoimentos"; // Importar o novo componente Depoimentos
 import Contato from "@/sections/Contato"; // Importar o novo componente Contato
+import BlogPreview from "@/sections/BlogPreview"; // Importar o novo componente BlogPreview
 
 export default function LandingPage() {
   const location = useLocation();
@@ -41,12 +42,8 @@ export default function LandingPage() {
         {/* Nova seção de Depoimentos */}
         <Depoimentos />
 
-        <section id="blog" className="py-24 bg-background border-t border-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-foreground mb-6">Blog</h2>
-            <p className="text-textSecondary max-w-3xl">Fique por dentro das últimas tendências e dicas do mundo digital.</p>
-          </div>
-        </section>
+        {/* Nova seção de Blog Preview */}
+        <BlogPreview />
 
         {/* Nova seção de Contato */}
         <Contato />

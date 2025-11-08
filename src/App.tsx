@@ -45,6 +45,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 // Importar as novas páginas
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import TermosUso from "./pages/TermosUso";
+import Blog from "./pages/Blog"; // Importar a página principal do Blog
+import BlogPostPage from "./pages/BlogPostPage"; // Importar a página de post individual
 
 
 const queryClient = new QueryClient();
@@ -81,6 +83,10 @@ const App = () => {
             {/* Novas Rotas para Páginas Legais */}
             <Route path="/politica-privacidade" element={<PageTransition><PoliticaPrivacidade /></PageTransition>} />
             <Route path="/termos-uso" element={<PageTransition><TermosUso /></PageTransition>} />
+
+            {/* Rotas do Blog */}
+            <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+            <Route path="/blog/:slug" element={<PageTransition><BlogPostPage /></PageTransition>} />
 
             {/* Rotas Protegidas para Master */}
             <Route
