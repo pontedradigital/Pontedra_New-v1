@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ClientDashboardLayout from "@/components/layouts/ClientDashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -229,7 +229,7 @@ const MinhaExperienciaPage = () => {
             <DialogTitle className="text-primary">Detalhes do Agendamento</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Informações completas sobre o serviço agendado.
-            </CardDescription>
+            </DialogDescription>
           </DialogHeader>
           {selectedAppointmentDetail && (
             <div className="grid gap-4 py-4">
