@@ -18,7 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "bot";
+  sender: "user" | "Assistente Pontedra"; // Atualizado para Assistente Pontedra
   timestamp: string;
 }
 
@@ -69,7 +69,7 @@ const AtendimentoInteligentePage = () => {
   useEffect(() => {
     if (chatState.messages.length === 0) {
       setTimeout(() => {
-        addBotMessage(CHATBOT_RESPONSES.find(r => r.type === "greeting")?.text || "Olá! Como posso ajudar?");
+        addBotMessage(CHATBOT_RESPONSES.find(r => r.id === 1)?.message || "Olá! Como posso ajudar?");
       }, 500);
     }
 
@@ -94,9 +94,9 @@ const AtendimentoInteligentePage = () => {
         clearInterval(proactiveTipIntervalRef.current);
       }
       proactiveTipIntervalRef.current = window.setInterval(() => {
-        const tips = CHATBOT_RESPONSES.filter(r => r.type.startsWith("proactive_tip_"));
-        const randomTip = tips[Math.floor(Math.random() * tips.length)];
-        addBotMessage(randomTip.text);
+        // Using a random message from the new CHATBOT_RESPONSES for proactive tips
+        const randomMessage = CHATBOT_RESPONSES[Math.floor(Math.random() * CHATBOT_RESPONSES.length)].message;
+        addBotMessage(randomMessage);
       }, 60000); // Every 60 seconds
     };
 
@@ -111,7 +111,7 @@ const AtendimentoInteligentePage = () => {
   const addBotMessage = (text: string) => {
     setChatState(prev => ({
       ...prev,
-      messages: [...prev.messages, { id: Date.now(), text, sender: "bot", timestamp: new Date().toISOString() }],
+      messages: [...prev.messages, { id: Date.now(), text, sender: "Assistente Pontedra", timestamp: new Date().toISOString() }], // Atualizado sender
     }));
   };
 
@@ -119,7 +119,7 @@ const AtendimentoInteligentePage = () => {
     setIsTyping(true);
     await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate Assistente Pontedra processing time
 
-    let botResponse = CHATBOT_RESPONSES.find(r => r.type === "fallback")?.text || "Desculpe, não entendi. 😕";
+    let botResponse = CHATBOT_RESPONSES.find(r => r.id === 4)?.message || "Desculpe, não entendi. 😕"; // Fallback message
     let newLastServiceMentioned = chatState.lastServiceMentioned;
     let newAwaitingConfirmation = chatState.awaitingConfirmation;
     let newPendingAppointment = chatState.pendingAppointment;
@@ -133,7 +133,7 @@ const AtendimentoInteligentePage = () => {
         newPendingAppointment = { ...newPendingAppointment!, serviceName: service.name, date: "", time: "" };
         newAwaitingConfirmation = "date_time";
         newLastServiceMentioned = service.name;
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_prompt_date_time")?.text?.replace('{serviceName}', service.name) || "Ótimo! E qual dia e horário você prefere?";
+        botResponse = `Ótimo! E qual dia e horário você prefere para o serviço de ${service.name}? Por exemplo: 'amanhã às 10h' ou '25/12 às 14h'. ⏰`;
       } else {
         botResponse = "Não encontrei este serviço. Por favor, escolha um dos nossos serviços: Corte de Cabelo Masculino, Manicure e Pedicure, Massagem Relaxante, Coloração Feminina ou Limpeza de Pele. 🧐";
       }
@@ -173,39 +173,36 @@ const AtendimentoInteligentePage = () => {
           status: "confirmed", // Simulate immediate confirmation
         }, user?.email || "cliente@teste.com");
 
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_confirm_success")?.text
-          ?.replace('{serviceName}', newPendingAppointment.serviceName)
-          .replace('{date}', format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR }))
-          .replace('{time}', newPendingAppointment.time) || "Agendamento confirmado! ✅";
+        botResponse = `Perfeito! Seu agendamento para '${newPendingAppointment.serviceName}' foi registrado para ${format(parseISO(newPendingAppointment.date), "dd/MM/yyyy", { locale: ptBR })} às ${newPendingAppointment.time}. Você receberá uma confirmação em breve. ✅`;
         newAwaitingConfirmation = null;
         newPendingAppointment = null;
         newLastServiceMentioned = null;
         toast.success("Agendamento criado com sucesso!");
       } else {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_confirm_fail")?.text || "Não consegui entender a data ou hora. Por favor, tente novamente com um formato como 'amanhã às 14h' ou '25/12 às 10h'. 📅";
+        botResponse = "Não consegui entender a data ou hora. Por favor, tente novamente com um formato como 'amanhã às 14h' ou '25/12 às 10h'. 📅";
       }
     }
     // Intent: General Services
     else if (lowerCaseText.includes("serviços") || lowerCaseText.includes("o que vocês oferecem")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "services_general")?.text || "Nossos serviços incluem Corte, Manicure, Coloração e Limpeza. Qual deles você deseja mais informações? 💇‍♀️💅";
+      botResponse = "Atualmente oferecemos: \n• Corte de Cabelo Masculino 💇‍♂️\n• Manicure e Pedicure 💅\n• Massagem Relaxante 💆‍♀️\n• Coloração Feminina 🌈\n• Limpeza de Pele ✨\nQual deles você deseja mais informações ou agendar?";
       newAwaitingConfirmation = "service";
     }
     // Intent: Service Price
     else if (lowerCaseText.includes("valor") || lowerCaseText.includes("preço") || lowerCaseText.includes("quanto custa")) {
       if (lowerCaseText.includes("corte")) {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "service_price_corte")?.text || "O Corte de Cabelo Masculino custa R$55,00.";
+        botResponse = "O Corte de Cabelo Masculino custa R$55,00 e dura cerca de 45 minutos. Deseja agendar um horário? 🗓️";
         newLastServiceMentioned = "Corte de Cabelo Masculino";
       } else if (lowerCaseText.includes("manicure") || lowerCaseText.includes("pedicure")) {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "service_price_manicure")?.text || "O serviço de Manicure e Pedicure custa R$85,00.";
+        botResponse = "O serviço de Manicure e Pedicure custa R$85,00 e dura cerca de 1 hora. Deseja agendar um horário? 💅";
         newLastServiceMentioned = "Manicure e Pedicure";
       } else if (lowerCaseText.includes("coloração")) {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "service_price_coloracao")?.text || "A Coloração Feminina custa R$180,00.";
+        botResponse = "A Coloração Feminina custa R$180,00 e dura em média 1h30. Deseja agendar um horário? 🎨";
         newLastServiceMentioned = "Coloração Feminina";
       } else if (lowerCaseText.includes("limpeza de pele")) {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "service_price_limpeza")?.text || "A Limpeza de Pele custa R$100,00.";
+        botResponse = "A Limpeza de Pele custa R$100,00 e dura cerca de 1 hora. Deseja agendar um horário? ✨";
         newLastServiceMentioned = "Limpeza de Pele";
       } else if (lowerCaseText.includes("massagem")) {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "service_price_massagem")?.text || "A Massagem Relaxante custa R$130,00.";
+        botResponse = "A Massagem Relaxante custa R$130,00 e dura cerca de 60 minutos. Deseja agendar um horário? 🧘‍♀️";
         newLastServiceMentioned = "Massagem Relaxante";
       } else if (chatState.lastServiceMentioned) {
         const service = MOCK_CLIENT_SERVICES.find(s => s.name === chatState.lastServiceMentioned);
@@ -218,30 +215,30 @@ const AtendimentoInteligentePage = () => {
     }
     // Intent: Promotions
     else if (lowerCaseText.includes("promoção") || lowerCaseText.includes("desconto") || lowerCaseText.includes("oferta")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "promotion_general")?.text || "Temos algumas promoções! 🎉 A Assistente Pontedra identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
+      botResponse = "Sim! 🎉 A Assistente Pontedra identificou que o serviço de Manicure e Pedicure está com 10% de desconto essa semana. Deseja aproveitar?";
     }
     // Intent: Human Assistance
     else if (lowerCaseText.includes("falar com alguém") || lowerCaseText.includes("atendente") || lowerCaseText.includes("suporte")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "human_assistance")?.text || "Um de nossos atendentes será notificado. 🧑‍💻";
+      botResponse = "Sem problemas! Um de nossos atendentes será notificado para te ajudar. Enquanto isso, posso te ajudar com alguma dúvida sobre serviços? 🧑‍💻";
     }
     // Intent: Thank you / Goodbye
     else if (lowerCaseText.includes("obrigado") || lowerCaseText.includes("valeu")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "thank_you")?.text || "De nada! 😊";
+      botResponse = "De nada! 😊 Se precisar de mais alguma coisa, é só chamar.";
     }
     else if (lowerCaseText.includes("tchau") || lowerCaseText.includes("até mais")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "goodbye")?.text || "Até mais! 👋";
+      botResponse = "Até mais! 👋 Tenha um ótimo dia.";
     }
     // Intent: Scheduling trigger
     else if (lowerCaseText.includes("agendar") || lowerCaseText.includes("marcar")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "scheduling_prompt_service")?.text || "Claro! Para qual serviço você gostaria de agendar? 📝";
+      botResponse = "Claro! Para qual serviço você gostaria de agendar? Me diga o nome do serviço. 📝";
       newAwaitingConfirmation = "service";
     }
     // Intent: Cancel/Reschedule (simulated)
     else if (lowerCaseText.includes("cancelar agendamento")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "cancel_appointment_prompt")?.text || "Para cancelar um agendamento, por favor, acesse a página 'Meus Agendamentos' ou informe o ID do agendamento que deseja cancelar. (Funcionalidade simulada) ❌";
+      botResponse = "Para cancelar um agendamento, por favor, acesse a página 'Meus Agendamentos' ou informe o ID do agendamento que deseja cancelar. (Funcionalidade simulada) ❌";
     }
     else if (lowerCaseText.includes("reagendar")) {
-      botResponse = CHATBOT_RESPONSES.find(r => r.type === "reschedule_appointment_prompt")?.text || "Para reagendar, por favor, acesse a página 'Meus Agendamentos' e selecione a opção de reagendamento. (Funcionalidade simulada) 🔄";
+      botResponse = "Para reagendar, por favor, acesse a página 'Meus Agendamentos' e selecione a opção de reagendamento. (Funcionalidade simulada) 🔄";
     }
     // Intent: Check appointment status
     else if (lowerCaseText.includes("status do meu agendamento") || lowerCaseText.includes("meu agendamento") || lowerCaseText.includes("próximo agendamento")) {
@@ -249,7 +246,7 @@ const AtendimentoInteligentePage = () => {
       if (upcoming.length > 0) {
         botResponse = `Seu próximo agendamento é para '${upcoming[0].serviceName}' em ${format(parseISO(upcoming[0].date), "dd/MM/yyyy", { locale: ptBR })} às ${upcoming[0].time}. Status: ${upcoming[0].status}. 🗓️`;
       } else {
-        botResponse = CHATBOT_RESPONSES.find(r => r.type === "check_appointment_status_no_upcoming")?.text || "Você não tem agendamentos futuros registrados. Que tal agendar um novo serviço? 🗓️";
+        botResponse = "Você não tem agendamentos futuros registrados. Que tal agendar um novo serviço? 🗓️";
       }
     }
 
@@ -330,7 +327,7 @@ const AtendimentoInteligentePage = () => {
                   message.sender === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {message.sender === "bot" && (
+                {message.sender === "Assistente Pontedra" && ( // Atualizado sender
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary border border-border">
                     <BotIcon className="h-4 w-4" />
                   </div>
@@ -373,7 +370,7 @@ const AtendimentoInteligentePage = () => {
                   className="max-w-[70%] p-3 rounded-lg bg-muted text-muted-foreground rounded-bl-none border border-border shadow-sm flex items-center gap-2"
                 >
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span>Digitando...</span>
+                  <span>Assistente Pontedra digitando...</span> {/* Atualizado texto */}
                 </motion.div>
               </div>
             )}

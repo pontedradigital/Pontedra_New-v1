@@ -551,3 +551,9 @@ export const MOCK_CLIENT_DETAILED_APPOINTMENT_HISTORY: DetailedClientAppointment
     notes: "Retoque de raiz, tom loiro acinzentado."
   },
 ];
+
+export const assistantProfile = {
+  name: "Assistente Pontedra",
+  status: "Online",
+  description: "Assistente virtual da Pontedra para auxiliar clientes em dúvidas, agendamentos e promoções em tempo real."
+};
