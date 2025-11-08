@@ -67,11 +67,19 @@ export default {
         },
         pontedra: { // Adicionando cores personalizadas
           green: "#00C896",
+          'green-light': "#00E0A0", // Nova cor
+          'green-hover': "#4acb78", // Nova cor
+          'dark-text': "#081017", // Nova cor
+          'border-light': "#2a3b4b", // Nova cor
           dark: "#0D1B2A",
           'shader-bg': '#0a0f1c', // Cor de fundo para o shader
           'neon-green': '#00ffae', // Cor de linha 1
           'neon-blue': '#00b4ff', // Cor de linha 2
         },
+        // Mapeando as novas cores genéricas para as variáveis CSS existentes
+        textPrimary: "hsl(var(--foreground))",
+        textSecondary: "hsl(var(--muted-foreground))",
+        bgMain: "hsl(var(--background))",
       },
       borderRadius: {
         lg: "var(--radius)",

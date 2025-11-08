@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/login/Login";
 import Register from "./pages/register/Register";
-import LandingPage from "./pages/LandingPage";
+import LandingPage from "./pages/LandingPage"; // A LandingPage agora tem sua própria Navbar
 
 import MasterDashboardPage from "./pages/dashboard/master/Index";
 import UsersPage from "./pages/dashboard/master/Users";
@@ -37,9 +37,8 @@ import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
 import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
 import NotificacoesSuportePage from "./pages/dashboard/cliente/NotificacoesSuporte";
 import HistoricoAgendamentosPage from "./pages/dashboard/cliente/HistoricoAgendamentos";
-import BeneficiosFidelidadePage from "./pages/dashboard/cliente/BeneficiosFidelidade"; // Importar a nova página
+import BeneficiosFidelidadePage from "./pages/dashboard/cliente/BeneficiosFidelidade";
 
-import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
