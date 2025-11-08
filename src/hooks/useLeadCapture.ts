@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-// Removendo a importação de enviarEmailConfirmacaoLead, pois agora será uma Edge Function
 
 interface LeadData {
   nome: string
@@ -49,31 +48,28 @@ export function useLeadCapture() {
         p_session_id: sessionId,
         p_nome: leadData.nome,
         p_email: leadData.email,
-        p_telefone: leadData.telefone || null,
-        p_origem: leadData.origem,
-        p_assunto: leadData.assunto || null,
-        p_mensagem: leadData.mensagem || null,
-        p_url_captura: trackingData.url_captura,
-        p_ip_address: null, // IP address should ideally be captured server-side for accuracy
-        p_user_agent: trackingData.user_agent,
-        p_utm_source: trackingData.utm_source,
-        p_utm_medium: trackingData.utm_medium,
-        p_utm_campaign: trackingData.utm_campaign,
-        p_referrer: trackingData.referrer,
+        p_telefone: leadData.telefone || undefined, // Alterado de null para undefined
+        p_origem: leadData.origem || undefined, // Alterado de null para undefined
+        p_assunto: leadData.assunto || undefined, // Alterado de null para undefined
+        p_mensagem: leadData.mensagem || undefined, // Alterado de null para undefined
+        p_url_captura: trackingData.url_captura || undefined, // Alterado de null para undefined
+        p_ip_address: undefined, // Alterado de null para undefined
+        p_user_agent: trackingData.user_agent || undefined, // Alterado de null para undefined
+        p_utm_source: trackingData.utm_source || undefined, // Alterado de null para undefined
+        p_utm_medium: trackingData.utm_medium || undefined, // Alterado de null para undefined
+        p_utm_campaign: trackingData.utm_campaign || undefined, // Alterado de null para undefined
+        p_referrer: trackingData.referrer || undefined, // Alterado de null para undefined
       })
 
       if (supabaseError) throw supabaseError
 
       // 2. Invocar a Edge Function para enviar e-mails
       const { data: emailResponse, error: edgeFunctionError } = await supabase.functions.invoke('send-lead-emails', {
-        body: { data: leadData }, // Passa os dados do lead para a Edge Function
+        body: { data: leadData },
       })
 
       if (edgeFunctionError) throw edgeFunctionError
       if (!emailResponse.success) throw new Error(emailResponse.error || 'Erro ao enviar e-mails pela Edge Function.')
-
-      // Removido: localStorage.setItem('pontedra_lead_captured', 'true')
-      // Removido: localStorage.setItem('pontedra_lead_email', leadData.email)
 
       return { success: true, data: dbResponse }
     } catch (err) {
@@ -85,11 +81,8 @@ export function useLeadCapture() {
     }
   }
 
-  // Removido: verificarLeadCapturado
-
   return {
     capturarLead,
-    // Removido: verificarLeadCapturado,
     loading,
     error,
   }
