@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star } from "lucide-react"; // Adicionado Headset e Star
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, Wallet } from "lucide-react"; // Adicionado Wallet
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,9 +36,10 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
 
   const clientNavItems = [
     { name: "Início", href: "/dashboard/cliente", icon: LayoutDashboard },
-    { name: "Minha Experiência", href: "/dashboard/cliente/minha-experiencia", icon: Star }, // Novo item
+    { name: "Minha Experiência", href: "/dashboard/cliente/minha-experiencia", icon: Star },
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
     { name: "Central de Atendimento", href: "/dashboard/cliente/central-atendimento", icon: Headset },
+    { name: "Carteira Digital", href: "/dashboard/cliente/carteira-digital", icon: Wallet }, // Novo item
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },
   ];

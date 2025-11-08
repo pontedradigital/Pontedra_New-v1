@@ -124,6 +124,33 @@ export interface ClientPromotion {
   actionMessage: string; // Message to pre-fill chat
 }
 
+export interface ClientFinancialSummary {
+  currentBalance: number;
+  availableCredits: number;
+  accumulatedCashback: number;
+}
+
+export interface ClientTransaction {
+  id: string;
+  date: string;
+  description: string;
+  type: "credit" | "debit" | "cashback";
+  amount: number;
+  status: "paid" | "pending" | "refunded" | "completed";
+}
+
+export interface ClientFinancialInsight {
+  id: string;
+  message: string;
+  category: string;
+}
+
+export interface ClientSpendingChartData {
+  month: string;
+  spending: number;
+}
+
+
 export const MOCK_CLIENT_SERVICES: Service[] = [
   { id: "s1", name: "Corte de Cabelo Masculino", description: "Corte moderno com lavagem e finalização.", price: 55.00, category: "Cabelo", availability: "available", imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Corte" },
   { id: "s2", name: "Manicure e Pedicure", description: "Serviço completo de unhas.", price: 85.00, category: "Estética", availability: "available", imageUrl: "https://via.placeholder.com/150/FF0000/FFFFFF?text=Manicure" },
@@ -311,13 +338,13 @@ export const MOCK_CLIENT_EXPERIENCE_SUMMARY: ClientExperienceSummary = {
 };
 
 export const MOCK_CLIENT_APPOINTMENT_HISTORY = [
-  { id: "h1", date: "2024-11-20", serviceName: "Corte de Cabelo Masculino", status: "Concluído", value: 55.00 },
-  { id: "h2", date: "2024-11-15", serviceName: "Manicure e Pedicure", status: "Concluído", value: 85.00 },
-  { id: "h3", date: "2024-11-10", serviceName: "Limpeza de Pele", status: "Concluído", value: 100.00 },
-  { id: "h4", date: "2024-11-05", serviceName: "Coloração Feminina", status: "Concluído", value: 180.00 },
-  { id: "h5", date: "2024-10-28", serviceName: "Corte de Cabelo Masculino", status: "Concluído", value: 55.00 },
-  { id: "h6", date: "2024-12-01", serviceName: "Massagem Relaxante", status: "Pendente", value: 130.00 },
-  { id: "h7", date: "2024-12-05", serviceName: "Manicure e Pedicure", status: "Pendente", value: 85.00 },
+  { id: "h1", date: "2024-11-20", serviceName: "Corte de Cabelo Masculino", status: "Concluído", value: 55.00, clientEmail: "cliente@teste.com" },
+  { id: "h2", date: "2024-11-15", serviceName: "Manicure e Pedicure", status: "Concluído", value: 85.00, clientEmail: "cliente@teste.com" },
+  { id: "h3", date: "2024-11-10", serviceName: "Limpeza de Pele", status: "Concluído", value: 100.00, clientEmail: "cliente@teste.com" },
+  { id: "h4", date: "2024-11-05", serviceName: "Coloração Feminina", status: "Concluído", value: 180.00, clientEmail: "cliente@teste.com" },
+  { id: "h5", date: "2024-10-28", serviceName: "Corte de Cabelo Masculino", status: "Concluído", value: 55.00, clientEmail: "cliente@teste.com" },
+  { id: "h6", date: "2024-12-01", serviceName: "Massagem Relaxante", status: "Pendente", value: 130.00, clientEmail: "cliente@teste.com" },
+  { id: "h7", date: "2024-12-05", serviceName: "Manicure e Pedicure", status: "Pendente", value: 85.00, clientEmail: "cliente@teste.com" },
 ];
 
 export const MOCK_CLIENT_AI_RECOMMENDATIONS: ClientAIRecommendation[] = [
@@ -339,4 +366,36 @@ export const MOCK_CLIENT_30_DAY_STATS = [
   { name: 'Semana 2', agendamentos: 5 },
   { name: 'Semana 3', agendamentos: 2 },
   { name: 'Semana 4', agendamentos: 4 },
+];
+
+export const MOCK_CLIENT_FINANCIAL_SUMMARY: ClientFinancialSummary = {
+  currentBalance: 250.75,
+  availableCredits: 50.00,
+  accumulatedCashback: 12.50,
+};
+
+export const MOCK_CLIENT_TRANSACTIONS: ClientTransaction[] = [
+  { id: "t1", date: "2024-11-20", description: "Pagamento: Corte de Cabelo Masculino", type: "debit", amount: 55.00, status: "paid" },
+  { id: "t2", date: "2024-11-18", description: "Crédito: Recarga de Saldo", type: "credit", amount: 100.00, status: "completed" },
+  { id: "t3", date: "2024-11-15", description: "Cashback: Manicure e Pedicure", type: "cashback", amount: 8.50, status: "completed" },
+  { id: "t4", date: "2024-11-10", description: "Pagamento: Limpeza de Pele", type: "debit", amount: 100.00, status: "paid" },
+  { id: "t5", date: "2024-11-05", description: "Crédito: Bônus de Aniversário", type: "credit", amount: 20.00, status: "completed" },
+  { id: "t6", date: "2024-10-28", description: "Pagamento: Coloração Feminina", type: "debit", amount: 180.00, status: "paid" },
+  { id: "t7", date: "2024-10-25", description: "Cashback: Corte de Cabelo Masculino", type: "cashback", amount: 5.50, status: "completed" },
+];
+
+export const MOCK_CLIENT_FINANCIAL_INSIGHTS: ClientFinancialInsight[] = [
+  { id: "fi1", message: "Você gastou 25% menos este mês em comparação com o anterior. Ótimo controle!", category: "Economia" },
+  { id: "fi2", message: "Seu saldo atual de R$250,75 cobre aproximadamente 4 agendamentos médios.", category: "Planejamento" },
+  { id: "fi3", message: "Sugestão: use seu cashback de R$12,50 antes do vencimento em 31/12 para um desconto extra!", category: "Oportunidade" },
+  { id: "fi4", message: "Você tem R$50,00 em créditos disponíveis. Que tal agendar aquele serviço que você está de olho?", category: "Créditos" },
+];
+
+export const MOCK_CLIENT_SPENDING_CHART_DATA: ClientSpendingChartData[] = [
+  { month: 'Jun', spending: 150 },
+  { month: 'Jul', spending: 200 },
+  { month: 'Ago', spending: 180 },
+  { month: 'Set', spending: 250 },
+  { month: 'Out', spending: 300 },
+  { month: 'Nov', spending: 220 },
 ];

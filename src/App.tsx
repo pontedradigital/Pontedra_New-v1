@@ -32,7 +32,8 @@ import ClientAgendaPage from "./pages/dashboard/cliente/Agenda";
 import ClientCentralAtendimentoPage from "./pages/dashboard/cliente/CentralAtendimento";
 import ClientPerfilPage from "./pages/dashboard/cliente/Perfil";
 import ClientSettingsPage from "./pages/dashboard/cliente/Settings";
-import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia"; // Importar a nova página
+import ClientMinhaExperienciaPage from "./pages/dashboard/cliente/MinhaExperiencia";
+import ClientCarteiraDigitalPage from "./pages/dashboard/cliente/CarteiraDigital"; // Importar a nova página
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -191,7 +192,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/cliente/minha-experiencia" // Nova rota
+                path="/dashboard/cliente/minha-experiencia"
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><ClientMinhaExperienciaPage /></PageTransition>
@@ -211,6 +212,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={["client"]}>
                     <PageTransition><ClientCentralAtendimentoPage /></PageTransition>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/cliente/carteira-digital" // Nova rota
+                element={
+                  <ProtectedRoute allowedRoles={["client"]}>
+                    <PageTransition><ClientCarteiraDigitalPage /></PageTransition>
                   </ProtectedRoute>
                 }
               />
