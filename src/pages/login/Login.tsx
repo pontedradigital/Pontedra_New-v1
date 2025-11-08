@@ -6,34 +6,32 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import LandingNavbar from "@/components/navigation/LandingNavbar"; // Importar LandingNavbar
+import Navbar from "@/components/Navbar"; // Importar a nova Navbar
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, user } = useAuth(); // Get user from useAuth
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      // After successful login, the user state in AuthContext should be updated.
-      // We can rely on the user object from useAuth directly.
-      if (user?.role === "master") { // Check user role from context
+      if (user?.role === "master") {
         navigate("/dashboard/master");
       } else if (user?.role === "client") {
         navigate("/dashboard/cliente");
       } else {
-        navigate("/"); // Fallback
+        navigate("/");
       }
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <LandingNavbar />
-      <div className="flex flex-1 items-center justify-center mt-16"> {/* Adicionado mt-16 para evitar sobreposição */}
+      <Navbar />
+      <div className="flex flex-1 items-center justify-center mt-16">
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
