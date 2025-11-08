@@ -47,29 +47,6 @@ export default function LandingPage() {
       </main>
       <Footer />
       <PopupManager /> {/* Componente PopupManager adicionado aqui */}
-
-      {/* Botão de teste - REMOVER DEPOIS */}
-      <button
-        onClick={() => {
-          const event = new CustomEvent('test-popup')
-          window.dispatchEvent(event)
-        }}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          padding: '15px 30px',
-          background: '#00C896',
-          color: '#0D1B2A',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-          zIndex: 9999
-        }}
-      >
-        TESTAR POP-UP
-      </button>
     </div>
   );
 }
