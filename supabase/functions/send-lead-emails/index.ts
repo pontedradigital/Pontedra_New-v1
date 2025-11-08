@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-// Removendo a importação do cliente Resend, pois usaremos fetch diretamente.
-// import { Resend } from "npm:resend";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,14 +16,36 @@ serve(async (req) => {
 
     console.log("📨 Dados recebidos do formulário:", { nome, email, telefone, assunto, mensagem, origem, url_captura, ip_address });
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendKey = Deno.env.get("RESEND_API_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+
+    // Verificações explícitas para variáveis de ambiente
+    if (!supabaseUrl) {
+      console.error("❌ SUPABASE_URL environment variable is not set.");
+      return new Response(JSON.stringify({ success: false, error: "Missing SUPABASE_URL environment variable." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    if (!supabaseKey) {
+      console.error("❌ SUPABASE_SERVICE_ROLE_KEY environment variable is not set.");
+      return new Response(JSON.stringify({ success: false, error: "Missing SUPABASE_SERVICE_ROLE_KEY environment variable." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    if (!resendKey) {
+      console.error("❌ RESEND_API_KEY environment variable is not set.");
+      return new Response(JSON.stringify({ success: false, error: "Missing RESEND_API_KEY environment variable. Please configure it in Supabase Project Settings -> Edge Functions -> Manage Secrets." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    // const resend = new Resend(resendKey); // Não é mais necessário
 
-    // Inserir dados no Supabase (mantido da implementação anterior)
+    // Inserir dados no Supabase
     const { error: insertError } = await supabase.from("site_contato").insert([
       {
         nome,
