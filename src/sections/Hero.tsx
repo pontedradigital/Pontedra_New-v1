@@ -22,16 +22,18 @@ const Hero: React.FC = () => {
     return () => hero?.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // Função para scrollar para uma seção específica
-  const scrollToId = (id: string) => {
-    if (window.location.pathname !== "/landing") {
-      navigate(`/landing#${id}`);
+  // The scrollToId function is now handled by the Navbar component
+  // and the LandingPage's useEffect for hash changes.
+  // This button will now rely on the Navbar's logic.
+  const handleScrollToSolutions = () => {
+    const nav = document.getElementById("pontedra-navbar");
+    const section = document.getElementById("solucoes");
+    if (section && nav) {
+      const navHeight = nav.getBoundingClientRect().height;
+      const top = section.getBoundingClientRect().top + window.scrollY - navHeight - 8;
+      window.scrollTo({ top, behavior: "smooth" });
     } else {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        window.scrollBy(0, -24); // Ajuste para a altura da navbar
-      }
+      navigate("/landing#solucoes");
     }
   };
 
@@ -86,7 +88,7 @@ const Hero: React.FC = () => {
 
           <div className="mt-8 flex gap-4">
             <button 
-              onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
+              onClick={handleScrollToSolutions}
               className="px-6 py-3 bg-[#8BEB65] text-black font-semibold rounded-xl hover:bg-[#74D857] transition"
             >
               Ver Soluções

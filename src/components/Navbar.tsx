@@ -1,76 +1,128 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
-  const [solid, setSolid] = useState(false);
+  const [active, setActive] = useState<string>("hero");
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const target = document.getElementById("quem-somos");
-    if (!target) {
-      // Fallback if "quem-somos" is not found (e.g., on other pages)
-      const onScroll = () => {
-        setSolid(window.scrollY > window.innerHeight - 120); // Adjust threshold as needed
-      };
-      window.addEventListener("scroll", onScroll);
-      onScroll();
-      return () => window.removeEventListener("scroll", onScroll);
-    }
+    // adiciona comportamento de rolagem suave por via CSS (fallback JS também usado)
+    document.documentElement.style.scrollBehavior = "smooth";
 
-    const obs = new IntersectionObserver(
+    // Observe as seções para atualizar o link ativo
+    const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // If "quem-somos" is intersecting (meaning it's visible), navbar should be transparent.
-          // If it's NOT intersecting (meaning we've scrolled past it or are above it), navbar should be solid.
-          // The user wants solid when the *next* section reaches the top, so `!entry.isIntersecting` is correct for that.
-          setSolid(!entry.isIntersecting);
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute("id");
+            if (id) setActive(id);
+          }
         });
       },
-      { root: null, threshold: 0.05 } // Trigger when 5% of the target is visible
+      {
+        root: null,
+        rootMargin: "-40% 0px -40% 0px", // detecta a seção centralmente
+        threshold: 0.01,
+      }
     );
-    obs.observe(target);
-    return () => obs.disconnect();
-  }, [location]);
+
+    document.querySelectorAll("section[id]").forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToSection = (id: string) => {
+    const section = document.getElementById(id);
+    const nav = document.getElementById("pontedra-navbar");
+    if (!section) {
+      // If section is not on current page, navigate to landing and then scroll
+      if (location.pathname !== "/landing") {
+        navigate(`/landing#${id}`);
+        // The useEffect in LandingPage will handle scrolling after navigation
+        return;
+      }
+      return;
+    }
+
+    const navHeight = nav ? nav.getBoundingClientRect().height : 80;
+    // calcula posição levando em conta navbar fixa
+    const top = section.getBoundingClientRect().top + window.scrollY - navHeight - 8; // -8 px de folga
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+
+  const links = [
+    { id: "hero", label: "Início" },
+    { id: "quem-somos", label: "Quem Somos" },
+    { id: "solucoes", label: "Soluções" },
+    { id: "depoimentos", label: "Depoimentos" },
+    { id: "blog", label: "Blog" },
+    { id: "contato", label: "Contato" },
+  ];
 
   const isAuthPage = location.pathname.includes("/login") || location.pathname.includes("/register");
 
-  const scrollToSection = (id: string) => {
-    if (location.pathname !== "/landing") {
-      navigate(`/landing#${id}`);
-    } else {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        window.scrollBy(0, -20); // Ajuste para a altura da navbar
-      }
-    }
-  };
-
-  const navClass = solid
-    ? "bg-pontedra-hero-bg-dark/90 backdrop-blur-sm border-b border-border shadow-sm" // Usando a nova cor de fundo do Hero
-    : "bg-transparent";
-
   return (
-    <header className={`fixed w-full z-50 transition-all duration-300 ${navClass}`}>
-      <nav className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        <a href="/landing" className="text-pontedra-green font-bold text-lg tracking-wide">
-          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-10 w-auto" /> {/* Reduzido para h-10 */}
+    <nav
+      id="pontedra-navbar"
+      className="fixed top-0 left-0 w-full z-50 transition-colors duration-300"
+      style={{ backdropFilter: "blur(8px)" }}
+    >
+      <div className="container mx-auto flex items-center justify-between px-6 py-4">
+        <a href="/landing" className="text-white font-bold text-lg tracking-wide">
+          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-10 w-auto" />
         </a>
 
-        <div className="hidden md:flex items-center gap-8 text-textPrimary">
-          <button onClick={() => scrollToSection("hero")} className="hover:text-pontedra-green transition">Início</button>
-          <button onClick={() => scrollToSection("quem-somos")} className="hover:text-pontedra-green transition">Quem Somos</button>
-          <button onClick={() => scrollToSection("solucoes")} className="hover:text-pontedra-green transition">Soluções</button>
-          <button onClick={() => scrollToSection("depoimentos")} className="hover:text-pontedra-green transition">Depoimentos</button>
-          <button onClick={() => scrollToSection("blog")} className="hover:text-pontedra-green transition">Blog</button>
-          <button onClick={() => scrollToSection("contato")} className="hover:text-pontedra-green transition">Contato</button>
-        </div>
+        <ul className="hidden md:flex gap-8">
+          {links.map((l) => (
+            <li key={l.id}>
+              <button
+                onClick={() => scrollToSection(l.id)}
+                className={`text-sm font-medium transition-all duration-200 ${
+                  active === l.id ? "text-[#57e389] scale-105" : "text-white/90 hover:text-[#57e389]"
+                }`}
+                aria-current={active === l.id ? "page" : undefined}
+              >
+                {l.label}
+              </button>
+            </li>
+          ))}
+        </ul>
 
-        {!isAuthPage && (
-          <a href="/login" className="hidden md:inline-block bg-pontedra-green text-pontedra-dark-text px-5 py-2 rounded-full font-semibold hover:bg-pontedra-green-hover transition">Acessar Plataforma</a>
-        )}
-      </nav>
-    </header>
+        <div className="flex items-center gap-4">
+          {!isAuthPage && (
+            <>
+              <a
+                href="/login"
+                className="hidden md:inline-block text-white/90 hover:text-white transition"
+              >
+                Entrar
+              </a>
+              <button
+                onClick={() => {
+                  window.location.href = "/login";
+                }}
+                className="bg-[#57e389] text-[#062026] px-4 py-2 rounded-full font-semibold hover:brightness-110 transition"
+              >
+                Acessar Plataforma
+              </button>
+            </>
+          )}
+          {/* hamburger para mobile */}
+          <button
+            onClick={() => {
+              const menu = document.getElementById("mobile-nav");
+              if (menu) menu.classList.toggle("hidden");
+            }}
+            className="md:hidden text-white ml-2"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+        </div>
+      </div>
+    </nav>
   );
 }

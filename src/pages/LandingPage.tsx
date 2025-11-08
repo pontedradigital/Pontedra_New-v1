@@ -8,26 +8,28 @@ export default function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.scrollBy(0, -20); // Ajuste para a altura da navbar
-    }
-  };
-
+  // This useEffect handles scrolling to a section if a hash is present in the URL
   useEffect(() => {
     if (location.hash) {
-      const section = location.hash.replace("#", "");
-      setTimeout(() => scrollToSection(section), 100);
+      const id = location.hash.replace("#", "");
+      const section = document.getElementById(id);
+      const nav = document.getElementById("pontedra-navbar");
+      if (section && nav) {
+        const navHeight = nav.getBoundingClientRect().height;
+        const top = section.getBoundingClientRect().top + window.scrollY - navHeight - 8;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
     }
   }, [location.hash]);
 
   return (
     <div className="font-sans bg-bgMain text-textPrimary min-h-screen">
       <Navbar />
-      <main className="pt-16">
-        <Hero />
+      <main className="pt-16"> {/* Adjusted padding to account for fixed navbar */}
+        <section id="hero">
+          <Hero />
+        </section>
+
         <section id="quem-somos" className="py-24 bg-card border-t border-border">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-pontedra-green mb-4">Quem Somos</h2>

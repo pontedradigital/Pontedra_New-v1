@@ -42,6 +42,8 @@
     --sidebar-accent-foreground: 210 29% 91%; /* #e1e8f0 */
     --sidebar-border: 215 39% 18%; /* #1d2c3f */
     --sidebar-ring: 140 70% 62%; /* #57e389 */
+
+    --nav-height: 72px; /* ajuste conforme a altura real da sua navbar */
   }
 
   /* Força o tema escuro como padrão */
@@ -163,6 +165,20 @@
   .react-calendar-container .react-calendar__decade-view__years__year:enabled:hover,
   .react-calendar-container .react-calendar__century-view__decades__decade:enabled:hover {
     background-color: hsl(var(--muted));
+  }
+
+  /* Custom Navbar Scroll Styles */
+  section[id] {
+    scroll-margin-top: calc(var(--nav-height) + 12px);
+  }
+
+  #pontedra-navbar {
+    background: rgba(6, 14, 20, 0.06); /* transparente por padrão */
+  }
+
+  body.scrolled #pontedra-navbar {
+    background: rgba(6, 14, 20, 0.88);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   }
 }
 
