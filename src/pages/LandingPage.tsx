@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/sections/Hero";
 import Footer from "@/components/navigation/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
+import QuemSomos from "@/components/landing/QuemSomos"; // Import the new component
 
 export default function LandingPage() {
   const location = useLocation();
@@ -30,12 +31,7 @@ export default function LandingPage() {
           <Hero />
         </section>
 
-        <section id="quem-somos" className="py-24 bg-card border-t border-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-pontedra-green mb-4">Quem Somos</h2>
-            <p className="text-textSecondary max-w-3xl">Somos apaixonados por transformar ideias em conexões reais. A Pontedra nasceu para aproximar marcas e pessoas, ajudando Pequenas e Médias Empresas e Profissionais Liberais a crescerem no digital com propósito.</p>
-          </div>
-        </section>
+        <QuemSomos /> {/* Integrated the new QuemSomos component here */}
 
         <section id="solucoes" className="py-24 bg-background border-t border-border">
           <div className="max-w-7xl mx-auto px-6">
