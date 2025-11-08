@@ -10,14 +10,9 @@ export default function Footer() {
       <div className="container mx-auto px-4 md:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {/* Coluna 1 - Logo e Slogan */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center">
-                <span className="text-[#0D1B2A] font-bold text-xl">P</span>
-              </div>
-              {/* Logotipo da Pontedra */}
-              <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-10 w-auto" />
-            </div>
+          <div className="space-y-4 flex flex-col items-start"> {/* Adicionado flex-col items-start para alinhamento */}
+            {/* Logotipo da Pontedra - Aumentado em 300% (h-10 para h-40) */}
+            <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-40 w-auto" />
             <p className="text-[#9ba8b5] text-sm leading-relaxed">
               Conectando sua empresa a pessoas por meio do marketing digital.
             </p>
