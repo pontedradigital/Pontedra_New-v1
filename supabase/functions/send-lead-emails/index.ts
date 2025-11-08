@@ -65,8 +65,8 @@ serve(async (req) => {
       throw new Error(`Falha ao inserir contato no banco de dados: ${insertError.message}`);
     }
 
-    // Enviar e-mail via API do Resend
-    const resendResponse = await fetch("https://api.resend.com/emails", {
+    // --- Envio de e-mail para a equipe interna ---
+    const resendInternalResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${resendKey}`,
@@ -90,18 +90,55 @@ Mensagem: ${mensagem}
       }),
     });
 
-    const resendResult = await resendResponse.json();
-    console.log("✅ Resposta do Resend:", resendResult);
+    const resendInternalResult = await resendInternalResponse.json();
+    console.log("✅ Resposta do Resend (Equipe Interna):", resendInternalResult);
 
-    if (!resendResponse.ok) {
-      console.error("❌ Erro ao enviar e-mail via Resend:", resendResult);
-      return new Response(JSON.stringify({ success: false, error: resendResult }), {
+    if (!resendInternalResponse.ok) {
+      console.error("❌ Erro ao enviar e-mail para a equipe interna via Resend:", resendInternalResult);
+      return new Response(JSON.stringify({ success: false, error: resendInternalResult }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    console.log('E-mail enviado via Resend');
+    // --- Envio de e-mail de confirmação para o cliente ---
+    const resendClientResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Pontedra <no-reply@pontedra.com>", // Remetente para o cliente
+        to: [email], // E-mail do cliente
+        subject: `Obrigado pelo seu contato, ${nome}!`,
+        text: `
+Olá ${nome},
+
+Recebemos sua mensagem e agradecemos o contato!
+
+Nossa equipe analisará sua solicitação e retornaremos em breve.
+
+Detalhes da sua mensagem:
+Assunto: ${assunto}
+Mensagem: ${mensagem}
+
+Atenciosamente,
+Equipe Pontedra
+        `,
+      }),
+    });
+
+    const resendClientResult = await resendClientResponse.json();
+    console.log("✅ Resposta do Resend (Cliente):", resendClientResult);
+
+    if (!resendClientResponse.ok) {
+      console.error("❌ Erro ao enviar e-mail de confirmação para o cliente via Resend:", resendClientResult);
+      // Não vamos retornar um erro 500 aqui, pois o e-mail interno já foi enviado com sucesso.
+      // Apenas logamos o erro para investigação.
+    }
+
+    console.log('E-mails enviados via Resend');
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
