@@ -28,6 +28,7 @@ const Index = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
         <div className="text-center">
+          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-20 w-auto mx-auto mb-4 animate-pulse" />
           <h1 className="text-4xl font-bold mb-4">Carregando...</h1>
           <p className="text-xl text-muted-foreground">Verificando sua sessão.</p>
         </div>
@@ -41,6 +42,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
       <div className="text-center">
+        <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-20 w-auto mx-auto mb-4" />
         <h1 className="text-4xl font-bold mb-4">Redirecionando...</h1>
         <p className="text-xl text-muted-foreground">Aguarde um momento.</p>
       </div>

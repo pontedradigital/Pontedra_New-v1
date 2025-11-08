@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
 import { registerService } from "@/services/auth";
 import { toast } from "sonner";
-import { Bot } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; // Removido Bot
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -42,7 +41,7 @@ const Register = () => {
         <Card className="mx-auto max-w-sm bg-card border-border shadow-lg rounded-2xl">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <Bot className="h-10 w-10 text-primary" />
+              <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-10 w-auto" />
             </div>
             <CardTitle className="text-2xl font-bold text-foreground">Cadastre-se</CardTitle>
             <CardDescription className="text-muted-foreground">

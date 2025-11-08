@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Footer = () => {
@@ -15,8 +14,7 @@ const Footer = () => {
     >
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <span className="font-bold text-foreground">Pontedra</span>
+          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-5 w-auto" />
         </div>
         <p className="text-center md:text-left">
           © {new Date().getFullYear()} Pontedra. Todos os direitos reservados.

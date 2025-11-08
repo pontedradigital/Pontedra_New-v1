@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper } from "lucide-react"; // Adicionado Newspaper para o Blog
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,7 +21,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Canais de Atendimento", href: "/dashboard/master/canais-atendimento", icon: MessageSquare },
     { name: "IA Insights", href: "/dashboard/master/ai-insights", icon: Bot },
     { name: "Relatórios e Sugestões", href: "/dashboard/master/analises", icon: BarChart },
-    { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper }, // Novo item de navegação
+    { name: "Blog", href: "/dashboard/master/blog", icon: Newspaper },
     { name: "Configurações", href: "/dashboard/master/settings", icon: Settings },
   ];
 
@@ -39,8 +39,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     <div className="flex h-full max-h-screen flex-col gap-2 bg-sidebar border-r border-sidebar-border">
       <div className="flex h-16 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
         <Link to="/" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-          <Bot className="h-6 w-6 text-primary" />
-          <span className="text-lg">Pontedra SaaS</span>
+          <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-6 w-auto" />
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-4">

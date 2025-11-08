@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, Bot } from "lucide-react";
+import { MenuIcon } from "lucide-react"; // Removido Bot
 import { motion } from "framer-motion";
 
 const LandingNavbar = () => {
@@ -22,8 +22,7 @@ const LandingNavbar = () => {
       className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between lg:px-8"
     >
       <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-        <Bot className="h-7 w-7" />
-        Pontedra
+        <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-7 w-auto" />
       </Link>
 
       <div className="hidden lg:flex items-center gap-6">
