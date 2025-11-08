@@ -41,7 +41,7 @@ export async function enviarEmailConfirmacaoLead(data: EmailLeadData) {
                   <!-- Logo -->
                   <tr>
                     <td align="center" style="padding: 40px 40px 20px 40px; background: linear-gradient(135deg, #0D1B2A 0%, #1a2f42 100%);">
-                      <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/public/pontedra-logo.webp" alt="Pontedra" style="width: 180px; height: auto;">
+                      <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra" style="width: 180px; height: auto;">
                     </td>
                   </tr>
 
