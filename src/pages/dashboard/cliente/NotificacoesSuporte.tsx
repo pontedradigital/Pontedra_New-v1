@@ -29,6 +29,7 @@ const NotificacoesSuportePage = () => {
   const supportChatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Simulate new notifications every 30 seconds
     const interval = setInterval(() => {
       if (user) {
         const randomType: NotificationType = ["lembrete", "promoção", "confirmação", "info"][Math.floor(Math.random() * 4)] as NotificationType;
@@ -51,7 +52,7 @@ const NotificacoesSuportePage = () => {
           message: messages[randomType],
         });
       }
-    }, 30000);
+    }, 30000); // Every 30 seconds
 
     return () => clearInterval(interval);
   }, [user, addClientNotification]);
@@ -98,6 +99,7 @@ const NotificacoesSuportePage = () => {
 
   const handleMarkAsRead = (id: string) => {
     markClientNotificationAsRead(id);
+    toast.success("Notificação marcada como lida.");
   };
 
   const handleSendSupportMessage = (e: React.FormEvent) => {
@@ -123,7 +125,7 @@ const NotificacoesSuportePage = () => {
       };
       setSupportChat((prev) => [...prev, botResponse]);
       setIsSupportTyping(false);
-    }, 2000);
+    }, 2000); // Simulate 2-second delay for support response
   };
 
   const formatTimestamp = (isoString: string) => {
@@ -286,7 +288,7 @@ const NotificacoesSuportePage = () => {
               </Button>
             </form>
           </CardFooter>
-        </Card>
+        </motion.div>
       </div>
     </ClientDashboardLayout>
   );

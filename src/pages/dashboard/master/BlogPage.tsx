@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import MasterDashboardLayout from "@/components/layouts/MasterDashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"; // Adicionado CardFooter
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,64 +9,94 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useMockData } from "@/context/MockContext";
+
+interface BlogPost {
+  id: string;
+  title: string;
+  author: string;
+  date: string;
+  content: string;
+  imageUrl?: string;
+}
+
+const MOCK_BLOG_POSTS: BlogPost[] = [
+  {
+    id: "blog1",
+    title: "Otimizando o Atendimento com IA: Guia Completo",
+    author: "Equipe Pontedra",
+    date: "2024-10-26",
+    content: "Descubra como a inteligência artificial pode revolucionar a forma como você interage com seus clientes, automatizando tarefas e personalizando a experiência.",
+    imageUrl: "https://via.placeholder.com/400x200/57e389/0c1624?text=IA+Atendimento"
+  },
+  {
+    id: "blog2",
+    title: "Centralização Multicanal: A Chave para a Eficiência",
+    author: "Equipe Pontedra",
+    date: "2024-10-20",
+    content: "Gerenciar WhatsApp, Instagram e Messenger em um só lugar nunca foi tão fácil. Veja os benefícios de uma plataforma unificada.",
+    imageUrl: "https://via.placeholder.com/400x200/111d2e/e1e8f0?text=Multicanal"
+  },
+  {
+    id: "blog3",
+    title: "Agendamentos Inteligentes: Menos Esforço, Mais Clientes",
+    author: "Equipe Pontedra",
+    date: "2024-10-15",
+    content: "Automatize o processo de agendamento e libere sua equipe para focar no que realmente importa: o serviço ao cliente.",
+    imageUrl: "https://via.placeholder.com/400x200/9ba8b5/0c1624?text=Agenda+IA"
+  },
+];
 
 const BlogPage = () => {
-  const { blogPosts, addBlogPost, updateBlogPost, deleteBlogPost, isLoading } = useMockData();
+  const [posts, setPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPost, setCurrentPost] = useState<typeof blogPosts[0] | null>(null);
+  const [currentPost, setCurrentPost] = useState<BlogPost | null>(null);
   const [formState, setFormState] = useState({
     title: "",
     content: "",
     imageUrl: "",
-    tags: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormState({ ...formState, [e.target.id]: e.target.value });
   };
 
-  const handleSavePost = async (e: React.FormEvent) => {
+  const handleSavePost = (e: React.FormEvent) => {
     e.preventDefault();
-    const tagsArray = formState.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
-
     if (currentPost) {
-      try {
-        await updateBlogPost(currentPost.id, { ...formState, tags: tagsArray });
-        setIsModalOpen(false);
-        setFormState({ title: "", content: "", imageUrl: "", tags: "" });
-        setCurrentPost(null);
-      } catch (error: any) {
-        toast.error(error.message || "Erro ao atualizar post.");
-      }
+      // Edit existing post
+      setPosts(posts.map(p => p.id === currentPost.id ? { ...p, ...formState } : p));
+      toast.success("Post atualizado com sucesso!");
     } else {
-      try {
-        await addBlogPost({ ...formState, tags: tagsArray });
-        setIsModalOpen(false);
-        setFormState({ title: "", content: "", imageUrl: "", tags: "" });
-      } catch (error: any) {
-        toast.error(error.message || "Erro ao criar post.");
-      }
+      // Add new post
+      const newId = `blog${posts.length + 1}`;
+      const newPost: BlogPost = {
+        id: newId,
+        author: "Equipe Pontedra",
+        date: new Date().toISOString().slice(0, 10),
+        ...formState,
+      };
+      setPosts([...posts, newPost]);
+      toast.success("Novo post criado com sucesso!");
     }
+    setIsModalOpen(false);
+    setFormState({ title: "", content: "", imageUrl: "" });
+    setCurrentPost(null);
   };
 
-  const handleEditPost = (post: typeof blogPosts[0]) => {
+  const handleEditPost = (post: BlogPost) => {
     setCurrentPost(post);
-    setFormState({ title: post.title, content: post.content, imageUrl: post.imageUrl || "", tags: post.tags.join(', ') });
+    setFormState({ title: post.title, content: post.content, imageUrl: post.imageUrl || "" });
     setIsModalOpen(true);
   };
 
-  const handleDeletePost = async (id: string) => {
-    try {
-      await deleteBlogPost(id);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao excluir post.");
-    }
+  const handleDeletePost = (id: string) => {
+    setPosts(posts.filter(post => post.id !== id));
+    toast.info("Post excluído.");
   };
 
   const handleOpenNewPostModal = () => {
     setCurrentPost(null);
-    setFormState({ title: "", content: "", imageUrl: "", tags: "" });
+    setFormState({ title: "", content: "", imageUrl: "" });
     setIsModalOpen(true);
   };
 
@@ -85,7 +115,7 @@ const BlogPage = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {blogPosts.map((post, index) => (
+        {posts.map((post, index) => (
           <motion.div
             key={post.id}
             variants={cardVariants}
@@ -163,21 +193,10 @@ const BlogPage = () => {
                 className="col-span-3 bg-background border-border text-foreground focus:ring-primary"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="tags" className="text-right text-foreground">
-                Tags (separadas por vírgula)
-              </Label>
-              <Input
-                id="tags"
-                value={formState.tags}
-                onChange={handleInputChange}
-                className="col-span-3 bg-background border-border text-foreground focus:ring-primary"
-              />
-            </div>
           </form>
           <DialogFooter className="border-t border-border/50 pt-4">
-            <Button type="submit" onClick={handleSavePost} disabled={isLoading} className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
-              {isLoading ? "Salvando..." : currentPost ? "Salvar Alterações" : "Criar Post"}
+            <Button type="submit" onClick={handleSavePost} className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
+              {currentPost ? "Salvar Alterações" : "Criar Post"}
             </Button>
           </DialogFooter>
         </DialogContent>

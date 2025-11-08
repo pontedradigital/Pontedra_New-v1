@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, BellRing, History, Brain, Lightbulb, Gift } from "lucide-react";
+import { Home, Settings, Users, Briefcase, CalendarDays, Bot, MessageSquare, LayoutDashboard, User, BarChart, Newspaper, MessageCircle, Camera, DollarSign, Headset, Star, BellRing, History, Brain, Lightbulb, Gift } from "lucide-react"; // Adicionado Gift
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,7 +44,7 @@ export const Sidebar = ({ userRole }: SidebarProps) => {
     { name: "Agendamentos", href: "/dashboard/cliente/agenda", icon: CalendarDays },
     { name: "Histórico de Agendamentos", href: "/dashboard/cliente/historico-agendamentos", icon: History },
     { name: "Atendimento Inteligente (Assistente Pontedra)", href: "/dashboard/cliente/atendimento-inteligente", icon: Headset },
-    { name: "Benefícios e Fidelidade", href: "/dashboard/cliente/beneficios-fidelidade", icon: Gift },
+    { name: "Benefícios e Fidelidade", href: "/dashboard/cliente/beneficios-fidelidade", icon: Gift }, // Novo item
     { name: "Notificações e Suporte", href: "/dashboard/cliente/notificacoes-suporte", icon: BellRing, badge: unreadNotificationCount },
     { name: "Perfil", href: "/dashboard/cliente/perfil", icon: User },
     { name: "Configurações", href: "/dashboard/cliente/settings", icon: Settings },

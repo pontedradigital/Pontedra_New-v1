@@ -18,7 +18,7 @@ import { assistentePontedraBase } from "@/data/assistentePontedraBase";
 import { registrarInteracao } from "@/utils/registroChat";
 import { registrarAgendamento } from "@/utils/agendamentosFake";
 import { atualizarBaseDeConhecimento, analisarPadroes } from "@/utils/assistentePontedraAprendizado";
-import { obterUltimoRelatorio } from "@/utils/assistentePontedraAnalise";
+import { obterUltimoRelatorio } from "@/utils/assistentePontedraAnalise"; // Importar utilitário de análise
 
 interface Message {
   id: number;
@@ -83,7 +83,7 @@ const AtendimentoInteligentePage = () => {
       setInputMessage(initialMsg);
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -105,7 +105,7 @@ const AtendimentoInteligentePage = () => {
         ];
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         addBotMessage(randomTip);
-      }, 60000);
+      }, 60000); // Every 60 seconds
     };
 
     resetProactiveTimer();
@@ -114,7 +114,7 @@ const AtendimentoInteligentePage = () => {
         clearInterval(proactiveTipIntervalRef.current);
       }
     };
-  }, [chatState.messages]);
+  }, [chatState.messages]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addBotMessage = (text: string) => {
     setChatState(prev => ({
@@ -134,6 +134,7 @@ const AtendimentoInteligentePage = () => {
 
     const lowerCaseText = userText.toLowerCase();
 
+    // --- Lógica de Agendamento Multi-turn ---
     if (chatState.awaitingConfirmation === "service") {
       const service = MOCK_CLIENT_SERVICES.find(s => lowerCaseText.includes(s.name.toLowerCase()));
       if (service) {
@@ -216,6 +217,9 @@ const AtendimentoInteligentePage = () => {
         botResponse = "Por favor, responda 'sim' para confirmar ou 'não' para cancelar.";
       }
     }
+    // --- Fim da Lógica de Agendamento Multi-turn ---
+
+    // --- Outras Intenções (se não estiver em um fluxo multi-turn) ---
     else if (lowerCaseText.includes("oi") || lowerCaseText.includes("olá") || lowerCaseText.includes("bom dia") || lowerCaseText.includes("boa tarde") || lowerCaseText.includes("boa noite")) {
       botResponse = assistentePontedraBase.saudacao[Math.floor(Math.random() * assistentePontedraBase.saudacao.length)];
     }
@@ -272,8 +276,8 @@ const AtendimentoInteligentePage = () => {
     }
 
     addBotMessage(botResponse);
-    registrarInteracao(clientName, userText, botResponse);
-    atualizarBaseDeConhecimento(userText, botResponse);
+    registrarInteracao(clientName, userText, botResponse); // Registrar interação
+    atualizarBaseDeConhecimento(userText, botResponse); // Registrar para aprendizado
     setChatState(prev => ({
       ...prev,
       lastServiceMentioned: newLastServiceMentioned,

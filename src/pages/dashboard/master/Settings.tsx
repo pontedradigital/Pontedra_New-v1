@@ -7,34 +7,33 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Settings as SettingsIcon, Upload } from "lucide-react";
 import { motion } from "framer-motion";
-import { useMockData } from "@/context/MockContext";
 
 const SettingsPage = () => {
-  const { companyInfo, systemParams, updateCompanyInfo, updateSystemParams, isLoading } = useMockData();
-  const [localCompanyInfo, setLocalCompanyInfo] = useState(companyInfo);
-  const [localSystemParams, setLocalSystemParams] = useState(systemParams);
-
-  React.useEffect(() => {
-    setLocalCompanyInfo(companyInfo);
-    setLocalSystemParams(systemParams);
-  }, [companyInfo, systemParams]);
+  const [companyInfo, setCompanyInfo] = useState({
+    name: "Dyad SaaS Ltda.",
+    email: "contato@dyadsaas.com",
+    phone: "5511999998888",
+    address: "Rua Exemplo, 123 - Cidade, Estado",
+    logoUrl: "https://via.placeholder.com/150",
+  });
+  const [systemParams, setSystemParams] = useState({
+    clientLimit: 1000,
+    activePlan: "Premium",
+  });
 
   const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalCompanyInfo({ ...localCompanyInfo, [e.target.id]: e.target.value });
+    setCompanyInfo({ ...companyInfo, [e.target.id]: e.target.value });
   };
 
   const handleSystemParamsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setLocalSystemParams({ ...localSystemParams, [e.target.id]: e.target.value });
+    setSystemParams({ ...systemParams, [e.target.id]: e.target.value });
   };
 
-  const handleSaveSettings = async (e: React.FormEvent) => {
+  const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await updateCompanyInfo(localCompanyInfo);
-      await updateSystemParams(localSystemParams);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar configurações.");
-    }
+    toast.success("Configurações salvas com sucesso!");
+    console.log("Company Info:", companyInfo);
+    console.log("System Params:", systemParams);
   };
 
   const handleExportReports = () => {
@@ -61,30 +60,30 @@ const SettingsPage = () => {
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="name" className="text-foreground">Nome da Empresa</Label>
-                <Input id="name" value={localCompanyInfo.name} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
+                <Input id="name" value={companyInfo.name} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email" className="text-foreground">E-mail de Contato</Label>
-                <Input id="email" type="email" value={localCompanyInfo.email} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
+                <Input id="email" type="email" value={companyInfo.email} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone" className="text-foreground">Telefone</Label>
-                <Input id="phone" value={localCompanyInfo.phone} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
+                <Input id="phone" value={companyInfo.phone} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="address" className="text-foreground">Endereço</Label>
-                <Input id="address" value={localCompanyInfo.address} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
+                <Input id="address" value={companyInfo.address} onChange={handleCompanyInfoChange} className="bg-background border-border text-foreground focus:ring-primary" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="logoUrl" className="text-foreground">URL do Logo</Label>
                 <div className="flex items-center gap-2">
-                  <Input id="logoUrl" value={localCompanyInfo.logoUrl} onChange={handleCompanyInfoChange} className="flex-1 bg-background border-border text-foreground focus:ring-primary" />
+                  <Input id="logoUrl" value={companyInfo.logoUrl} onChange={handleCompanyInfoChange} className="flex-1 bg-background border-border text-foreground focus:ring-primary" />
                   <Button type="button" variant="outline" size="sm" className="bg-background border-border text-foreground hover:bg-muted" onClick={() => toast.info("Upload de logo (simulado)")}>
                     <Upload className="h-4 w-4 mr-2" /> Upload
                   </Button>
                 </div>
-                {localCompanyInfo.logoUrl && (
-                  <img src={localCompanyInfo.logoUrl} alt="Logo da Empresa" className="mt-2 h-16 object-contain rounded-md border border-border p-1" />
+                {companyInfo.logoUrl && (
+                  <img src={companyInfo.logoUrl} alt="Logo da Empresa" className="mt-2 h-16 object-contain rounded-md border border-border p-1" />
                 )}
               </div>
             </CardContent>
@@ -104,14 +103,14 @@ const SettingsPage = () => {
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="clientLimit" className="text-foreground">Limite de Clientes</Label>
-                <Input id="clientLimit" type="number" value={localSystemParams.clientLimit} onChange={handleSystemParamsChange} className="bg-background border-border text-foreground focus:ring-primary" />
+                <Input id="clientLimit" type="number" value={systemParams.clientLimit} onChange={handleSystemParamsChange} className="bg-background border-border text-foreground focus:ring-primary" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="activePlan" className="text-foreground">Plano Ativo</Label>
                 <select
                   id="activePlan"
                   className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
-                  value={localSystemParams.activePlan}
+                  value={systemParams.activePlan}
                   onChange={handleSystemParamsChange}
                 >
                   <option value="Free">Grátis</option>
@@ -133,9 +132,7 @@ const SettingsPage = () => {
           <Button type="button" variant="outline" className="bg-background border-border text-foreground hover:bg-muted" onClick={handleExportReports}>
             Exportar Relatórios
           </Button>
-          <Button type="submit" disabled={isLoading} className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">
-            {isLoading ? "Salvando..." : "Salvar Configurações"}
-          </Button>
+          <Button type="submit" className="uppercase bg-primary text-background hover:bg-primary/90 shadow-md shadow-primary/20">Salvar Configurações</Button>
         </motion.div>
       </form>
     </MasterDashboardLayout>

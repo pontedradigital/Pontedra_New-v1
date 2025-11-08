@@ -34,7 +34,7 @@ const MOCK_BENEFITS: Benefit[] = [
   { id: "b4", name: "Acesso VIP a Eventos", pointsRequired: 500, description: "Acesso exclusivo a eventos e lançamentos da Pontedra." },
 ];
 
-const initialPoints = 150;
+const initialPoints = 150; // Pontos iniciais
 const initialHistory: PointHistoryEntry[] = [
   { id: "ph1", date: "2024-10-20", description: "Agendamento: Corte de Cabelo", pointsChange: 50, status: "Confirmado" },
   { id: "ph2", date: "2024-10-25", description: "Agendamento: Manicure e Pedicure", pointsChange: 80, status: "Confirmado" },
@@ -60,7 +60,7 @@ const BeneficiosFidelidadePage = () => {
     } else {
       setLastRedemption("Nenhum resgate ainda");
     }
-    setActiveBenefitsCount(redeemedBenefits.length);
+    setActiveBenefitsCount(redeemedBenefits.length); // Simple count of utilized benefits
   }, [pointHistory]);
 
   const getFidelityLevel = (points: number) => {
@@ -90,7 +90,7 @@ const BeneficiosFidelidadePage = () => {
   };
 
   const handleSimulatePointsGain = () => {
-    const pointsGained = Math.floor(Math.random() * 50) + 20;
+    const pointsGained = Math.floor(Math.random() * 50) + 20; // Gain between 20 and 70 points
     setTotalPoints(prev => prev + pointsGained);
     const newHistoryEntry: PointHistoryEntry = {
       id: `ph${pointHistory.length + 1}`,

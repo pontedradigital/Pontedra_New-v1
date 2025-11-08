@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return <div>Carregando...</div>; // Or a more sophisticated loading spinner
   }
 
   if (!isAuthenticated) {
@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     toast.error("Você não tem permissão para acessar esta página.");
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace />; // Redirect to home or a permission denied page
   }
 
   return <>{children}</>;

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import MasterDashboardLayout from "@/components/layouts/MasterDashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Bot, Clock, Briefcase, Users, TrendingUp, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button"; // Importar Button
+import { Bot, Clock, Briefcase, Users, TrendingUp, RefreshCcw } from "lucide-react"; // Adicionar RefreshCcw
 import { motion } from "framer-motion";
-import { useMockData } from "@/context/MockContext";
+import { useMockData } from "@/context/MockContext"; // Importar useMockData
 
 const generateRandomValue = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
@@ -18,14 +18,18 @@ const AIInsightsPage = () => {
     avgResponseTime: generateRandomValue(5, 30), // in minutes
   });
 
+  // Update local insights based on mockData's AI insights or random values
   useEffect(() => {
+    // This effect will run once on mount and whenever aiInsights from context changes
+    // For the purpose of displaying the main metrics, we can keep them somewhat static or update them less frequently
+    // The 'generateNewAIInsights' button will specifically update the list of AI insights.
     setLocalInsights({
       mostBusyTime: ["10:00 - 12:00", "14:00 - 16:00", "17:00 - 19:00"][generateRandomValue(0, 2)],
       mostBookedService: aiInsights[generateRandomValue(0, aiInsights.length - 1)]?.title || "Serviço Mais Agendado",
       activeClients: generateRandomValue(50, 200),
       avgResponseTime: generateRandomValue(5, 30),
     });
-  }, [aiInsights]);
+  }, [aiInsights]); // Depend on aiInsights from context
 
   const handleGenerateInsights = async () => {
     await generateNewAIInsights();

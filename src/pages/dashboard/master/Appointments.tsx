@@ -8,13 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreHorizontal, PlusCircle, CheckCircle2, XCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, CheckCircle2, XCircle } from "lucide-react"; // Importar ícones
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useMockData } from "@/context/MockContext";
 import { format } from "date-fns";
 import { MOCK_AVAILABLE_TIMES } from "@/data/mockData";
-import AgendaCalendar from "@/components/AgendaCalendar";
+import AgendaCalendar from "@/components/AgendaCalendar"; // Importar o novo componente de calendário
 
 interface Appointment {
   id: string;
@@ -60,12 +60,8 @@ const AppointmentsPage = () => {
   };
 
   const handleUpdateStatus = async (id: string, newStatus: Appointment["status"]) => {
-    try {
-      await updateAppointment(id, { status: newStatus });
-      toast.success(`Status do agendamento atualizado para ${newStatus}.`);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao atualizar status.");
-    }
+    await updateAppointment(id, { status: newStatus });
+    toast.success(`Status do agendamento atualizado para ${newStatus}.`);
   };
 
   const handleAddAppointment = async (e: React.FormEvent) => {
@@ -85,7 +81,7 @@ const AppointmentsPage = () => {
         status: "pending",
       });
     } catch (error: any) {
-      toast.error(error.message || "Erro ao adicionar agendamento.");
+      console.error("Erro ao adicionar agendamento:", error.message);
     }
   };
 
@@ -165,6 +161,7 @@ const AppointmentsPage = () => {
           <CardContent>
             <div className="flex flex-col lg:flex-row gap-6 mb-6">
               <div className="flex-1 flex justify-center">
+                {/* Mantendo o shadcn/ui Calendar para a visualização principal, mas com aprimoramentos */}
                 <AgendaCalendar onSelectDate={setSelectedDate} selectedDate={selectedDate} />
               </div>
               <div className="flex-1">
@@ -173,7 +170,7 @@ const AppointmentsPage = () => {
                   <ul className="space-y-2">
                     {filteredAppointments
                       .filter(app => app.date === (selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""))
-                      .sort((a, b) => b.time.localeCompare(a.time))
+                      .sort((a, b) => b.time.localeCompare(a.time)) // Descending time for same day
                       .map(app => (
                         <li key={app.id} className="flex justify-between items-center p-3 bg-background border border-border rounded-md shadow-sm">
                           <div>
@@ -214,7 +211,7 @@ const AppointmentsPage = () => {
                     .sort((a, b) => {
                       const dateTimeA = new Date(`${a.date}T${a.time}`);
                       const dateTimeB = new Date(`${b.date}T${b.time}`);
-                      return dateTimeB.getTime() - dateTimeA.getTime();
+                      return dateTimeB.getTime() - dateTimeA.getTime(); // Descending order (most recent first)
                     })
                     .map((app) => (
                       <TableRow key={app.id} className="border-b border-border/50 hover:bg-background">

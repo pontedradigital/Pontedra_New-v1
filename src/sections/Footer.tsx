@@ -12,7 +12,9 @@ export default function Footer() {
           {/* Coluna 1 - Logo e Slogan */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-12 w-auto" />
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center">
+                <span className="text-[#0D1B2A] font-bold text-xl">P</span>
+              </div>
               <span className="text-2xl font-bold text-white">Pontedra</span>
             </div>
             <p className="text-[#9ba8b5] text-sm leading-relaxed">
@@ -120,7 +122,7 @@ export default function Footer() {
                 Política de Privacidade
               </Link>
               <Link to="/termos-uso" className="hover:text-[#57e389] transition-colors">
-                Termos de Uso
+                Termos de Serviço
               </Link>
               <Link to="/contato" className="hover:text-[#57e389] transition-colors">
                 Contato
