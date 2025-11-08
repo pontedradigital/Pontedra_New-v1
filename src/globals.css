@@ -325,40 +325,90 @@
 }
 
 /* ========================================
-   TRANSIÇÕES DISCRETAS ENTRE SEÇÕES
+   REMOVE COMPLETAMENTE LINHAS ENTRE SEÇÕES
    ======================================== */
 
-/* Remove todas as bordas */
-section {
+/* Remove todas as bordas e linhas de sections */
+section,
+section::before,
+section::after {
   border: none !important;
-  position: relative;
+  border-top: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
-/* Gradiente sutil entre seções */
+/* Remove linhas de divs e containers dentro das sections */
+section > *,
+section div,
+section > div:first-child,
+section > div:last-child {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+/* Transição suave com gradiente imperceptível */
+section {
+  position: relative;
+  isolation: isolate;
+}
+
 section::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 120px;
   background: linear-gradient(
     to bottom,
-    rgba(13, 27, 42, 0) 0%,
-    rgba(13, 27, 42, 0.15) 50%,
-    rgba(13, 27, 42, 0) 100%
+    transparent 0%,
+    rgba(13, 27, 42, 0.03) 30%,
+    rgba(13, 27, 42, 0.08) 60%,
+    transparent 100%
   );
-  filter: blur(15px);
+  filter: blur(25px);
   pointer-events: none;
-  z-index: 1;
+  z-index: -1;
+  opacity: 0.5;
 }
 
-section:last-of-type::after {
-  display: none;
+/* Remove o after da última seção */
+section:last-of-type::after,
+section:last-child::after {
+  display: none !important;
 }
 
-/* Sobreposição leve entre seções */
+/* Sobreposição muito sutil entre seções */
 section + section {
-  margin-top: -40px;
-  padding-top: 60px;
+  margin-top: -60px;
+  padding-top: 80px;
+}
+
+/* Remove linhas do container principal */
+.container,
+.mx-auto,
+[class*="max-w-"] {
+  border: none !important;
+}
+
+/* Força remoção de qualquer hr ou divider */
+hr,
+.divider,
+[class*="border-t"],
+[class*="border-b"] {
+  display: none !important;
+}
+
+/* Remove linhas específicas do Tailwind */
+.\!border-0 {
+  border: 0 !important;
+}
+
+/* Aplica suavização em toda a landing page */
+body,
+#root,
+main {
+  border: none !important;
 }
