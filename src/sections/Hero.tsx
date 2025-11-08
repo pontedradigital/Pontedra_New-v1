@@ -196,44 +196,38 @@ const Hero = () => {
         className="absolute top-0 left-0 w-full h-full -z-10"
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 flex flex-col md:flex-row items-center justify-between">
         {/* Conteúdo principal (esquerda) */}
-        <div className="text-center lg:text-left">
-          <motion.p
-            className="text-sm font-semibold text-pontedra-title-green mb-2"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            initial="hidden"
-            animate={controls}
-            transition={{ duration: 0.6, delay: 0.1 }}
+        <div className="max-w-xl text-center lg:text-left">
+          <p
+            className="text-lime-400 font-medium mb-2 opacity-0 animate-fadeInUp"
+            style={{ animationDelay: '0.1s' }}
           >
             💡 Soluções Web para PMEs e Profissionais
-          </motion.p>
+          </p>
 
           <h1
-            className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight drop-shadow-lg opacity-0 animate-fadeInUp animate-pulse-slow"
+            className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-6 opacity-0 animate-fadeInUp motion-safe:animate-pulse-slow"
             style={{ animationDelay: '0.2s' }}
           >
-            Conectamos sua empresa a <span className="text-pontedra-title-green">pessoas</span>
+            Conectamos sua empresa a <span className="text-lime-400">pessoas</span>
           </h1>
 
           <p
-            className="text-base md:text-lg text-pontedra-subtitle-gray mt-4 max-w-xl mx-auto lg:mx-0 opacity-0 animate-fadeInUp animate-pulse-slow"
+            className="text-gray-300 mb-8 max-w-xl mx-auto lg:mx-0 opacity-0 animate-fadeInUp motion-safe:animate-pulse-slow"
             style={{ animationDelay: '0.4s' }}
           >
             Construímos pontes digitais que conectam sua marca a clientes reais, impulsionando resultados com autenticidade, tecnologia e inteligência estratégica.
           </p>
 
           <div
-            className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start opacity-0 animate-fadeIn"
+            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start opacity-0 animate-fadeIn"
             style={{ animationDelay: '0.6s' }}
           >
             <a
               href="#solucoes"
               onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
-              className="bg-pontedra-button-green hover:bg-pontedra-button-green-hover text-pontedra-dark-text px-6 py-3 rounded-xl font-semibold transition-all duration-700 ease-out shadow-lg hover:scale-105 hover:shadow-[0_0_15px_#5FF07780]"
+              className="bg-lime-500 text-black px-6 py-3 rounded-xl font-semibold hover:scale-105 hover:shadow-[0_0_15px_#5FF07780] transition-all duration-700 ease-out"
             >
               Ver Soluções
             </a>
@@ -241,55 +235,34 @@ const Hero = () => {
               href="https://www.instagram.com/digitalpontevra/"
               target="_blank"
               rel="noreferrer"
-              className="border border-white hover:bg-pontedra-title-green hover:text-pontedra-dark-text text-white px-6 py-3 rounded-xl font-semibold transition-all duration-700 ease-out shadow-lg hover:scale-105 hover:shadow-[0_0_15px_#5FF07780]"
+              className="border border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-black hover:scale-105 hover:shadow-[0_0_15px_#5FF07780] transition-all duration-700 ease-out"
             >
               Ver Portfólio
             </a>
           </div>
         </div>
 
-        {/* Checklist lateral (direita) */}
-        <motion.div
-          className="hidden lg:flex flex-col items-end justify-center space-y-6"
-          variants={{
-            hidden: { opacity: 0, x: 50 },
-            visible: { opacity: 1, x: 0 },
-          }}
-          initial="hidden"
-          animate={controls}
-          transition={{ delay: 1.0, duration: 1 }}
-        >
-          {/* Card 1 */}
-          <div className="bg-gradient-to-b from-[#5FF077]/15 to-[#45D060]/15 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] animate-float-delay-0 shadow-inner shadow-[#5FF077]/10 border border-pontedra-line-green-dark relative overflow-hidden group flex items-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative flex items-center gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
-                1
+        {/* Caixas numeradas com gradiente animado */}
+        <div className="relative flex flex-col gap-4 mt-12 md:mt-0">
+          {[
+            { id: 1, text: 'Atraia mais' },
+            { id: 2, text: 'Venda melhor' },
+            { id: 3, text: 'Seu sucesso acontece' }
+          ].map((item, index) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-4 bg-gradient-to-b from-lime-500/20 via-lime-600/20 to-lime-700/20
+                         backdrop-blur-sm border border-lime-500/30 rounded-2xl px-6 py-4 w-[300px] h-[90px]
+                         shadow-lg hover:scale-[1.03] hover:shadow-lime-400/30 transition-all duration-500 animate-gradient-flow"
+              style={{ animationDelay: `${1.0 + index * 0.2}s` }} // Sincroniza com o texto
+            >
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-lime-500 text-black font-bold text-lg">
+                {item.id}
               </div>
-              <span className="text-white text-xl font-semibold">Atraia mais</span>
+              <p className="text-white font-semibold text-xl">{item.text}</p>
             </div>
-          </div>
-          {/* Card 2 */}
-          <div className="bg-gradient-to-b from-[#45D060]/15 to-[#35A050]/15 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] animate-float-delay-1 shadow-inner shadow-[#5FF077]/10 border border-pontedra-line-green-dark relative overflow-hidden group flex items-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative flex items-center gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
-                2
-              </div>
-              <span className="text-white text-xl font-semibold">Venda melhor</span>
-            </div>
-          </div>
-          {/* Card 3 */}
-          <div className="bg-gradient-to-b from-[#35A050]/15 to-[#2A7B49]/15 backdrop-blur-sm rounded-2xl px-6 py-4 w-[300px] h-[90px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] animate-float-delay-2 shadow-inner shadow-[#5FF077]/10 border border-pontedra-line-green-dark relative overflow-hidden group flex items-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-pontedra-line-green-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative flex items-center gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pontedra-button-green flex items-center justify-center text-pontedra-dark-text font-bold text-lg">
-                3
-              </div>
-              <span className="text-white text-xl font-semibold">Seu sucesso acontece</span>
-            </div>
-          </div>
-        </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
