@@ -9,8 +9,9 @@ export default function Navbar() {
   useEffect(() => {
     const target = document.getElementById("quem-somos");
     if (!target) {
+      // Fallback if "quem-somos" is not found (e.g., on other pages)
       const onScroll = () => {
-        setSolid(window.scrollY > window.innerHeight - 120);
+        setSolid(window.scrollY > window.innerHeight - 120); // Adjust threshold as needed
       };
       window.addEventListener("scroll", onScroll);
       onScroll();
@@ -20,10 +21,13 @@ export default function Navbar() {
     const obs = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
+          // If "quem-somos" is intersecting (meaning it's visible), navbar should be transparent.
+          // If it's NOT intersecting (meaning we've scrolled past it or are above it), navbar should be solid.
+          // The user wants solid when the *next* section reaches the top, so `!entry.isIntersecting` is correct for that.
           setSolid(!entry.isIntersecting);
         });
       },
-      { root: null, threshold: 0.05 }
+      { root: null, threshold: 0.05 } // Trigger when 5% of the target is visible
     );
     obs.observe(target);
     return () => obs.disconnect();
@@ -44,7 +48,7 @@ export default function Navbar() {
   };
 
   const navClass = solid
-    ? "bg-background/95 backdrop-blur-sm border-b border-border shadow-sm"
+    ? "bg-pontedra-hero-bg-dark/90 backdrop-blur-sm border-b border-border shadow-sm" // Usando a nova cor de fundo do Hero
     : "bg-transparent";
 
   return (

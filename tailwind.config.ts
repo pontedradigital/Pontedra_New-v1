@@ -75,6 +75,15 @@ export default {
           'shader-bg': '#0a0f1c', // Cor de fundo para o shader
           'neon-green': '#00ffae', // Cor de linha 1
           'neon-blue': '#00b4ff', // Cor de linha 2
+          // Novas cores para o Hero
+          'hero-bg-dark': '#0B1420',
+          'line-green-dark': '#1C2C20',
+          'line-green-light': '#2C3E30',
+          'title-green': '#A8E063',
+          'subtitle-gray': '#C0C6CA',
+          'button-green': '#7ED957',
+          'button-green-hover': '#6CC94A',
+          'checklist-card-bg': '#101B25',
         },
         // Mapeando as novas cores genéricas para as variáveis CSS existentes
         textPrimary: "hsl(var(--foreground))",
