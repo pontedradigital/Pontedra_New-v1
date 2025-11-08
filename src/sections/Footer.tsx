@@ -108,24 +108,6 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
-        {/* Área de direitos autorais */}
-        <div className="mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#9ba8b5]">
-            <p>© {currentYear} Pontedra. Todos os direitos reservados.</p>
-            <div className="flex gap-6">
-              <Link to="/politica-privacidade" className="hover:text-[#57e389] transition-colors">
-                Política de Privacidade
-              </Link>
-              <Link to="/termos-uso" className="hover:text-[#57e389] transition-colors">
-                Termos de Serviço
-              </Link>
-              <Link to="/contato" className="hover:text-[#57e389] transition-colors">
-                Contato
-              </Link>
-            </div>
-          </div>
-        </div>
       </div>
     </footer>
   );
