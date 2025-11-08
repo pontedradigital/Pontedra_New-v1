@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import LandingNavbar from "@/components/LandingNavbar";
+import Footer from "@/sections/Footer"; // Importar Footer
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -96,6 +97,7 @@ const Register = () => {
           </Card>
         </motion.div>
       </div>
+      <Footer /> {/* Adicionado Footer */}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import LandingNavbar from "@/components/LandingNavbar";
+import Footer from "@/sections/Footer"; // Importar Footer
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -81,6 +82,7 @@ const Login = () => {
           </Card>
         </motion.div>
       </div>
+      <Footer /> {/* Adicionado Footer */}
     </div>
   );
 };

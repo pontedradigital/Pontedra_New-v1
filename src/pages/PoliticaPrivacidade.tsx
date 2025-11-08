@@ -1,12 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Shield } from "lucide-react";
+import LandingNavbar from "@/components/LandingNavbar"; // Importar LandingNavbar
+import Footer from "@/sections/Footer"; // Importar Footer
 
 export default function PoliticaPrivacidade() {
   return (
-    <div className="min-h-screen bg-[#0D1B2A]">
+    <div className="min-h-screen flex flex-col bg-[#0D1B2A]">
+      <LandingNavbar /> {/* Adicionado LandingNavbar */}
       {/* Header */}
-      <header className="border-b border-[#1d2c3f] bg-[#0a1520]">
+      <header className="border-b border-[#1d2c3f] bg-[#0a1520] pt-24"> {/* Adicionado pt-24 para compensar a navbar fixa */}
         <div className="container mx-auto px-4 md:px-8 py-6">
           <Link to="/" className="inline-flex items-center gap-2 text-[#57e389] hover:text-[#4bc979] transition-colors">
             <ArrowLeft className="w-5 h-5" />
@@ -16,7 +19,7 @@ export default function PoliticaPrivacidade() {
       </header>
 
       {/* Conteúdo */}
-      <main className="container mx-auto px-4 md:px-8 py-16">
+      <main className="container mx-auto px-4 md:px-8 py-16 flex-grow"> {/* Adicionado flex-grow */}
         <div className="max-w-4xl mx-auto">
           {/* Título */}
           <div className="text-center mb-12">
@@ -168,6 +171,7 @@ export default function PoliticaPrivacidade() {
           </div>
         </div>
       </main>
+      <Footer /> {/* Adicionado Footer */}
     </div>
   );
 }

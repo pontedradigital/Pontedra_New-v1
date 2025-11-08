@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Calendar, Clock, ArrowRight } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
+import LandingNavbar from "@/components/LandingNavbar"; // Importar LandingNavbar
+import Footer from "@/sections/Footer"; // Importar Footer
 
 // Função para remover acentos
 const removeAccents = (str: string) => {
@@ -34,7 +36,8 @@ export default function Blog() {
   }, [searchTerm, activeCategory]);
 
   return (
-    <div className="min-h-screen bg-[#0D1B2A]">
+    <div className="min-h-screen flex flex-col bg-[#0D1B2A]">
+      <LandingNavbar /> {/* Adicionado LandingNavbar */}
       {/* Hero Section */}
       <section className="relative w-full py-20 md:py-32 bg-gradient-to-b from-[#0a1520] to-[#0D1B2A]">
         <div className="container mx-auto px-4 md:px-8">
@@ -88,7 +91,7 @@ export default function Blog() {
       </section>
 
       {/* Posts */}
-      <section className="py-16">
+      <section className="py-16 flex-grow"> {/* Adicionado flex-grow para empurrar o footer para baixo */}
         <div className="container mx-auto px-4 md:px-8">
           {filteredPosts.length > 0 ? (
             <>
@@ -231,6 +234,7 @@ export default function Blog() {
           )}
         </div>
       </section>
+      <Footer /> {/* Adicionado Footer */}
     </div>
   );
 }
