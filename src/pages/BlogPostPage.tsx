@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Clock, Share2, Whatsapp, Facebook, Linkedin, Twitter, Copy } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, MessageCircle, Facebook, Linkedin, Twitter, Copy } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
 import { toast } from "sonner";
 import LandingNavbar from "@/components/LandingNavbar";
@@ -134,7 +134,7 @@ export default function BlogPostPage() {
                   className="p-3 rounded-full bg-[#25D366] text-white shadow-md hover:bg-[#1DA851] transition-colors"
                   aria-label="Compartilhar no WhatsApp"
                 >
-                  <Whatsapp className="w-5 h-5" />
+                  <MessageCircle className="w-5 h-5" /> {/* Changed from Whatsapp to MessageCircle */}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.1 }}

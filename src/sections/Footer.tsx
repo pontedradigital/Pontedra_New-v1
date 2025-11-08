@@ -107,7 +107,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-[#111d2e] border border-[#1d2c3f] flex items-center justify-center hover:bg-[#1d3a2f] hover:border-[#57e389]/50 transition-all group"
               >
-                <MessageCircle className="w-5 h-5 text-[#9ba8b5] group-hover:text-[#57e389] transition-colors" />
+                <MessageCircle className="w-5 h-5 text-[#9ba8b5] group-hover:text-[#57e389] transition-colors" /> {/* Changed from Whatsapp to MessageCircle */}
               </a>
             </div>
           </div>
