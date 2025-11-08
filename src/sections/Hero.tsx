@@ -14,9 +14,22 @@ const Hero = () => {
     let height = (canvas.height = window.innerHeight);
     const lines: any[] = [];
     const lineCount = 30;
-    // Usando as cores neon do tailwind.config.ts
-    const color1 = "hsl(var(--pontedra-neon-blue))";
-    const color2 = "hsl(var(--pontedra-neon-green))";
+
+    // Criar um elemento temporário para resolver as variáveis CSS
+    const tempDiv = document.createElement('div');
+    tempDiv.style.display = 'none';
+    document.body.appendChild(tempDiv);
+
+    // Obter as cores resolvidas do Tailwind
+    tempDiv.className = 'text-pontedra-neon-blue';
+    const resolvedColor1 = getComputedStyle(tempDiv).color;
+    tempDiv.className = 'text-pontedra-neon-green';
+    const resolvedColor2 = getComputedStyle(tempDiv).color;
+
+    document.body.removeChild(tempDiv); // Remover o elemento temporário
+
+    const color1 = resolvedColor1 || "#00b4ff"; // Fallback
+    const color2 = resolvedColor2 || "#57e389"; // Fallback
 
     for (let i = 0; i < lineCount; i++) {
       lines.push({
