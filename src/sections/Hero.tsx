@@ -1,9 +1,64 @@
-import React from "react";
-import ShaderLines from "../components/ShaderLines";
+import React, { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-export default function Hero() {
+const Hero = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+    const lines: any[] = [];
+    const lineCount = 30;
+    // Usando as cores neon do tailwind.config.ts
+    const color1 = "hsl(var(--pontedra-neon-blue))";
+    const color2 = "hsl(var(--pontedra-neon-green))";
+
+    for (let i = 0; i < lineCount; i++) {
+      lines.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        speed: 0.5 + Math.random() * 1,
+        length: 100 + Math.random() * 200,
+        alpha: 0.2 + Math.random() * 0.3,
+      });
+    }
+
+    const draw = () => {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      ctx.strokeStyle = gradient;
+
+      lines.forEach((line) => {
+        ctx.globalAlpha = line.alpha;
+        ctx.beginPath();
+        ctx.moveTo(line.x, line.y);
+        ctx.lineTo(line.x + line.length, line.y);
+        ctx.stroke();
+
+        line.y += line.speed;
+        if (line.y > height) line.y = -line.length;
+      });
+
+      requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const scrollToId = (id: string) => {
     if (window.location.pathname !== "/landing") {
@@ -18,54 +73,66 @@ export default function Hero() {
   };
 
   return (
-    <section id="hero" className="relative overflow-hidden min-h-[78vh] md:min-h-[88vh] flex items-center">
-      <ShaderLines intensity={1.0} colorA="hsl(var(--pontedra-neon-green))" colorB="hsl(var(--pontedra-neon-blue))" blur={0.6} />
+    <section id="hero" className="relative h-screen w-full flex flex-col justify-center items-center text-center overflow-hidden">
+      <canvas
+        ref={canvasRef}
+        className="absolute top-0 left-0 w-full h-full -z-10"
+      />
 
-      <div className="max-w-7xl mx-auto w-full px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
-        <div className="text-left">
-          <div className="inline-block mb-6">
-            <span className="bg-card/50 text-pontedra-green text-sm font-semibold px-4 py-2 rounded-full border border-border">Soluções Web para PMEs e Profissionais</span>
-          </div>
+      {/* Conteúdo principal do HERO */}
+      <motion.h1
+        className="text-5xl md:text-7xl font-bold text-foreground drop-shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
+      >
+        Soluções Digitais que Conectam Resultados
+      </motion.h1>
 
-          <h1 className="mt-4 text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
-            <span className="block text-pontedra-green">Conectamos</span>
-            <span className="block text-foreground">sua empresa</span>
-            <span className="block text-foreground">a pessoas</span>
-          </h1>
+      <motion.p
+        className="text-lg md:text-2xl text-textSecondary mt-4 max-w-2xl"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 1 }}
+      >
+        Transforme sua presença online em um fluxo constante de clientes.
+      </motion.p>
 
-          <div className="w-16 h-1 bg-pontedra-green-light rounded mt-6 mb-6"></div>
+      <div className="mt-8 flex gap-4">
+        <a
+          href="#solucoes"
+          onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}}
+          className="bg-pontedra-green hover:bg-pontedra-green-hover text-pontedra-dark-text px-6 py-3 rounded-xl font-semibold transition"
+        >
+          Ver Soluções
+        </a>
+        <a
+          href="https://www.instagram.com/digitalpontevra/"
+          target="_blank"
+          rel="noreferrer"
+          className="border border-pontedra-border-light hover:bg-pontedra-green hover:text-pontedra-dark-text text-textPrimary px-6 py-3 rounded-xl font-semibold transition"
+        >
+          Portfólio
+        </a>
+      </div>
 
-          <p className="text-textSecondary max-w-xl mb-8">
-            Construímos pontes digitais que aproximam sua marca de clientes reais, com autenticidade, tecnologia e estratégia.
-          </p>
-
-          <div className="flex flex-wrap gap-4">
-            <a href="#solucoes" onClick={(e)=>{e.preventDefault(); scrollToId('solucoes');}} className="inline-flex items-center bg-pontedra-green hover:bg-pontedra-green-hover text-pontedra-dark-text px-6 py-3 rounded-xl font-semibold transition">
-              Ver Soluções <span className="ml-3">→</span>
-            </a>
-
-            <a href="https://www.instagram.com/digitalpontevra/" target="_blank" rel="noreferrer" className="inline-flex items-center border border-pontedra-border-light px-6 py-3 rounded-xl font-semibold text-textPrimary hover:border-pontedra-green transition">
-              Ver Portfólio
-            </a>
-          </div>
+      {/* Checklist lateral */}
+      <div className="absolute right-10 bottom-10 flex flex-col text-foreground gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-pontedra-green font-bold">1.</span>
+          <span>Identifique sua dor</span>
         </div>
-
-        <div className="space-y-6">
-          {[
-            { num: "01", title: "Descubra como resolver seus desafios" },
-            { num: "02", title: "Nós criamos a solução sob medida" },
-            { num: "03", title: "Transforme resultados e conquiste clientes" },
-          ].map((c) => (
-            <article key={c.num} className="flex items-center gap-4 bg-card/60 border border-border rounded-xl p-5 backdrop-blur-sm hover:-translate-y-1 transition-transform duration-300">
-              <div className="flex-none w-12 h-12 rounded-full bg-background border border-pontedra-green-light flex items-center justify-center text-pontedra-green font-bold">{c.num}</div>
-              <div className="flex-1">
-                <h4 className="text-foreground font-semibold">{c.title}</h4>
-              </div>
-              <div className="text-textSecondary">→</div>
-            </article>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-pontedra-green font-bold">2.</span>
+          <span>Nós resolvemos</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-pontedra-green font-bold">3.</span>
+          <span>Transforme em resultados</span>
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default Hero;
