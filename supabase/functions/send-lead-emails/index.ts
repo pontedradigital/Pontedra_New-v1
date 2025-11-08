@@ -30,10 +30,10 @@ serve(async (req) => {
 
   try {
     // Extract leadData from the request body, matching frontend structure
-    const { data: leadData } = await req.json() as { data: EmailLeadData }
+    const { record: leadData } = await req.json() as { record: EmailLeadData }
 
-    if (!leadData.email || !leadData.mensagem) {
-      console.error("Erro: Campos obrigatórios (e-mail e mensagem) ausentes")
+    if (!leadData.email || !leadData.origem) { // 'origem' é agora NOT NULL no DB
+      console.error("Erro: Campos obrigatórios (e-mail e origem) ausentes")
       return new Response(JSON.stringify({ error: "Campos obrigatórios ausentes" }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 
@@ -55,6 +55,7 @@ serve(async (req) => {
       popup_tempo: 'Pop-up - Tempo de Navegação',
       popup_saida: 'Pop-up - Tentativa de Saída',
       popup_retorno: 'Pop-up - Retorno à Página',
+      desconhecido: 'Origem Desconhecida',
     }[leadData.origem] || leadData.origem
 
     const internalRecipients = [
@@ -194,7 +195,7 @@ serve(async (req) => {
       </html>
     `
 
-    // Email para o cliente (confirmação)
+    -- Email para o cliente (confirmação)
     const emailClienteHTML = `
       <!DOCTYPE html>
       <html>
