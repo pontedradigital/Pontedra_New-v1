@@ -15,7 +15,8 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center">
                 <span className="text-[#0D1B2A] font-bold text-xl">P</span>
               </div>
-              <span className="text-2xl font-bold text-white">Pontedra</span>
+              {/* Logotipo da Pontedra */}
+              <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-10 w-auto" />
             </div>
             <p className="text-[#9ba8b5] text-sm leading-relaxed">
               Conectando sua empresa a pessoas por meio do marketing digital.
