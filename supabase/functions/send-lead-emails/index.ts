@@ -139,26 +139,20 @@ Mensagem: ${mensagem}
                 </p>
                 
                 <p style="margin: 0 0 20px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
-                  Ficamos muito felizes em saber que você entrou em contato com a Pontedra! Cada mensagem que recebemos representa uma nova oportunidade de entender necessidades reais e criar algo que gere impacto de verdade.
+                  😊 Ficamos muito felizes em saber que você entrou em contato com a Pontedra! Cada mensagem que recebemos representa uma nova oportunidade de entender necessidades reais e criar algo que gere impacto de verdade.
                 </p>
 
                 <p style="margin: 0 0 20px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
-                  Nossa equipe já está analisando sua solicitação com atenção e em breve retornaremos com uma resposta personalizada, feita especialmente para você.
+                  👩‍💻 Nossa equipe já está analisando sua solicitação com atenção e em breve retornaremos com uma resposta personalizada, feita especialmente para você.
                 </p>
 
                 <p style="margin: 0 0 30px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
-                  Estamos empolgados para dar o próximo passo junto com você.
+                  🚀 Estamos empolgados para dar o próximo passo junto com você.
                 </p>
 
                 <div style="background-color: #0B1420; border-left: 4px solid #00C896; padding: 20px; margin: 30px 0; border-radius: 8px;">
                   <p style="margin: 0; color: #e1e8f0; font-size: 15px; line-height: 1.6;">
-                    Enquanto aguarda nosso retorno, aproveite para acessar nossa plataforma de clientes, na aba <strong>Login</strong>. Assim, você já poderá conhecer algumas das ferramentas disponíveis, agendar uma consultoria e se aproximar ainda mais do nosso time.
-                  </p>
-                </div>
-
-                <div style="background: linear-gradient(135deg, #00C896 0%, #00E0A0 100%); border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
-                  <p style="margin: 0; color: #0D1B2A; font-size: 16px; font-weight: bold;">
-                    ⚡ Tempo médio de resposta: 24 horas
+                    Enquanto aguarda nosso retorno, aproveite para acessar nossa plataforma de clientes através do site <a href="https://www.pontedra.com" style="color: #00C896; text-decoration: none; font-weight: bold;">www.pontedra.com</a> e, na aba <strong>Login</strong>, você já poderá conhecer algumas das ferramentas disponíveis, agendar uma consultoria e se aproximar ainda mais do nosso time.
                   </p>
                 </div>
               </td>
