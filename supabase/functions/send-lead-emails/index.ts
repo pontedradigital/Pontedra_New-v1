@@ -103,50 +103,103 @@ Mensagem: ${mensagem}
 
     // --- Envio de e-mail de confirmação para o cliente (AGORA EM HTML) ---
     const clientEmailHtml = `
-      <div style="font-family: 'Poppins', sans-serif; background-color: #0D1B2A; color: #e1e8f0; padding: 20px; text-align: center;">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0">
-          <tr>
-            <td align="center" style="padding-bottom: 30px;">
-              <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra Logo" style="max-width: 150px; height: auto; display: block; margin: 0 auto;">
-            </td>
-          </tr>
-          <tr>
-            <td align="center">
-              <div style="background-color: #111d2e; border: 1px solid #1d2c3f; border-radius: 12px; padding: 30px; max-width: 600px; margin: 0 auto; text-align: left;">
-                <h1 style="color: #57e389; font-size: 28px; margin-bottom: 20px; text-align: center;">Olá ${nome},</h1>
-                <p style="font-size: 16px; line-height: 1.6; margin-bottom: 15px;">
-                  Recebemos sua mensagem e gostaríamos de agradecer pelo seu contato com a Pontedra!
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body style="margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #0D1B2A;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0D1B2A; padding: 40px 20px;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="background-color: #111d2e; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            
+            <!-- Logo -->
+            <tr>
+              <td align="center" style="padding: 40px 40px 20px 40px; background: linear-gradient(135deg, #0D1B2A 0%, #1a2f42 100%);">
+                <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra" style="width: 180px; height: auto;">
+              </td>
+            </tr>
+
+            <!-- Título -->
+            <tr>
+              <td align="center" style="padding: 30px 40px; background: linear-gradient(135deg, #0D1B2A 0%, #1a2f42 100%);">
+                <h1 style="margin: 0; color: #00C896; font-size: 32px; font-weight: bold;">
+                  Obrigado pelo contato!
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Conteúdo -->
+            <tr>
+              <td style="padding: 40px;">
+                <p style="margin: 0 0 20px 0; color: #e1e8f0; font-size: 18px; line-height: 1.6;">
+                  Olá <strong style="color: #00C896;">${nome}</strong>,
                 </p>
-                <p style="font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
-                  Nossa equipe está analisando sua solicitação com atenção e retornaremos o mais breve possível para conversarmos sobre como podemos impulsionar o seu negócio.
+                
+                <p style="margin: 0 0 20px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
+                  Ficamos muito felizes em saber que você entrou em contato com a Pontedra! Cada mensagem que recebemos representa uma nova oportunidade de entender necessidades reais e criar algo que gere impacto de verdade.
                 </p>
-                <div style="background-color: #0a1520; border: 1px solid #1d2c3f; border-left: 4px solid #57e389; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
-                  <p style="font-size: 15px; color: #9ba8b5; margin-bottom: 10px;"><strong>Detalhes da sua mensagem:</strong></p>
-                  <p style="font-size: 15px; line-height: 1.5; margin-bottom: 5px;"><strong>Assunto:</strong> ${assunto || 'Não informado'}</p>
-                  <p style="font-size: 15px; line-height: 1.5;"><strong>Mensagem:</strong> ${mensagem}</p>
+
+                <p style="margin: 0 0 20px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
+                  Nossa equipe já está analisando sua solicitação com atenção e em breve retornaremos com uma resposta personalizada, feita especialmente para você.
+                </p>
+
+                <p style="margin: 0 0 30px 0; color: #9ba8b5; font-size: 16px; line-height: 1.6;">
+                  Estamos empolgados para dar o próximo passo junto com você.
+                </p>
+
+                <div style="background-color: #0B1420; border-left: 4px solid #00C896; padding: 20px; margin: 30px 0; border-radius: 8px;">
+                  <p style="margin: 0; color: #e1e8f0; font-size: 15px; line-height: 1.6;">
+                    Enquanto aguarda nosso retorno, aproveite para acessar nossa plataforma de clientes, na aba <strong>Login</strong>. Assim, você já poderá conhecer algumas das ferramentas disponíveis, agendar uma consultoria e se aproximar ainda mais do nosso time.
+                  </p>
                 </div>
-                <p style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                  Enquanto isso, sinta-se à vontade para explorar nosso site e conhecer mais sobre nossas soluções em desenvolvimento web e marketing digital.
+
+                <div style="background: linear-gradient(135deg, #00C896 0%, #00E0A0 100%); border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
+                  <p style="margin: 0; color: #0D1B2A; font-size: 16px; font-weight: bold;">
+                    ⚡ Tempo médio de resposta: 24 horas
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Informações de Contato -->
+            <tr>
+              <td style="padding: 30px 40px; background-color: #0B1420; border-top: 1px solid #1d2c3f;">
+                <p style="margin: 0 0 15px 0; color: #00C896; font-size: 16px; font-weight: bold;">
+                  📞 Entre em contato:
                 </p>
-                <p style="font-size: 16px; line-height: 1.6; text-align: center; color: #9ba8b5;">
-                  Atenciosamente,<br>
-                  <strong>Equipe Pontedra</strong>
+                <p style="margin: 0 0 8px 0; color: #9ba8b5; font-size: 14px;">
+                  <strong style="color: #e1e8f0;">Telefone:</strong> +55 11 97877-7308
                 </p>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-top: 30px;">
-              <p style="font-size: 12px; color: #9ba8b5;">
-                Este é um e-mail automático, por favor, não responda diretamente.
-              </p>
-              <p style="font-size: 12px; color: #9ba8b5;">
-                Pontedra - Conectamos sua empresa a pessoas.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </div>
+                <p style="margin: 0 0 8px 0; color: #9ba8b5; font-size: 14px;">
+                  <strong style="color: #e1e8f0;">E-mail:</strong> contato@pontedra.com
+                </p>
+                <p style="margin: 0; color: #9ba8b5; font-size: 14px;">
+                  <strong style="color: #e1e8f0;">Site:</strong> www.pontedra.com
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="padding: 30px 40px; background-color: #0a0f1c;">
+                <p style="margin: 0 0 10px 0; color: #9ba8b5; font-size: 12px;">
+                  © 2025 Pontedra - Conectando empresas a pessoas
+                </p>
+                <p style="margin: 0; color: #6b7885; font-size: 11px;">
+                  Avenida Vila Ema 4191 - Vila Ema - São Paulo/SP
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
     `;
 
     const resendClientResponse = await fetch("https://api.resend.com/emails", {
