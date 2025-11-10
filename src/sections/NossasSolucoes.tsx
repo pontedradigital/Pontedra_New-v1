@@ -97,15 +97,7 @@ const services = [
     fullDesc: "Ajudamos sua marca a nascer (ou renascer) com propósito e personalidade. Criamos logótipos, paletas de cores, tipografias e diretrizes visuais que refletem quem você é e conectam com seu público.",
     badge: "Design"
   },
-  {
-    id: 11,
-    title: "Integração de Ferramentas",
-    category: "Sistemas",
-    icon: Zap,
-    shortDesc: "Integramos todas as ferramentas do seu negócio.",
-    fullDesc: "Integramos todas as ferramentas do seu negócio em uma única plataforma. Conectamos seu site com sistemas de pagamento, e-mail marketing, redes sociais, analytics e muito mais, criando um ecossistema digital completo.",
-    badge: "Sistemas"
-  },
+  // O serviço com id: 11 "Integração de Ferramentas" foi removido conforme solicitado.
   {
     id: 12,
     title: "Assessoria Digital Completa",
