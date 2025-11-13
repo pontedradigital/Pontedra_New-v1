@@ -59,7 +59,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         setUser(session?.user || null);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Only fetch profile if user is new or profile is not yet loaded for this user
+          if (!profile || profile.id !== session.user.id) {
+            await fetchProfile(session.user.id);
+          }
         } else {
           setProfile(null);
         }
@@ -88,32 +91,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [profile]); // Added profile to dependency array to make sure the `if (!profile || profile.id !== session.user.id)` check works correctly.
 
   useEffect(() => {
     console.log("AuthContext: Navigation Effect - loading:", loading, "user:", !!user, "profile:", !!profile, "currentPath:", window.location.pathname);
-    if (!loading && user && profile) {
-      const currentPath = window.location.pathname;
-      if (!currentPath.startsWith('/dashboard')) {
-        console.log("AuthContext: Navigating to dashboard based on role:", profile.role);
-        if (profile.role === "master") {
-          navigate("/dashboard/master");
-        } else if (profile.role === "client") {
-          navigate("/dashboard/client");
+    if (!loading) {
+      if (user && profile) {
+        const currentPath = window.location.pathname;
+        const expectedDashboardPrefix = `/dashboard/${profile.role}`;
+        
+        // If not on any dashboard route, or on a dashboard route but not the one matching the role, navigate.
+        // This prevents unnecessary re-navigations if already on a valid sub-route like /dashboard/master/packages
+        if (!currentPath.startsWith('/dashboard') || !currentPath.startsWith(expectedDashboardPrefix)) {
+          console.log(`AuthContext: Navigating to ${expectedDashboardPrefix} based on role: ${profile.role}`);
+          navigate(expectedDashboardPrefix);
         } else {
-          navigate("/dashboard/prospect");
+          console.log("AuthContext: Already on a valid dashboard route for this role, no navigation needed.");
         }
-      } else {
-        console.log("AuthContext: Already on a dashboard route, no navigation needed.");
-      }
-    } else if (!loading && !user) {
-      const currentPath = window.location.pathname;
-      if (currentPath.startsWith('/dashboard')) {
-        console.log("AuthContext: No user and on dashboard route, redirecting to login.");
-        navigate('/login');
+      } else if (!user) {
+        const currentPath = window.location.pathname;
+        // If on any dashboard route (except login/cadastro pages themselves), redirect to login.
+        if (currentPath.startsWith('/dashboard') && !['/login', '/cadastro'].includes(currentPath)) {
+          console.log("AuthContext: No user and on dashboard route, redirecting to login.");
+          navigate('/login');
+        }
       }
     }
-  }, [loading, user, profile, navigate]);
+  }, [loading, user, profile, navigate]); // Dependencies are correct here.
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log("AuthContext: Attempting login for:", email);
