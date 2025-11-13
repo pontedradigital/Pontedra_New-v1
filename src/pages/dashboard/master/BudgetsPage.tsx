@@ -36,7 +36,7 @@ import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } => '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Tipos de dados para Serviços (products)
@@ -141,7 +141,17 @@ export default function BudgetsPage() {
       const { data, error } = await supabase
         .from('budgets')
         .select(`
-          *,
+          id,
+          user_id,
+          proposal_number,
+          client_name,
+          client_phone,
+          client_email,
+          client_address,
+          client_cep,
+          valid_until,
+          total_amount,
+          created_at,
           budget_items(*)
         `)
         .order('created_at', { ascending: false });
@@ -304,6 +314,9 @@ export default function BudgetsPage() {
   };
 
   const generatePdf = async (budget: Budget) => {
+    console.log("Generating PDF for budget:", budget); // Log para depuração
+    console.log("Proposal Number for PDF:", budget.proposal_number); // Log para depuração
+
     const input = pdfContentRef.current;
     if (!input) {
       toast.error("Erro: Conteúdo do PDF não encontrado.");
