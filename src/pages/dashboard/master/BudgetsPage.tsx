@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label }s from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
@@ -75,6 +75,7 @@ interface BudgetItem {
 interface Budget {
   id: string;
   user_id: string;
+  proposal_number: string; // NOVO: Número da proposta
   client_name: string;
   client_phone: string | null;
   client_email: string | null;
@@ -323,6 +324,7 @@ export default function BudgetsPage() {
           <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra Logo" style="max-height: 80px; width: auto;">
         </div>
         <h1 style="font-size: 28px; color: #00C896; text-align: center; margin-bottom: 20px;">PROPOSTA COMERCIAL</h1>
+        <p style="font-size: 14px; text-align: center; color: #555; margin-bottom: 10px;">Número da Proposta: <strong>${budget.proposal_number}</strong></p>
         <p style="font-size: 14px; text-align: center; color: #555; margin-bottom: 30px;">Gerado em: ${format(new Date(budget.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
 
         <div style="border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 30px; background-color: #f9f9f9;">
@@ -440,6 +442,7 @@ export default function BudgetsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
+                <TableHead className="text-muted-foreground">Nº PROPOSTA</TableHead> {/* NOVO */}
                 <TableHead className="text-muted-foreground">CLIENTE</TableHead>
                 <TableHead className="text-muted-foreground">DATA CRIAÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">VALIDADE</TableHead>
@@ -452,6 +455,7 @@ export default function BudgetsPage() {
               {budgets && budgets.length > 0 ? (
                 budgets.map((budget) => (
                   <TableRow key={budget.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                    <TableCell className="font-medium text-foreground py-4">{budget.proposal_number}</TableCell> {/* NOVO */}
                     <TableCell className="font-medium text-foreground py-4">
                       {budget.client_name}
                       {budget.client_email && <p className="text-sm text-muted-foreground">{budget.client_email}</p>}
@@ -487,7 +491,7 @@ export default function BudgetsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
                     Nenhum orçamento encontrado.
                   </TableCell>
                 </TableRow>
