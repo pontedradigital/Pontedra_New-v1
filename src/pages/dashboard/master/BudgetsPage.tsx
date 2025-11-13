@@ -201,6 +201,23 @@ export default function BudgetsPage() {
     staleTime: Infinity,
   });
 
+  // Fetch annual package discount percentage from settings
+  const { data: annualDiscountSetting, isLoading: isLoadingAnnualDiscount } = useQuery<{ key: string; value: number } | null, Error>({
+    queryKey: ['settings', 'annual_package_discount_percentage'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'annual_package_discount_percentage')
+        .single();
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity, // This setting doesn't change often
+  });
+
   // Fetch installment rates
   const { data: installmentRates, isLoading: isLoadingRates } = useQuery<InstallmentRate[], Error>({
     queryKey: ['installment_rates'],
@@ -270,7 +287,7 @@ export default function BudgetsPage() {
     return itemsToFilter;
   }, [searchTerm, allAvailableItems, currentSelectionType]);
 
-  // --- NOVOS CÁLCULOS PARA OPÇÕES DE PAGAMENTO ---
+  // --- CÁLCULOS PARA OPÇÕES DE PAGAMENTO ---
   const cashDiscountPercentage = useMemo(() => defaultCashDiscountSetting?.value || 10, [defaultCashDiscountSetting]);
 
   const valorAVistaComDesconto = useMemo(() => {
@@ -303,7 +320,23 @@ export default function BudgetsPage() {
 
   const parcelamento6x = useMemo(() => getInstallmentDetails(6), [getInstallmentDetails]);
   const parcelamento10x = useMemo(() => getInstallmentDetails(10), [getInstallmentDetails]);
-  // --- FIM DOS NOVOS CÁLCULOS ---
+
+  // Cálculos para pacotes (Mensal e Anual)
+  const packageAnnualDiscountPercentage = useMemo(() => annualDiscountSetting?.value || 10, [annualDiscountSetting]);
+
+  const packageMonthlyPrice = useMemo(() => totalAmount, [totalAmount]); // Para pacotes, totalAmount é o valor mensal
+
+  const packageAnnualPriceWithDiscount = useMemo(() => {
+    if (packageMonthlyPrice === 0) return 0;
+    const annualRaw = packageMonthlyPrice * 12;
+    return parseFloat((annualRaw * (1 - packageAnnualDiscountPercentage / 100)).toFixed(2));
+  }, [packageMonthlyPrice, packageAnnualDiscountPercentage]);
+
+  const packageMonthlyPriceFromAnnual = useMemo(() => {
+    if (packageAnnualPriceWithDiscount === 0) return 0;
+    return parseFloat((packageAnnualPriceWithDiscount / 12).toFixed(2));
+  }, [packageAnnualPriceWithDiscount]);
+  // --- FIM DOS CÁLCULOS ---
 
   const calculateValidUntil = () => {
     let currentDate = new Date();
@@ -475,7 +508,7 @@ export default function BudgetsPage() {
     saveBudgetMutation.mutate({ budgetData: formData, items: selectedItems });
   };
 
-  const generatePdfContent = async (budget: Budget) => {
+  const generatePdfContent = async (budget: Budget, annualDiscountSetting: { key: string; value: number } | null | undefined) => {
     const clientAddressFull = [
       budget.client_street,
       budget.client_number ? `, ${budget.client_number}` : '',
@@ -487,34 +520,57 @@ export default function BudgetsPage() {
     ].filter(Boolean).join('');
 
     const pdfTotalAmount = budget.total_amount;
-    const pdfCashDiscountPercentage = defaultCashDiscountSetting?.value || 10;
-    const pdfValorAVistaComDesconto = parseFloat((pdfTotalAmount * (1 - pdfCashDiscountPercentage / 100)).toFixed(2));
+    const isPackageBudget = budget.budget_items.length > 0 && budget.budget_items[0].item_type === 'package';
 
-    const getPdfInstallmentDetails = (installments: number) => {
-      if (pdfTotalAmount === 0 || !installmentRates) return { total: 0, parcela: 0, taxa: 0 };
-      
-      let effectiveClientRate = 0;
-      let totalComJuros = pdfTotalAmount; // Começa com o valor total, sem juros
+    let paymentOptionsHtml = '';
 
-      // Cliente paga juros apenas para parcelas de 7 a 10
-      if (installments >= 7 && installments <= 10) {
-        const rate = installmentRates.find(r => r.installments === installments);
-        effectiveClientRate = rate ? rate.client_pays_rate : 0;
-        totalComJuros = pdfTotalAmount * (1 + effectiveClientRate);
-      }
-      // Para parcelas <= 6, effectiveClientRate permanece 0, então totalComJuros é igual a pdfTotalAmount.
+    if (isPackageBudget) {
+      const pdfPackageAnnualDiscountPercentage = annualDiscountSetting?.value || 10;
+      const pdfPackageMonthlyPrice = pdfTotalAmount;
+      const pdfPackageAnnualRaw = pdfPackageMonthlyPrice * 12;
+      const pdfPackageAnnualPriceWithDiscount = parseFloat((pdfPackageAnnualRaw * (1 - pdfPackageAnnualDiscountPercentage / 100)).toFixed(2));
+      const pdfPackageMonthlyPriceFromAnnual = parseFloat((pdfPackageAnnualPriceWithDiscount / 12).toFixed(2));
 
-      const valorParcela = totalComJuros / installments;
+      paymentOptionsHtml = `
+        <p style="font-size: 16px; text-align: right; margin-top: 20px;"><strong>Valor Mensal: R$ ${pdfPackageMonthlyPrice.toFixed(2)}</strong></p>
+        <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Anual (${pdfPackageAnnualDiscountPercentage}% de desconto): R$ ${pdfPackageAnnualPriceWithDiscount.toFixed(2)}</strong></p>
+        <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Mensal (Pacote Anual): R$ ${pdfPackageMonthlyPriceFromAnnual.toFixed(2)}</strong></p>
+      `;
+    } else {
+      const pdfCashDiscountPercentage = defaultCashDiscountSetting?.value || 10;
+      const pdfValorAVistaComDesconto = parseFloat((pdfTotalAmount * (1 - pdfCashDiscountPercentage / 100)).toFixed(2));
 
-      return {
-        total: parseFloat(totalComJuros.toFixed(2)),
-        parcela: parseFloat(valorParcela.toFixed(2)),
-        taxa: parseFloat((effectiveClientRate * 100).toFixed(2)),
+      const getPdfInstallmentDetails = (installments: number) => {
+        if (pdfTotalAmount === 0 || !installmentRates) return { total: 0, parcela: 0, taxa: 0 };
+        
+        let effectiveClientRate = 0;
+        let totalComJuros = pdfTotalAmount;
+
+        if (installments >= 7 && installments <= 10) {
+          const rate = installmentRates.find(r => r.installments === installments);
+          effectiveClientRate = rate ? rate.client_pays_rate : 0;
+          totalComJuros = pdfTotalAmount * (1 + effectiveClientRate);
+        }
+
+        const valorParcela = totalComJuros / installments;
+
+        return {
+          total: parseFloat(totalComJuros.toFixed(2)),
+          parcela: parseFloat(valorParcela.toFixed(2)),
+          taxa: parseFloat((effectiveClientRate * 100).toFixed(2)),
+        };
       };
-    };
 
-    const pdfParcelamento6x = getPdfInstallmentDetails(6);
-    const pdfParcelamento10x = getPdfInstallmentDetails(10);
+      const pdfParcelamento6x = getPdfInstallmentDetails(6);
+      const pdfParcelamento10x = getPdfInstallmentDetails(10);
+
+      paymentOptionsHtml = `
+        <p style="font-size: 16px; text-align: right; margin-top: 20px;"><strong>Valor Total: R$ ${pdfTotalAmount.toFixed(2)}</strong></p>
+        <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor à Vista (${pdfCashDiscountPercentage}% de desconto): R$ ${pdfValorAVistaComDesconto.toFixed(2)}</strong></p>
+        <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 6x (sem juros): 6x de R$ ${pdfParcelamento6x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento6x.total.toFixed(2)})</strong></p>
+        <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 10x (com juros): 10x de R$ ${pdfParcelamento10x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento10x.total.toFixed(2)})</strong></p>
+      `;
+    }
 
     return `
       <div style="font-family: 'Poppins', sans-serif; padding: 40px; color: #0D1B2A; background-color: #ffffff; box-sizing: border-box;">
@@ -560,10 +616,7 @@ export default function BudgetsPage() {
               `).join('')}
             </tbody>
           </table>
-          <p style="font-size: 16px; text-align: right; margin-top: 20px;"><strong>Valor Total: R$ ${pdfTotalAmount.toFixed(2)}</strong></p>
-          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor à Vista (${pdfCashDiscountPercentage}% de desconto): R$ ${pdfValorAVistaComDesconto.toFixed(2)}</strong></p>
-          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 6x (sem juros): 6x de R$ ${pdfParcelamento6x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento6x.total.toFixed(2)})</strong></p>
-          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 10x (com juros): 10x de R$ ${pdfParcelamento10x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento10x.total.toFixed(2)})</strong></p>
+          ${paymentOptionsHtml}
         </div>
 
         <div style="text-align: center; margin-bottom: 30px; padding: 15px; background-color: #e0ffe0; border-radius: 8px;">
@@ -585,7 +638,8 @@ export default function BudgetsPage() {
       return;
     }
 
-    const htmlContent = await generatePdfContent(budget);
+    // Pass annualDiscountSetting to generatePdfContent
+    const htmlContent = await generatePdfContent(budget, annualDiscountSetting);
 
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -642,7 +696,7 @@ export default function BudgetsPage() {
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
   const isPdfActionDisabled = !currentEditableBudget || saveBudgetMutation.isPending;
 
-  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates) {
+  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -938,20 +992,37 @@ export default function BudgetsPage() {
               {/* Resumo de Valores Adicionais */}
               <div className="md:col-span-2 mt-4 pt-4 border-t border-border">
                 <h3 className="text-xl font-bold text-primary mb-4">Opções de Pagamento</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Valor à Vista ({cashDiscountPercentage}% de desconto)</Label>
-                    <Input value={`R$ ${valorAVistaComDesconto.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                {currentSelectionType === 'package' ? (
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Valor Mensal</Label>
+                      <Input value={`R$ ${packageMonthlyPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Valor Anual ({packageAnnualDiscountPercentage}% OFF)</Label>
+                      <Input value={`R$ ${packageAnnualPriceWithDiscount.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Valor Mensal (Pacote Anual)</Label>
+                      <Input value={`R$ ${packageMonthlyPriceFromAnnual.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Valor Parcelado em até 6x</Label>
-                    <Input value={`6x de R$ ${parcelamento6x.parcela.toFixed(2)} (Total: R$ ${parcelamento6x.total.toFixed(2)})`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Valor à Vista ({cashDiscountPercentage}% de desconto)</Label>
+                      <Input value={`R$ ${valorAVistaComDesconto.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Valor Parcelado em até 6x</Label>
+                      <Input value={`6x de R$ ${parcelamento6x.parcela.toFixed(2)} (Total: R$ ${parcelamento6x.total.toFixed(2)})`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Valor Parcelado em até 10x</Label>
+                      <Input value={`10x de R$ ${parcelamento10x.parcela.toFixed(2)} (Total: R$ ${parcelamento10x.total.toFixed(2)})`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Valor Parcelado em até 10x</Label>
-                    <Input value={`10x de R$ ${parcelamento10x.parcela.toFixed(2)} (Total: R$ ${parcelamento10x.total.toFixed(2)})`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
-                  </div>
-                </div>
+                )}
               </div>
 
               <DialogFooter className="md:col-span-2 mt-6 flex justify-end gap-2">
