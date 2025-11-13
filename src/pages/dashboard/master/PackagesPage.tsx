@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react'; // Adicionado useMemo
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
@@ -66,8 +66,8 @@ export default function PackagesPage() {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch packages with their associated services
-  const { data: packages, isLoading, isError, error } = useQuery<PackageItem[], Error>({
+  // Fetch packages with their associated service_ids
+  const { data: packagesData, isLoading, isError, error } = useQuery<any[], Error>({ // Use 'any[]' temporariamente para dados brutos
     queryKey: ['packages'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -75,18 +75,13 @@ export default function PackagesPage() {
         .select(`
           *,
           package_services(
-            service_id,
-            products(id, sku, name, description, final_price, is_active)
+            service_id
           )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      return data.map(pkg => ({
-        ...pkg,
-        services_in_package: pkg.package_services.map((ps: any) => ps.products).filter(Boolean) as ServiceItem[]
-      }));
+      return data;
     },
   });
 
@@ -96,13 +91,28 @@ export default function PackagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, sku, name, description, final_price, is_active') // Incluir is_active para filtragem client-side
-        // .eq('is_active', true) // REMOVIDO: Este filtro estava causando o erro 400
+        .select('id, sku, name, description, final_price, is_active')
         .order('name', { ascending: true });
       if (error) throw error;
       return data;
     },
   });
+
+  // Combine packagesData with availableServices on the client side
+  const packages = useMemo(() => {
+    if (!packagesData || !availableServices) return [];
+
+    return packagesData.map(pkg => {
+      const servicesInPackage = pkg.package_services
+        .map((ps: { service_id: string }) => availableServices.find(s => s.id === ps.service_id))
+        .filter(Boolean) as ServiceItem[]; // Filter out undefined and cast
+
+      return {
+        ...pkg,
+        services_in_package: servicesInPackage,
+      };
+    });
+  }, [packagesData, availableServices]);
 
   // Filtrar serviços ativos no lado do cliente
   const activeAvailableServices = availableServices?.filter(service => service.is_active) || [];
