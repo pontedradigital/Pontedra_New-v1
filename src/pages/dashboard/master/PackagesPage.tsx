@@ -41,7 +41,7 @@ interface PackageItem {
   sku: string;
   name: string;
   description: string | null;
-  price: number; // Preço mensal final calculado
+  price: number; // Preço mensal final calculado (já com o desconto do pacote)
   discount_percentage: number | null;
   is_active: boolean;
   created_at: string;
@@ -127,16 +127,30 @@ export default function PackagesPage() {
         .map((ps: { service_id: string }) => servicesMap.get(ps.service_id))
         .filter(Boolean) as ServiceItem[];
 
+      // Calculate sum of services price for display in table
+      const sumOfServicesPrice = servicesInPackage.reduce((total, service) => total + (service?.final_price || 0), 0);
+
+      // Calculate annual price with discount for display in table
+      const monthlyPriceWithPackageDiscount = pkg.price || 0;
+      const annualRaw = monthlyPriceWithPackageDiscount * 12;
+      const annualDiscountRate = (annualDiscountSetting?.value || 10) / 100;
+      const annualPriceWithDiscount = parseFloat((annualRaw * (1 - annualDiscountRate)).toFixed(2));
+      const monthlyPriceFromAnnual = parseFloat((annualPriceWithDiscount / 12).toFixed(2));
+
+
       return {
         ...pkg,
         services_in_package: servicesInPackage,
+        sum_of_services_price: sumOfServicesPrice, // Add this for table display
+        annual_price_with_discount: annualPriceWithDiscount, // Add this for table display
+        monthly_price_from_annual: monthlyPriceFromAnnual, // Add this for table display
       };
     });
-  }, [packagesData, availableServices]);
+  }, [packagesData, availableServices, annualDiscountSetting]);
 
   const allAvailableServices = availableServices || [];
 
-  // Calculate total price of selected services (raw sum)
+  // Calculate total price of selected services (raw sum) for the dialog
   const sumOfSelectedServicesPrice = useMemo(() => {
     if (!allAvailableServices) return 0;
     return selectedServiceIds.reduce((total, serviceId) => {
@@ -145,25 +159,24 @@ export default function PackagesPage() {
     }, 0);
   }, [selectedServiceIds, allAvailableServices]);
 
-  // Calculate final package price after applying package-level discount
+  // Calculate final package price after applying package-level discount for the dialog
   const finalPackagePrice = useMemo(() => {
     const discount = packageDiscount || 0;
     if (discount < 0 || discount > 100) {
-      // toast.error("O desconto deve ser entre 0 e 100%."); // Removido para evitar spam de toast
-      return sumOfSelectedServicesPrice; // Return original sum if discount is invalid
+      return sumOfSelectedServicesPrice;
     }
     return parseFloat((sumOfSelectedServicesPrice * (1 - discount / 100)).toFixed(2));
   }, [sumOfSelectedServicesPrice, packageDiscount]);
 
-  // Calculate suggested annual price using the fetched annual discount
+  // Calculate suggested annual price using the fetched annual discount for the dialog
   const suggestedAnnualPrice = useMemo(() => {
     const monthlyPrice = finalPackagePrice;
     const annualRaw = monthlyPrice * 12;
-    const annualDiscountRate = (annualDiscountSetting?.value || 10) / 100; // Use fetched value or 10% fallback
+    const annualDiscountRate = (annualDiscountSetting?.value || 10) / 100;
     return parseFloat((annualRaw * (1 - annualDiscountRate)).toFixed(2));
   }, [finalPackagePrice, annualDiscountSetting]);
 
-  // Calcular o valor mensal do pacote anual
+  // Calcular o valor mensal do pacote anual para o dialog
   const monthlyAnnualPrice = useMemo(() => {
     return parseFloat((suggestedAnnualPrice / 12).toFixed(2));
   }, [suggestedAnnualPrice]);
@@ -240,7 +253,6 @@ export default function PackagesPage() {
       setFormData({
         name: '',
         description: '',
-        // price will be calculated
         is_active: true,
         sku: '', // Será gerado automaticamente
         discount_percentage: 0, // Default for new package
@@ -344,7 +356,10 @@ export default function PackagesPage() {
                 <TableHead className="text-muted-foreground">DESCRIÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">SERVIÇOS INCLUÍDOS</TableHead>
                 <TableHead className="text-muted-foreground">DESCONTO TOTAL</TableHead>
-                <TableHead className="text-muted-foreground">SUGESTÃO MENSAL</TableHead>
+                <TableHead className="text-muted-foreground">VALOR TOTAL (SEM DESC.)</TableHead> {/* NOVO */}
+                <TableHead className="text-muted-foreground">VALOR MENSAL (COM DESC.)</TableHead> {/* RENOMEADO */}
+                <TableHead className="text-muted-foreground">VALOR ANUAL (COM DESC.)</TableHead> {/* NOVO */}
+                <TableHead className="text-muted-foreground">VALOR MENSAL (ANUAL)</TableHead> {/* NOVO */}
                 <TableHead className="text-muted-foreground">STATUS</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
@@ -372,7 +387,10 @@ export default function PackagesPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-foreground py-4">{pkg.discount_percentage?.toFixed(2) || '0.00'}%</TableCell>
+                    <TableCell className="text-foreground py-4">R$ {pkg.sum_of_services_price?.toFixed(2)}</TableCell> {/* NOVO */}
                     <TableCell className="text-foreground py-4">R$ {pkg.price?.toFixed(2)}</TableCell>
+                    <TableCell className="text-foreground py-4">R$ {pkg.annual_price_with_discount?.toFixed(2)}</TableCell> {/* NOVO */}
+                    <TableCell className="text-foreground py-4">R$ {pkg.monthly_price_from_annual?.toFixed(2)}</TableCell> {/* NOVO */}
                     <TableCell className="py-4">
                       <Badge className={pkg.is_active ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}>
                         {pkg.is_active ? 'Ativo' : 'Inativo'}
@@ -390,7 +408,7 @@ export default function PackagesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
                     Nenhum pacote encontrado.
                   </TableCell>
                 </TableRow>
@@ -548,10 +566,9 @@ export default function PackagesPage() {
                     <Input value={`R$ ${finalPackagePrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-foreground">Sugestão de Valor Anual ({annualDiscountSetting?.value || 10}% OFF)</Label> {/* Atualizado para mostrar o valor dinâmico */}
+                    <Label className="text-foreground">Sugestão de Valor Anual ({annualDiscountSetting?.value || 10}% OFF)</Label>
                     <Input value={`R$ ${suggestedAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
                   </div>
-                  {/* Valor Mensal do Pacote Anual */}
                   <div className="space-y-2">
                     <Label className="text-foreground">Valor Mensal do Pacote Anual</Label>
                     <Input value={`R$ ${monthlyAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
