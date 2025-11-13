@@ -43,7 +43,7 @@ interface ServiceItem {
   description: string | null;
   initial_delivery_days: number | null;
   cost: number | null;
-  price: number; // Preço base (agora o Valor Bruto Cobrado)
+  price: number; // Preço base (valor inicial antes de qualquer ajuste de pagamento)
   discount_percentage: number | null;
   tax_percentage: number | null;
   
@@ -52,7 +52,7 @@ interface ServiceItem {
   default_installments_lojista: number | null; // Número de parcelas se lojista paga
   default_installments_cliente: number | null; // Número de parcelas se cliente paga
 
-  final_price: number | null; // Este campo no DB agora armazenará o mesmo que 'price'
+  final_price: number | null; // Este campo no DB armazenará o valor que o cliente paga
   created_at: string;
   updated_at: string;
 }
@@ -116,43 +116,67 @@ export default function ServicesPage() {
 
   // Calculate all pricing metrics for a service
   const calculateMetrics = (service: Partial<ServiceItem>, rates: InstallmentRate[] | undefined) => {
-    const valorBrutoCobrado = service.price || 0; // Este é o "Preço Base (Valor Bruto cobrado)"
+    const initialPriceInput = service.price || 0; // Este é o valor do campo de input 'Preço Base'
 
-    const custo = service.cost || 0;
-    const descontoPercentual = service.discount_percentage || 0;
-    const impostoPercentual = service.tax_percentage || 0;
+    const cost = service.cost || 0;
+    const discountPercentage = service.discount_percentage || 0;
+    const taxPercentage = service.tax_percentage || 0;
 
-    // Deduções do Valor Bruto Cobrado
-    const valorImposto = parseFloat((valorBrutoCobrado * (impostoPercentual / 100)).toFixed(2));
-    const valorDesconto = parseFloat((valorBrutoCobrado * (descontoPercentual / 100)).toFixed(2));
+    // Deduções fixas do lucro (baseadas no initialPriceInput)
+    const taxDeduction = parseFloat((initialPriceInput * (taxPercentage / 100)).toFixed(2));
+    const discountDeduction = parseFloat((initialPriceInput * (discountPercentage / 100)).toFixed(2));
 
-    let custoParcelamento = 0;
-    if (service.default_payment_option === 'lojista') {
-      const lojistaInstallments = service.default_installments_lojista || 1;
-      const lojistaRate = rates?.find(r => r.installments === lojistaInstallments)?.merchant_pays_rate || 0;
-      custoParcelamento = parseFloat((valorBrutoCobrado * lojistaRate).toFixed(2));
+    let clientFinalPayment = initialPriceInput; // O que o cliente *realmente* paga
+    let companyNetRevenue = initialPriceInput; // O que a empresa *realmente* recebe
+    let installmentCostDeduction = 0; // Custo absorvido pelo lojista
+
+    switch (service.default_payment_option) {
+      case 'vista':
+        // Cliente recebe 10% de desconto sobre o initialPriceInput
+        clientFinalPayment = parseFloat((initialPriceInput * 0.90).toFixed(2));
+        companyNetRevenue = clientFinalPayment;
+        break;
+      case 'lojista':
+        // Cliente paga o initialPriceInput. Lojista absorve os juros.
+        clientFinalPayment = initialPriceInput;
+        const lojistaInstallments = service.default_installments_lojista || 1;
+        const lojistaRate = rates?.find(r => r.installments === lojistaInstallments)?.merchant_pays_rate || 0;
+        installmentCostDeduction = parseFloat((initialPriceInput * lojistaRate).toFixed(2));
+        companyNetRevenue = parseFloat((initialPriceInput - installmentCostDeduction).toFixed(2));
+        break;
+      case 'cliente':
+        // Cliente paga o initialPriceInput + juros. Empresa recebe esse valor maior.
+        const clienteInstallments = service.default_installments_cliente || 1;
+        const clienteRate = rates?.find(r => r.installments === clienteInstallments)?.client_pays_rate || 0;
+        clientFinalPayment = parseFloat((initialPriceInput * (1 + clienteRate)).toFixed(2));
+        companyNetRevenue = clientFinalPayment;
+        // Não há installmentCostDeduction para o lojista aqui, pois o cliente paga.
+        break;
+      default:
+        // Caso padrão, nenhuma opção de pagamento especial selecionada
+        clientFinalPayment = initialPriceInput;
+        companyNetRevenue = initialPriceInput;
+        break;
     }
-    // Se o cliente paga os juros, o valorBrutoCobrado já inclui esses juros,
-    // então não há um "custo" adicional para o lojista a ser deduzido do valor bruto.
-    // O "desconto do parcelamento" na solicitação do usuário parece se referir ao custo que o lojista absorve.
 
-    const lucro = parseFloat((valorBrutoCobrado - custo - valorImposto - valorDesconto - custoParcelamento).toFixed(2));
+    // Calcular o lucro com base na receita líquida da empresa após todas as deduções
+    const profit = parseFloat((companyNetRevenue - cost - taxDeduction - discountDeduction).toFixed(2));
 
     return {
-      valorBrutoCobrado,
-      custo,
-      valorImposto,
-      valorDesconto,
-      custoParcelamento,
-      lucro,
+      valorBrutoCobradoDisplay: clientFinalPayment, // O que o cliente paga
+      custoDisplay: cost,
+      deducaoImpostoDisplay: taxDeduction,
+      deducaoDescontoDisplay: discountDeduction,
+      custoParcelamentoDisplay: installmentCostDeduction, // Custo absorvido pelo lojista
+      lucroLiquidoDisplay: profit,
     };
   };
 
   // Add/Edit service mutation (to 'products' table)
   const upsertServiceMutation = useMutation<void, Error, Partial<ServiceItem>>({
     mutationFn: async (newService) => {
-      // O campo 'final_price' no DB agora armazenará o mesmo valor do 'price'
-      const serviceToSave = { ...newService, final_price: newService.price }; 
+      const { valorBrutoCobradoDisplay } = calculateMetrics(newService, installmentRates); // Obter o valor final que o cliente paga
+      const serviceToSave = { ...newService, final_price: valorBrutoCobradoDisplay }; // Salvar este valor em final_price
 
       if (newService.id) {
         const { error } = await supabase.from('products').update(serviceToSave).eq('id', newService.id);
@@ -244,7 +268,7 @@ export default function ServicesPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const { valorBrutoCobrado, custo, valorImposto, valorDesconto, custoParcelamento, lucro } = calculateMetrics(formData, installmentRates);
+  const { valorBrutoCobradoDisplay, custoDisplay, deducaoImpostoDisplay, deducaoDescontoDisplay, custoParcelamentoDisplay, lucroLiquidoDisplay } = calculateMetrics(formData, installmentRates);
 
   if (isLoading || isLoadingRates) {
     return (
@@ -312,11 +336,11 @@ export default function ServicesPage() {
               <TableRow className="bg-muted/20">
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">CATEGORIA</TableHead>
-                <TableHead className="text-muted-foreground">PREÇO BASE</TableHead>
+                <TableHead className="text-muted-foreground">PREÇO BASE</TableHead> {/* Preço inicial do input */}
                 <TableHead className="text-muted-foreground">IMPOSTO</TableHead>
                 <TableHead className="text-muted-foreground">DESCONTO</TableHead>
                 <TableHead className="text-muted-foreground">OPÇÃO PADRÃO</TableHead>
-                <TableHead className="text-muted-foreground">VALOR FINAL</TableHead>
+                <TableHead className="text-muted-foreground">VALOR FINAL</TableHead> {/* Valor que o cliente paga */}
                 <TableHead className="text-muted-foreground">LUCRO</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
@@ -324,7 +348,7 @@ export default function ServicesPage() {
             <TableBody>
               {filteredServices && filteredServices.length > 0 ? (
                 filteredServices.map((service) => {
-                  const { lucro: rowLucro } = calculateMetrics(service, installmentRates);
+                  const { lucroLiquidoDisplay: rowLucro } = calculateMetrics(service, installmentRates);
                   const defaultOptionText = service.default_payment_option === 'vista' ? 'À Vista' :
                                             service.default_payment_option === 'lojista' ? `Lojista (${service.default_installments_lojista}x)` :
                                             service.default_payment_option === 'cliente' ? `Cliente (${service.default_installments_cliente}x)` : 'N/A';
@@ -332,11 +356,11 @@ export default function ServicesPage() {
                     <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                       <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
                       <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
-                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
+                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell> {/* Preço inicial */}
                       <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
                       <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
                       <TableCell className="text-muted-foreground py-4">{defaultOptionText}</TableCell>
-                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell> {/* Valor Final é o Preço Base */}
+                      <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell> {/* Valor final do DB */}
                       <TableCell className={`font-bold py-4 ${rowLucro >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         R$ {rowLucro.toFixed(2)}
                       </TableCell>
@@ -437,7 +461,7 @@ export default function ServicesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price" className="text-left">Preço Base (Valor Bruto Cobrado) (R$)</Label>
+                <Label htmlFor="price" className="text-left">Preço Base (Valor Inicial) (R$)</Label>
                 <Input
                   id="price"
                   name="price"
@@ -484,15 +508,15 @@ export default function ServicesPage() {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="vista" id="option-vista" />
-                    <Label htmlFor="option-vista">À Vista</Label>
+                    <Label htmlFor="option-vista">À Vista (Cliente Paga -10%)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="lojista" id="option-lojista" />
-                    <Label htmlFor="option-lojista">Parcelado (Lojista Paga)</Label>
+                    <Label htmlFor="option-lojista">Parcelado (Cliente Paga Valor Base)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cliente" id="option-cliente" />
-                    <Label htmlFor="option-cliente">Parcelado (Cliente Paga)</Label>
+                    <Label htmlFor="option-cliente">Parcelado (Cliente Paga +Juros)</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -547,23 +571,23 @@ export default function ServicesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-foreground">Valor Bruto Cobrado (R$)</Label>
-                    <Input value={`R$ ${valorBrutoCobrado.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                    <Input value={`R$ ${valorBrutoCobradoDisplay.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground">Custo do Serviço (R$)</Label>
-                    <Input value={`R$ ${custo.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                    <Input value={`R$ ${custoDisplay.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground">Dedução de Imposto (R$)</Label>
-                    <Input value={`R$ ${valorImposto.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                    <Input value={`R$ ${deducaoImpostoDisplay.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground">Dedução de Desconto (R$)</Label>
-                    <Input value={`R$ ${valorDesconto.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                    <Input value={`R$ ${deducaoDescontoDisplay.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-foreground">Custo de Parcelamento (R$)</Label>
-                    <Input value={`R$ ${custoParcelamento.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                    <Input value={`R$ ${custoParcelamentoDisplay.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
                   </div>
                 </div>
               </div>
@@ -572,9 +596,9 @@ export default function ServicesPage() {
               <div className="md:col-span-2 flex justify-between items-center mt-4 pt-4 border-t border-border">
                 <Label className="font-bold text-lg">LUCRO LÍQUIDO (R$)</Label>
                 <Input
-                  value={lucro.toFixed(2)}
+                  value={lucroLiquidoDisplay.toFixed(2)}
                   readOnly
-                  className={`w-1/2 bg-muted/50 border-border font-bold text-lg text-right ${lucro >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                  className={`w-1/2 bg-muted/50 border-border font-bold text-lg text-right ${lucroLiquidoDisplay >= 0 ? 'text-green-500' : 'text-red-500'}`}
                 />
               </div>
               <DialogFooter className="md:col-span-2 mt-6">
