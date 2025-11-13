@@ -10,26 +10,15 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, profile, loading } = useAuth(); // Usando useAuth
-  const navigate = useNavigate();
+  const { login, loading } = useAuth(); // Não precisamos mais do 'profile' aqui para a navegação
+  // A navegação será gerenciada pelo AuthContext após o perfil ser carregado.
+  // O 'navigate' ainda é útil para outras situações, mas não para o sucesso do login aqui.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(email, password);
-    
-    if (success && profile) {
-      if (profile.role === "master") {
-        navigate("/dashboard/master");
-      } else if (profile.role === "client") {
-        navigate("/dashboard/client");
-      } else { // Default para prospect
-        navigate("/dashboard/prospect");
-      }
-    } else if (success && !profile) {
-      // Se o login foi bem-sucedido mas o perfil ainda não carregou, aguardar ou redirecionar para uma página de carregamento
-      // Por simplicidade, vamos redirecionar para a home por enquanto, e o AuthContext cuidará do redirecionamento correto quando o perfil carregar
-      navigate("/"); 
-    }
+    // A função login do AuthContext já lida com o toast de sucesso/erro.
+    // A navegação para o dashboard será tratada pelo useEffect no AuthContext.
+    await login(email, password);
   };
 
   return (

@@ -24,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true); // Começa como true, indicando que estamos verificando o estado de autenticação
@@ -63,9 +63,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Escuta as mudanças no estado de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
-      // Para qualquer evento que altere o usuário ou a sessão, reavalia e define loading como true temporariamente
-      // até que o perfil seja buscado.
-      // A sessão inicial também é tratada por este listener (evento 'INITIAL_SESSION').
       await handleAuthSession(session);
     });
 
@@ -74,21 +71,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []); // Array de dependências vazio significa que isso é executado uma vez na montagem
 
+  // NOVO useEffect para navegação após o perfil ser carregado
+  useEffect(() => {
+    // Só navega se não estiver carregando, se houver um usuário e um perfil
+    if (!loading && user && profile) {
+      // Verifica se a rota atual não é uma rota de dashboard para evitar redirecionamentos desnecessários
+      const currentPath = window.location.pathname;
+      if (!currentPath.startsWith('/dashboard')) {
+        if (profile.role === "master") {
+          navigate("/dashboard/master");
+        } else if (profile.role === "client") {
+          navigate("/dashboard/client");
+        } else { // Default para prospect
+          navigate("/dashboard/prospect");
+        }
+      }
+    } else if (!loading && !user) {
+      // Se não estiver carregando e não houver usuário (deslogado),
+      // e a rota atual for uma rota de dashboard, redireciona para o login.
+      // Isso complementa o ProtectedRoute para casos onde o usuário desloga.
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/dashboard')) {
+        navigate('/login');
+      }
+    }
+  }, [loading, user, profile, navigate]); // Dependências para este efeito
+
   const login = async (email: string, password: string): Promise<boolean> => {
-    // O estado de carregamento local para o botão em Login.tsx irá lidar com seu próprio spinner.
-    // O estado de carregamento global será gerenciado pelo listener onAuthStateChange.
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       toast.error(error.message);
-      // Se o login falhar, o listener onAuthStateChange não disparará um evento SIGNED_IN,
-      // então precisamos garantir que o loading global seja false aqui.
       setLoading(false); // Garante que loading seja false se o login falhar
       return false;
     }
     toast.success("Login realizado com sucesso!");
-    // O listener onAuthStateChange agora detectará o evento SIGNED_IN
-    // e lidará com a busca do perfil e a definição do loading global para false.
     return true;
   };
 
@@ -111,7 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     if (data.user) {
       toast.success("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta.");
-      // O listener onAuthStateChange lidará com a definição de user, profile e loading para false
       return true;
     }
     setLoading(false); // Fallback se data.user for null, mas sem erro
@@ -127,8 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       toast.success("Logout realizado com sucesso!");
       navigate('/login');
-      // O listener onAuthStateChange detectará o evento SIGNED_OUT
-      // e lidará com a definição de user/profile para null e loading global para false.
     }
   };
 
