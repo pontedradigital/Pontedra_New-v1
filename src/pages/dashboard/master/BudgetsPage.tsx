@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, X } from 'lucide-react';
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X } from 'lucide-react'; // Added Eye icon
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -115,8 +115,11 @@ export default function BudgetsPage() {
     client_cep: '',
   });
   const [selectedItems, setSelectedItems] = useState<Array<{ id: string; type: 'service' | 'package'; name: string; description: string | null; price: number }>>([]);
-  const [searchTerm, setSearchTerm] = useState(''); // Mantido para a busca interna da lista de seleção
+  const [searchTerm, setSearchTerm] = useState('');
   const pdfContentRef = useRef<HTMLDivElement>(null);
+
+  // NEW STATE: To hold the budget that was just saved/created in the dialog
+  const [currentEditableBudget, setCurrentEditableBudget] = useState<Budget | null>(null);
 
   // Fetch all services
   const { data: services, isLoading: isLoadingServices } = useQuery<ServiceItem[], Error>({
@@ -372,12 +375,14 @@ export default function BudgetsPage() {
         client_cep: budgetToDuplicate.client_cep,
       });
       setSelectedItems(budgetToDuplicate.budget_items.map(item => ({
-        id: item.service_id || item.package_id || '', // Use service_id or package_id
+        id: item.service_id || item.package_id || '',
         type: item.item_type,
         name: item.item_name,
         description: item.item_description,
         price: item.item_price,
       })));
+      // When duplicating, we are creating a NEW budget, so currentEditableBudget should be null initially
+      setCurrentEditableBudget(null);
     } else {
       setFormData({
         client_name: '',
@@ -392,11 +397,13 @@ export default function BudgetsPage() {
         client_cep: '',
       });
       setSelectedItems([]);
+      setCurrentEditableBudget(null); // Clear for new budget
     }
     setIsDialogOpen(true);
   };
 
-  const createBudgetMutation = useMutation<Budget, Error, { budgetData: Partial<Budget>; items: typeof selectedItems }>({
+  // Renamed createBudgetMutation to saveBudgetMutation
+  const saveBudgetMutation = useMutation<Budget, Error, { budgetData: Partial<Budget>; items: typeof selectedItems }>({
     mutationFn: async ({ budgetData, items }) => {
       if (!user) throw new Error("Usuário não autenticado.");
 
@@ -410,17 +417,17 @@ export default function BudgetsPage() {
           client_name: budgetData.client_name,
           client_phone: budgetData.client_phone,
           client_email: budgetData.client_email,
-          client_street: budgetData.client_street, // NOVO
-          client_number: budgetData.client_number, // NOVO
-          client_complement: budgetData.client_complement, // NOVO
-          client_neighborhood: budgetData.client_neighborhood, // NOVO
-          client_city: budgetData.client_city, // NOVO
-          client_state: budgetData.client_state, // NOVO
+          client_street: budgetData.client_street,
+          client_number: budgetData.client_number,
+          client_complement: budgetData.client_complement,
+          client_neighborhood: budgetData.client_neighborhood,
+          client_city: budgetData.client_city,
+          client_state: budgetData.client_state,
           client_cep: budgetData.client_cep,
           valid_until: validUntil,
           total_amount: total,
         })
-        .select('*') // Agora seleciona todas as colunas para obter o proposal_number
+        .select('*')
         .single();
 
       if (budgetError) throw budgetError;
@@ -439,18 +446,16 @@ export default function BudgetsPage() {
       const { error: itemsError } = await supabase.from('budget_items').insert(budgetItemsToInsert);
       if (itemsError) throw itemsError;
 
-      return newBudgetResult as Budget; // Retorna o objeto completo do orçamento
+      return newBudgetResult as Budget;
     },
-    onSuccess: (newlyCreatedBudget) => { // Recebe o orçamento recém-criado
+    onSuccess: (newlyCreatedBudget) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      toast.success('Orçamento criado com sucesso!');
-      setIsDialogOpen(false);
-      setFormData({});
-      setSelectedItems([]);
-      generatePdf(newlyCreatedBudget); // Gera o PDF imediatamente com o novo orçamento
+      toast.success('Orçamento salvo com sucesso!');
+      setCurrentEditableBudget(newlyCreatedBudget); // Store the newly created budget
+      // Do NOT close dialog or clear form here, allow user to generate PDF
     },
     onError: (err) => {
-      toast.error(`Erro ao criar orçamento: ${err.message}`);
+      toast.error(`Erro ao salvar orçamento: ${err.message}`);
     },
   });
 
@@ -460,16 +465,10 @@ export default function BudgetsPage() {
       toast.error('Nome do cliente e pelo menos um item são obrigatórios.');
       return;
     }
-    createBudgetMutation.mutate({ budgetData: formData, items: selectedItems });
+    saveBudgetMutation.mutate({ budgetData: formData, items: selectedItems });
   };
 
-  const generatePdf = async (budget: Budget) => {
-    const input = pdfContentRef.current;
-    if (!input) {
-      toast.error("Erro: Conteúdo do PDF não encontrado.");
-      return;
-    }
-
+  const generatePdfContent = async (budget: Budget) => {
     const clientAddressFull = [
       budget.client_street,
       budget.client_number ? `, ${budget.client_number}` : '',
@@ -480,7 +479,6 @@ export default function BudgetsPage() {
       budget.client_cep ? ` - CEP: ${budget.client_cep}` : '',
     ].filter(Boolean).join('');
 
-    // Recalcular os valores para o PDF, garantindo que estão atualizados
     const pdfTotalAmount = budget.total_amount;
     const pdfCashDiscountPercentage = defaultCashDiscountSetting?.value || 10;
     const pdfValorAVistaComDesconto = parseFloat((pdfTotalAmount * (1 - pdfCashDiscountPercentage / 100)).toFixed(2));
@@ -501,15 +499,7 @@ export default function BudgetsPage() {
     const pdfParcelamento6x = getPdfInstallmentDetails(6);
     const pdfParcelamento10x = getPdfInstallmentDetails(10);
 
-    // Temporarily set the budget data to the ref for PDF generation
-    // This is a workaround as html2canvas needs the content to be in the DOM
-    // A more robust solution would be to render the PDF content in a separate component
-    // or use a library like @react-pdf/renderer for server-side rendering.
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.width = '800px'; // A4 width approx
-    tempDiv.innerHTML = `
+    return `
       <div style="font-family: 'Poppins', sans-serif; padding: 40px; color: #0D1B2A; background-color: #ffffff; box-sizing: border-box;">
         <div style="text-align: center; margin-bottom: 30px;">
           <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra Logo" style="max-height: 80px; width: auto;">
@@ -570,6 +560,21 @@ export default function BudgetsPage() {
         </div>
       </div>
     `;
+  };
+
+  const handlePdfAction = async (budget: Budget, action: 'download' | 'view') => {
+    if (!budget || !budget.id) {
+      toast.error("Nenhum orçamento selecionado para gerar PDF.");
+      return;
+    }
+
+    const htmlContent = await generatePdfContent(budget);
+
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.width = '800px'; // A4 width approx
+    tempDiv.innerHTML = htmlContent;
     document.body.appendChild(tempDiv);
 
     try {
@@ -592,15 +597,33 @@ export default function BudgetsPage() {
         heightLeft -= pageHeight;
       }
 
-      pdf.save(`Orcamento_${budget.client_name.replace(/\s/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`);
-      toast.success('PDF gerado com sucesso!');
+      const filename = `Orcamento_${budget.client_name.replace(/\s/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+
+      if (action === 'download') {
+        pdf.save(filename);
+        toast.success('PDF gerado e baixado com sucesso!');
+      } else { // action === 'view'
+        window.open(pdf.output('bloburl'), '_blank');
+        toast.success('PDF aberto em nova aba!');
+      }
     } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast.error("Falha ao gerar PDF. Tente novamente.");
+      console.error(`Erro ao ${action === 'download' ? 'gerar' : 'visualizar'} PDF:`, error);
+      toast.error(`Falha ao ${action === 'download' ? 'gerar' : 'visualizar'} PDF. Tente novamente.`);
     } finally {
       document.body.removeChild(tempDiv);
     }
   };
+
+  // Function to close dialog and reset state
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setFormData({});
+    setSelectedItems([]);
+    setCurrentEditableBudget(null);
+  };
+
+  const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
+  const isPdfActionDisabled = !currentEditableBudget || saveBudgetMutation.isPending;
 
   if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates) {
     return (
@@ -676,8 +699,11 @@ export default function BudgetsPage() {
                       <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(budget)} className="text-primary hover:text-primary/80">
                         <Copy className="h-4 w-4 mr-2" /> Duplicar
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => generatePdf(budget)} className="text-green-500 hover:text-green-600">
+                      <Button variant="ghost" size="sm" onClick={() => handlePdfAction(budget, 'download')} className="text-green-500 hover:text-green-600">
                         <Download className="h-4 w-4 mr-2" /> PDF
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handlePdfAction(budget, 'view')} className="text-blue-500 hover:text-blue-600">
+                        <Eye className="h-4 w-4 mr-2" /> Visualizar
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -698,7 +724,7 @@ export default function BudgetsPage() {
           <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border text-foreground rounded-xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-primary">
-                {formData.client_name ? `Duplicar Orçamento para ${formData.client_name}` : 'Novo Orçamento'}
+                {currentEditableBudget ? `Editar Orçamento #${currentEditableBudget.proposal_number}` : 'Novo Orçamento'}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
                 Preencha os detalhes do cliente e adicione os serviços/pacotes.
@@ -911,13 +937,29 @@ export default function BudgetsPage() {
                 </div>
               </div>
 
-              <DialogFooter className="md:col-span-2 mt-6">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+              <DialogFooter className="md:col-span-2 mt-6 flex justify-end gap-2">
+                <Button variant="outline" onClick={handleCloseDialog} className="bg-background border-border text-foreground hover:bg-muted">
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={createBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  {createBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Gerar Orçamento e PDF
+                <Button type="submit" disabled={isSaveDisabled} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  {saveBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Salvar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => handlePdfAction(currentEditableBudget!, 'download')}
+                  disabled={isPdfActionDisabled}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <Download className="h-4 w-4 mr-2" /> Gerar PDF
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => handlePdfAction(currentEditableBudget!, 'view')}
+                  disabled={isPdfActionDisabled}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
                 </Button>
               </DialogFooter>
             </form>
