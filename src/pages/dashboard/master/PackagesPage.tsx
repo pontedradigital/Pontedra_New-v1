@@ -146,6 +146,11 @@ export default function PackagesPage() {
     return parseFloat((annualRaw * (1 - annualDiscount)).toFixed(2));
   }, [finalPackagePrice]);
 
+  // NOVO: Calcular o valor mensal do pacote anual
+  const monthlyAnnualPrice = useMemo(() => {
+    return parseFloat((suggestedAnnualPrice / 12).toFixed(2));
+  }, [suggestedAnnualPrice]);
+
   // Add/Edit package mutation
   const upsertPackageMutation = useMutation<void, Error, { packageData: Partial<PackageItem>; serviceIds: string[] }>({
     mutationFn: async ({ packageData, serviceIds }) => {
@@ -528,6 +533,11 @@ export default function PackagesPage() {
                   <div className="space-y-2">
                     <Label className="text-foreground">Sugestão de Valor Anual (10% OFF)</Label>
                     <Input value={`R$ ${suggestedAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
+                  {/* NOVO: Valor Mensal do Pacote Anual */}
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Valor Mensal do Pacote Anual</Label>
+                    <Input value={`R$ ${monthlyAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
                   </div>
                 </div>
               </div>
