@@ -132,11 +132,19 @@ export default function PackagesPage() {
   const finalPackagePrice = useMemo(() => {
     const discount = packageDiscount || 0;
     if (discount < 0 || discount > 100) {
-      toast.error("O desconto deve ser entre 0 e 100%.");
+      // toast.error("O desconto deve ser entre 0 e 100%."); // Removido para evitar spam de toast
       return sumOfSelectedServicesPrice; // Return original sum if discount is invalid
     }
     return parseFloat((sumOfSelectedServicesPrice * (1 - discount / 100)).toFixed(2));
   }, [sumOfSelectedServicesPrice, packageDiscount]);
+
+  // Calculate suggested annual price
+  const suggestedAnnualPrice = useMemo(() => {
+    const monthlyPrice = finalPackagePrice;
+    const annualRaw = monthlyPrice * 12;
+    const annualDiscount = 0.10; // 10% de desconto para pagamento anual
+    return parseFloat((annualRaw * (1 - annualDiscount)).toFixed(2));
+  }, [finalPackagePrice]);
 
   // Add/Edit package mutation
   const upsertPackageMutation = useMutation<void, Error, { packageData: Partial<PackageItem>; serviceIds: string[] }>({
@@ -313,8 +321,8 @@ export default function PackagesPage() {
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">DESCRIÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">SERVIÇOS INCLUÍDOS</TableHead>
-                <TableHead className="text-muted-foreground">DESCONTO TOTAL</TableHead> {/* NOVO: Coluna Desconto Total */}
-                <TableHead className="text-muted-foreground">PREÇO MENSAL</TableHead>
+                <TableHead className="text-muted-foreground">DESCONTO TOTAL</TableHead>
+                <TableHead className="text-muted-foreground">SUGESTÃO MENSAL</TableHead> {/* Renomeado */}
                 <TableHead className="text-muted-foreground">STATUS</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
@@ -341,7 +349,7 @@ export default function PackagesPage() {
                         <span className="text-muted-foreground text-sm">Nenhum serviço</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-foreground py-4">{pkg.discount_percentage?.toFixed(2) || '0.00'}%</TableCell> {/* NOVO: Exibindo Desconto Total */}
+                    <TableCell className="text-foreground py-4">{pkg.discount_percentage?.toFixed(2) || '0.00'}%</TableCell>
                     <TableCell className="text-foreground py-4">R$ {pkg.price?.toFixed(2)}</TableCell>
                     <TableCell className="py-4">
                       <Badge className={pkg.is_active ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}>
@@ -360,7 +368,7 @@ export default function PackagesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Nenhum pacote encontrado.
                   </TableCell>
                 </TableRow>
@@ -414,7 +422,7 @@ export default function PackagesPage() {
                 />
               </div>
               
-              {/* NOVO: Campo de Desconto Total do Pacote */}
+              {/* Campo de Desconto Total do Pacote */}
               <div className="space-y-2">
                 <Label htmlFor="package-discount" className="text-left">Desconto Total do Pacote (%)</Label>
                 <div className="relative">
@@ -505,19 +513,22 @@ export default function PackagesPage() {
                 </div>
               </div>
 
-              {/* Informações de Pagamento (apenas display) */}
+              {/* NOVO: Resumo de Valores */}
               <div className="md:col-span-2 mt-4 pt-4 border-t border-border">
-                <h3 className="text-xl font-bold text-primary mb-4">Informações de Pagamento</h3>
-                <div className="space-y-3 text-muted-foreground">
-                  <p>
-                    <span className="font-semibold text-foreground">Cobrança Mensal:</span> Cartão de Crédito (1x), Boleto ou Pix.
-                  </p>
-                  <p>
-                    <span className="font-semibold text-foreground">Cobrança Anual:</span> Cartão de Crédito (até 12x), Boleto à vista ou Pix à vista.
-                  </p>
-                  <p className="text-sm italic">
-                    O preço do pacote é o valor mensal. Para cobrança anual, o valor será {formData.price ? `R$ ${(formData.price * 12).toFixed(2)}` : 'R$ 0.00'}.
-                  </p>
+                <h3 className="text-xl font-bold text-primary mb-4">Resumo de Valores</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Preço Total dos Serviços</Label>
+                    <Input value={`R$ ${sumOfSelectedServicesPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Sugestão de Valor Mensal</Label>
+                    <Input value={`R$ ${finalPackagePrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Sugestão de Valor Anual (10% OFF)</Label>
+                    <Input value={`R$ ${suggestedAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
                 </div>
               </div>
 
