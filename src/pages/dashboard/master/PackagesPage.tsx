@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'; // Adicionado useMemo
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
@@ -31,9 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Edit, Trash2, Loader2, Package, Check, X } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, Package, Check, X, Percent } from 'lucide-react'; // Adicionado Percent icon
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area'; // Importar ScrollArea
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Tipos de dados para Pacotes
 interface PackageItem {
@@ -41,7 +41,8 @@ interface PackageItem {
   sku: string;
   name: string;
   description: string | null;
-  price: number; // Preço mensal do pacote
+  price: number; // Preço mensal final calculado
+  discount_percentage: number | null; // NOVO: Desconto total do pacote
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -55,7 +56,6 @@ interface ServiceItem {
   name: string;
   description: string | null;
   final_price: number; // O preço final que o cliente paga pelo serviço individual
-  // REMOVIDO: is_active: boolean; // Esta coluna não existe na tabela 'products'
 }
 
 export default function PackagesPage() {
@@ -64,10 +64,11 @@ export default function PackagesPage() {
   const [editingPackage, setEditingPackage] = useState<PackageItem | null>(null);
   const [formData, setFormData] = useState<Partial<PackageItem>>({});
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [packageDiscount, setPackageDiscount] = useState<number>(0); // Estado para o input de desconto do pacote
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch packages with their associated service_ids
-  const { data: packagesData, isLoading, isError, error } = useQuery<any[], Error>({ // Use 'any[]' temporariamente para dados brutos
+  const { data: packagesData, isLoading, isError, error } = useQuery<any[], Error>({
     queryKey: ['packages'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -91,7 +92,7 @@ export default function PackagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, sku, name, description, final_price') // REMOVIDO: is_active
+        .select('id, sku, name, description, final_price')
         .order('name', { ascending: true });
       if (error) throw error;
       return data;
@@ -102,13 +103,12 @@ export default function PackagesPage() {
   const packages = useMemo(() => {
     if (!packagesData || !availableServices) return [];
 
-    // Criar um mapa para busca rápida de serviços por ID
     const servicesMap = new Map(availableServices.map(s => [s.id, s]));
 
     return packagesData.map(pkg => {
       const servicesInPackage = pkg.package_services
         .map((ps: { service_id: string }) => servicesMap.get(ps.service_id))
-        .filter(Boolean) as ServiceItem[]; // Filtrar undefined e fazer cast
+        .filter(Boolean) as ServiceItem[];
 
       return {
         ...pkg,
@@ -117,18 +117,26 @@ export default function PackagesPage() {
     });
   }, [packagesData, availableServices]);
 
-  // REMOVIDO: Filtrar serviços ativos no lado do cliente
-  // const activeAvailableServices = availableServices?.filter(service => service.is_active) || [];
-  const allAvailableServices = availableServices || []; // Usar todos os serviços disponíveis
+  const allAvailableServices = availableServices || [];
 
-  // Calculate total price of selected services
-  const calculateTotalServicesPrice = () => {
+  // Calculate total price of selected services (raw sum)
+  const sumOfSelectedServicesPrice = useMemo(() => {
     if (!allAvailableServices) return 0;
     return selectedServiceIds.reduce((total, serviceId) => {
       const service = allAvailableServices.find(s => s.id === serviceId);
       return total + (service?.final_price || 0);
     }, 0);
-  };
+  }, [selectedServiceIds, allAvailableServices]);
+
+  // Calculate final package price after applying package-level discount
+  const finalPackagePrice = useMemo(() => {
+    const discount = packageDiscount || 0;
+    if (discount < 0 || discount > 100) {
+      toast.error("O desconto deve ser entre 0 e 100%.");
+      return sumOfSelectedServicesPrice; // Return original sum if discount is invalid
+    }
+    return parseFloat((sumOfSelectedServicesPrice * (1 - discount / 100)).toFixed(2));
+  }, [sumOfSelectedServicesPrice, packageDiscount]);
 
   // Add/Edit package mutation
   const upsertPackageMutation = useMutation<void, Error, { packageData: Partial<PackageItem>; serviceIds: string[] }>({
@@ -169,6 +177,7 @@ export default function PackagesPage() {
       setEditingPackage(null);
       setFormData({});
       setSelectedServiceIds([]);
+      setPackageDiscount(0); // Reset discount
     },
     onError: (err) => {
       toast.error(`Erro ao salvar pacote: ${err.message}`);
@@ -195,16 +204,19 @@ export default function PackagesPage() {
       setEditingPackage(pkg);
       setFormData(pkg);
       setSelectedServiceIds(pkg.services_in_package?.map(s => s.id) || []);
+      setPackageDiscount(pkg.discount_percentage || 0); // Set discount for editing
     } else {
       setEditingPackage(null);
       setFormData({
         name: '',
         description: '',
-        price: 0,
-        is_active: true, // Manter como true para novos pacotes, se aplicável
+        // price will be calculated
+        is_active: true,
         sku: '', // Será gerado automaticamente
+        discount_percentage: 0, // Default for new package
       });
       setSelectedServiceIds([]);
+      setPackageDiscount(0); // Reset discount for new package
     }
     setIsDialogOpen(true);
   };
@@ -225,7 +237,13 @@ export default function PackagesPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    upsertPackageMutation.mutate({ packageData: formData, serviceIds: selectedServiceIds });
+    // Update formData with calculated price and discount before mutation
+    const packageDataToSave = {
+      ...formData,
+      price: finalPackagePrice, // Save the calculated final price
+      discount_percentage: packageDiscount, // Save the package-level discount
+    };
+    upsertPackageMutation.mutate({ packageData: packageDataToSave, serviceIds: selectedServiceIds });
   };
 
   const filteredPackages = packages?.filter(pkg => {
@@ -295,6 +313,7 @@ export default function PackagesPage() {
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">DESCRIÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">SERVIÇOS INCLUÍDOS</TableHead>
+                <TableHead className="text-muted-foreground">DESCONTO TOTAL</TableHead> {/* NOVO: Coluna Desconto Total */}
                 <TableHead className="text-muted-foreground">PREÇO MENSAL</TableHead>
                 <TableHead className="text-muted-foreground">STATUS</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
@@ -322,6 +341,7 @@ export default function PackagesPage() {
                         <span className="text-muted-foreground text-sm">Nenhum serviço</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-foreground py-4">{pkg.discount_percentage?.toFixed(2) || '0.00'}%</TableCell> {/* NOVO: Exibindo Desconto Total */}
                     <TableCell className="text-foreground py-4">R$ {pkg.price?.toFixed(2)}</TableCell>
                     <TableCell className="py-4">
                       <Badge className={pkg.is_active ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}>
@@ -340,7 +360,7 @@ export default function PackagesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
                     Nenhum pacote encontrado.
                   </TableCell>
                 </TableRow>
@@ -393,19 +413,39 @@ export default function PackagesPage() {
                   rows={3}
                 />
               </div>
+              
+              {/* NOVO: Campo de Desconto Total do Pacote */}
               <div className="space-y-2">
-                <Label htmlFor="price" className="text-left">Preço Mensal (R$)</Label>
+                <Label htmlFor="package-discount" className="text-left">Desconto Total do Pacote (%)</Label>
+                <div className="relative">
+                  <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="package-discount"
+                    name="package_discount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={packageDiscount}
+                    onChange={(e) => setPackageDiscount(parseFloat(e.target.value))}
+                    className="w-full pl-10 bg-background border-border text-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Campo de Preço Mensal Final (agora calculado e read-only) */}
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-left">Preço Mensal Final (R$)</Label>
                 <Input
                   id="price"
                   name="price"
                   type="number"
-                  step="0.01"
-                  value={formData.price || 0}
-                  onChange={handleFormChange}
-                  className="w-full bg-background border-border text-foreground"
-                  required
+                  value={finalPackagePrice.toFixed(2)}
+                  readOnly
+                  className="w-full bg-muted/50 border-border text-foreground"
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="is_active" className="text-left">Status</Label>
                 <Select
@@ -427,12 +467,12 @@ export default function PackagesPage() {
               <div className="md:col-span-2 mt-4 pt-4 border-t border-border">
                 <h3 className="text-xl font-bold text-primary mb-4">Serviços Incluídos no Pacote</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Selecione os serviços que farão parte deste pacote.
+                  Soma dos preços finais dos serviços selecionados: <span className="font-semibold text-foreground">R$ {sumOfSelectedServicesPrice.toFixed(2)}</span>
                 </p>
                 <ScrollArea className="h-60 w-full rounded-md border border-border p-4 bg-background">
                   <div className="grid grid-cols-1 gap-3">
                     {allAvailableServices.length > 0 ? (
-                      allAvailableServices.map(service => ( // Usando todos os serviços disponíveis
+                      allAvailableServices.map(service => (
                         <div key={service.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/20 transition-colors">
                           <div className="flex items-center gap-3">
                             <input
@@ -461,7 +501,7 @@ export default function PackagesPage() {
                 </ScrollArea>
                 <div className="mt-4 flex justify-between items-center text-lg font-bold text-foreground">
                   <span>Soma dos Serviços Selecionados:</span>
-                  <span className="text-primary">R$ {calculateTotalServicesPrice().toFixed(2)}</span>
+                  <span className="text-primary">R$ {sumOfSelectedServicesPrice.toFixed(2)}</span>
                 </div>
               </div>
 
