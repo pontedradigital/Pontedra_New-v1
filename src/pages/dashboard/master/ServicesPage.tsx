@@ -246,7 +246,7 @@ export default function ServicesPage() {
     }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = (name: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [name]: value,
@@ -389,7 +389,7 @@ export default function ServicesPage() {
 
         {/* Dialog para Adicionar/Editar Serviço */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] bg-card border-border text-foreground rounded-xl">
+          <DialogContent className="sm:max-w-[750px] bg-card border-border text-foreground rounded-xl"> {/* Aumentado o max-w */}
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-primary">
                 {editingService ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
@@ -398,26 +398,26 @@ export default function ServicesPage() {
                 Preencha os detalhes do serviço.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="grid gap-6 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Nome</Label>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4"> {/* Layout de 2 colunas */}
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-left">Nome</Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name || ''}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">Categoria</Label>
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-left">Categoria</Label>
                 <Select
                   name="category"
                   value={formData.category || 'Web'}
                   onValueChange={(value) => handleSelectChange('category', value as ServiceItem['category'])}
                 >
-                  <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
+                  <SelectTrigger className="w-full bg-background border-border text-foreground">
                     <SelectValue placeholder="Selecione a Categoria" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border text-popover-foreground">
@@ -427,30 +427,30 @@ export default function ServicesPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">Descrição</Label>
+              <div className="space-y-2 md:col-span-2"> {/* Descrição ocupa 2 colunas */}
+                <Label htmlFor="description" className="text-left">Descrição</Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={formData.description || ''}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                   rows={3}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="initial_delivery_days" className="text-right">Prazo Inicial (dias)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="initial_delivery_days" className="text-left">Prazo Inicial (dias)</Label>
                 <Input
                   id="initial_delivery_days"
                   name="initial_delivery_days"
                   type="number"
                   value={formData.initial_delivery_days || 0}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cost" className="text-right">Custo (R$)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="cost" className="text-left">Custo (R$)</Label>
                 <Input
                   id="cost"
                   name="cost"
@@ -458,11 +458,11 @@ export default function ServicesPage() {
                   step="0.01"
                   value={formData.cost || 0}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">Preço Base (R$)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-left">Preço Base (R$)</Label>
                 <Input
                   id="price"
                   name="price"
@@ -470,12 +470,12 @@ export default function ServicesPage() {
                   step="0.01"
                   value={formData.price || 0}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="discount_percentage" className="text-right">Desconto (%)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="discount_percentage" className="text-left">Desconto (%)</Label>
                 <Input
                   id="discount_percentage"
                   name="discount_percentage"
@@ -483,11 +483,11 @@ export default function ServicesPage() {
                   step="0.01"
                   value={formData.discount_percentage || 0}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tax_percentage" className="text-right">Imposto (%)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="tax_percentage" className="text-left">Imposto (%)</Label>
                 <Input
                   id="tax_percentage"
                   name="tax_percentage"
@@ -495,12 +495,12 @@ export default function ServicesPage() {
                   step="0.01"
                   value={formData.tax_percentage || 0}
                   onChange={handleFormChange}
-                  className="col-span-3 bg-background border-border text-foreground"
+                  className="w-full bg-background border-border text-foreground"
                 />
               </div>
 
               {/* Opções de Pagamento Padrão */}
-              <div className="col-span-4 mt-4">
+              <div className="md:col-span-2 mt-4"> {/* Ocupa 2 colunas */}
                 <h3 className="text-xl font-bold text-primary mb-4">Opções de Pagamento Padrão</h3>
                 <RadioGroup
                   value={formData.default_payment_option || 'vista'}
@@ -523,14 +523,14 @@ export default function ServicesPage() {
               </div>
 
               {formData.default_payment_option === 'lojista' && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="installments-lojista" className="text-right">Parcelas (Lojista)</Label>
+                <div className="space-y-2 md:col-span-2"> {/* Ocupa 2 colunas */}
+                  <Label htmlFor="installments-lojista" className="text-left">Parcelas (Lojista)</Label>
                   <Select
                     name="default_installments_lojista"
                     value={String(formData.default_installments_lojista || 1)}
                     onValueChange={(value) => handleSelectChange('default_installments_lojista', parseInt(value))}
                   >
-                    <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
+                    <SelectTrigger className="w-full bg-background border-border text-foreground">
                       <SelectValue placeholder="Número de Parcelas" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border text-popover-foreground">
@@ -545,14 +545,14 @@ export default function ServicesPage() {
               )}
 
               {formData.default_payment_option === 'cliente' && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="installments-cliente" className="text-right">Parcelas (Cliente)</Label>
+                <div className="space-y-2 md:col-span-2"> {/* Ocupa 2 colunas */}
+                  <Label htmlFor="installments-cliente" className="text-left">Parcelas (Cliente)</Label>
                   <Select
                     name="default_installments_cliente"
                     value={String(formData.default_installments_cliente || 1)}
                     onValueChange={(value) => handleSelectChange('default_installments_cliente', parseInt(value))}
                   >
-                    <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
+                    <SelectTrigger className="w-full bg-background border-border text-foreground">
                       <SelectValue placeholder="Número de Parcelas" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border text-popover-foreground">
@@ -567,7 +567,7 @@ export default function ServicesPage() {
               )}
 
               {/* Valores Calculados */}
-              <div className="col-span-4 mt-4 pt-4 border-t border-border">
+              <div className="md:col-span-2 mt-4 pt-4 border-t border-border"> {/* Ocupa 2 colunas */}
                 <h3 className="text-xl font-bold text-primary mb-4">Valores Calculados</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -589,23 +589,24 @@ export default function ServicesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 items-center gap-4 mt-4 pt-4 border-t border-border">
-                <Label className="text-right font-bold">VALOR FINAL (R$)</Label>
+              {/* VALOR FINAL e LUCRO - agora como linhas separadas antes do footer */}
+              <div className="md:col-span-2 flex justify-between items-center mt-4 pt-4 border-t border-border">
+                <Label className="font-bold text-lg">VALOR FINAL (R$)</Label>
                 <Input
                   value={finalPrice.toFixed(2)}
                   readOnly
-                  className="col-span-3 bg-muted/50 border-border text-foreground font-bold text-lg"
+                  className="w-1/2 bg-muted/50 border-border text-foreground font-bold text-lg text-right"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">LUCRO (R$)</Label>
+              <div className="md:col-span-2 flex justify-between items-center">
+                <Label className="font-bold text-lg">LUCRO (R$)</Label>
                 <Input
                   value={profit.toFixed(2)}
                   readOnly
-                  className={`col-span-3 bg-muted/50 border-border font-bold text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                  className={`w-1/2 bg-muted/50 border-border font-bold text-lg text-right ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
                 />
               </div>
-              <DialogFooter>
+              <DialogFooter className="md:col-span-2 mt-6"> {/* Adicionado mt-6 para espaçamento */}
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                   Cancelar
                 </Button>
