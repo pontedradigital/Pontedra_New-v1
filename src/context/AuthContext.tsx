@@ -2,12 +2,12 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // Importar useLocation
 
 interface UserProfile {
   id: string;
-  first_name: string | null; // Renomeado de 'nome'
-  last_name: string | null;  // Renomeado de 'sobrenome'
+  first_name: string | null;
+  last_name: string | null;
   telefone: string | null;
   role: 'prospect' | 'client' | 'master';
   status: 'ativo' | 'inativo';
@@ -18,18 +18,19 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, first_name: string, last_name: string) => Promise<boolean>; // Atualizado para first_name, last_name
-  updateProfile: (updates: Partial<UserProfile & { email?: string }>) => Promise<boolean>; // Nova função
+  register: (email: string, password: string, first_name: string, last_name: string) => Promise<boolean>;
+  updateProfile: (updates: Partial<UserProfile & { email?: string }>) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation(); // Usar useLocation para o caminho atual
 
   const fetchProfile = async (userId: string) => {
     console.log("AuthContext: Attempting to fetch profile for userId:", userId);
@@ -91,33 +92,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [profile]); // Added profile to dependency array to make sure the `if (!profile || profile.id !== session.user.id)` check works correctly.
+  }, [profile]);
 
   useEffect(() => {
-    console.log("AuthContext: Navigation Effect - loading:", loading, "user:", !!user, "profile:", !!profile, "currentPath:", window.location.pathname);
+    console.log("AuthContext: Navigation Effect - loading:", loading, "user:", !!user, "profile:", !!profile, "currentPath:", location.pathname);
     if (!loading) {
+      const currentPath = location.pathname;
+
       if (user && profile) {
-        const currentPath = window.location.pathname;
-        const expectedDashboardPrefix = `/dashboard/${profile.role}`;
-        
-        // If not on any dashboard route, or on a dashboard route but not the one matching the role, navigate.
-        // This prevents unnecessary re-navigations if already on a valid sub-route like /dashboard/master/packages
-        if (!currentPath.startsWith('/dashboard') || !currentPath.startsWith(expectedDashboardPrefix)) {
-          console.log(`AuthContext: Navigating to ${expectedDashboardPrefix} based on role: ${profile.role}`);
-          navigate(expectedDashboardPrefix);
-        } else {
-          console.log("AuthContext: Already on a valid dashboard route for this role, no navigation needed.");
+        // Se o usuário está logado e tem perfil, e está nas páginas de login/cadastro, redireciona para o dashboard
+        if (currentPath === '/login' || currentPath === '/cadastro') {
+          const expectedDashboardHome = `/dashboard/${profile.role}`;
+          console.log(`AuthContext: User authenticated, redirecting from ${currentPath} to ${expectedDashboardHome}`);
+          navigate(expectedDashboardHome, { replace: true });
         }
       } else if (!user) {
-        const currentPath = window.location.pathname;
-        // If on any dashboard route (except login/cadastro pages themselves), redirect to login.
-        if (currentPath.startsWith('/dashboard') && !['/login', '/cadastro'].includes(currentPath)) {
-          console.log("AuthContext: No user and on dashboard route, redirecting to login.");
-          navigate('/login');
+        // Se o usuário NÃO está logado, e está em uma rota de dashboard, redireciona para o login
+        if (currentPath.startsWith('/dashboard')) {
+          console.log(`AuthContext: User not authenticated, redirecting from ${currentPath} to /login`);
+          navigate('/login', { replace: true });
         }
       }
     }
-  }, [loading, user, profile, navigate]); // Dependencies are correct here.
+  }, [loading, user, profile, navigate, location.pathname]); // Adicionado location.pathname às dependências
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log("AuthContext: Attempting login for:", email);
@@ -140,8 +137,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: {
         data: {
-          first_name, // Usando first_name
-          last_name,  // Usando last_name
+          first_name,
+          last_name,
         },
       },
     });
