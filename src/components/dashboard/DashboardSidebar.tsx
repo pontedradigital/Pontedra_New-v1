@@ -24,6 +24,7 @@ import {
   Instagram,     // Para Instagram Direct
   Facebook,      // Para Facebook Messenger
   ChevronDown,   // Para indicar sub-menu
+  ShoppingCart,  // NOVO: Ícone para Produtos
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
+  { label: "Produtos", icon: ShoppingCart, href: "/dashboard/products", roles: ['master'] }, // NOVO: Item de menu para Produtos
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
