@@ -22,7 +22,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -32,8 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Importar RadioGroup
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PlusCircle, Edit, Trash2, Loader2, HardHat, DollarSign, Percent, CalendarDays } from 'lucide-react';
+import DetailsPopup from '@/components/dashboard/common/DetailsPopup'; // Importar o novo componente
 
 // Tipos de dados para Serviços (anteriormente Produtos)
 interface ServiceItem {
@@ -74,6 +74,9 @@ export default function ServicesPage() {
   const [formData, setFormData] = useState<Partial<ServiceItem>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
+
+  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
+  const [selectedServiceForDetails, setSelectedServiceForDetails] = useState<ServiceItem | null>(null); // Serviço para exibir no pop-up
 
   // Fetch services (from 'products' table)
   const { data: services, isLoading, isError, error } = useQuery<ServiceItem[], Error>({
@@ -269,6 +272,11 @@ export default function ServicesPage() {
     upsertServiceMutation.mutate(formData);
   };
 
+  const handleRowClick = (service: ServiceItem) => {
+    setSelectedServiceForDetails(service);
+    setIsDetailsPopupOpen(true);
+  };
+
   const filteredServices = services?.filter(service => {
     const matchesSearch = searchTerm === '' ||
       service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -347,7 +355,7 @@ export default function ServicesPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
-                <TableHead className="text-muted-foreground">SKU</TableHead> {/* NOVO: Coluna SKU */}
+                <TableHead className="text-muted-foreground">SKU</TableHead>
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">CATEGORIA</TableHead>
                 <TableHead className="text-muted-foreground">VALOR INICIAL</TableHead>
@@ -367,8 +375,8 @@ export default function ServicesPage() {
                                             service.default_payment_option === 'lojista' ? `Lojista (${service.default_installments_lojista}x)` :
                                             service.default_payment_option === 'cliente' ? `Cliente (${service.default_installments_cliente}x)` : 'N/A';
                   return (
-                    <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                      <TableCell className="font-medium text-foreground py-4">{service.sku}</TableCell> {/* NOVO: Exibindo SKU */}
+                    <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(service)}>
+                      <TableCell className="font-medium text-foreground py-4">{service.sku}</TableCell>
                       <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
                       <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
                       <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
@@ -380,10 +388,10 @@ export default function ServicesPage() {
                         R$ {rowLucro.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right py-4">
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(service)} className="text-primary hover:text-primary/80">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenDialog(service); }} className="text-primary hover:text-primary/80">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteServiceMutation.mutate(service.id)} className="text-destructive hover:text-destructive/80">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deleteServiceMutation.mutate(service.id); }} className="text-destructive hover:text-destructive/80">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -392,7 +400,7 @@ export default function ServicesPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     Nenhum serviço encontrado.
                   </TableCell>
                 </TableRow>
@@ -640,6 +648,13 @@ export default function ServicesPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Pop-up de Detalhes do Serviço */}
+        <DetailsPopup
+          isOpen={isDetailsPopupOpen}
+          onClose={() => setIsDetailsPopupOpen(false)}
+          data={selectedServiceForDetails}
+        />
       </motion.div>
     </DashboardLayout>
   );

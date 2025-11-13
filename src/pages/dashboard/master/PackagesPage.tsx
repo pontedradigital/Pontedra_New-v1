@@ -34,6 +34,7 @@ import {
 import { PlusCircle, Edit, Trash2, Loader2, Package, Check, X, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import DetailsPopup from '@/components/dashboard/common/DetailsPopup'; // Importar o novo componente
 
 // Tipos de dados para Pacotes
 interface PackageItem {
@@ -46,7 +47,10 @@ interface PackageItem {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  services_in_package?: ServiceItem[];
+  services_in_package?: ServiceItem[]; // Serviços incluídos no pacote
+  sum_of_services_price?: number; // Soma dos preços dos serviços sem desconto do pacote
+  annual_price_with_discount?: number; // Valor anual com desconto
+  monthly_price_from_annual?: number; // Valor mensal do pacote anual
 }
 
 // Tipos de dados para Serviços (do products table)
@@ -66,6 +70,9 @@ export default function PackagesPage() {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [packageDiscount, setPackageDiscount] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
+  const [selectedPackageForDetails, setSelectedPackageForDetails] = useState<PackageItem | null>(null); // Pacote para exibir no pop-up
 
   // Fetch packages with their associated service_ids
   const { data: packagesData, isLoading, isError, error } = useQuery<any[], Error>({
@@ -288,6 +295,11 @@ export default function PackagesPage() {
     upsertPackageMutation.mutate({ packageData: packageDataToSave, serviceIds: selectedServiceIds });
   };
 
+  const handleRowClick = (pkg: PackageItem) => {
+    setSelectedPackageForDetails(pkg);
+    setIsDetailsPopupOpen(true);
+  };
+
   const filteredPackages = packages?.filter(pkg => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -356,10 +368,10 @@ export default function PackagesPage() {
                 <TableHead className="text-muted-foreground">DESCRIÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">SERVIÇOS INCLUÍDOS</TableHead>
                 <TableHead className="text-muted-foreground">DESCONTO TOTAL</TableHead>
-                <TableHead className="text-muted-foreground">VALOR TOTAL (SEM DESC.)</TableHead> {/* NOVO */}
-                <TableHead className="text-muted-foreground">VALOR MENSAL (COM DESC.)</TableHead> {/* RENOMEADO */}
-                <TableHead className="text-muted-foreground">VALOR ANUAL (COM DESC.)</TableHead> {/* NOVO */}
-                <TableHead className="text-muted-foreground">VALOR MENSAL (ANUAL)</TableHead> {/* NOVO */}
+                <TableHead className="text-muted-foreground">VALOR TOTAL (SEM DESC.)</TableHead>
+                <TableHead className="text-muted-foreground">VALOR MENSAL (COM DESC.)</TableHead>
+                <TableHead className="text-muted-foreground">VALOR ANUAL (COM DESC.)</TableHead>
+                <TableHead className="text-muted-foreground">VALOR MENSAL (ANUAL)</TableHead>
                 <TableHead className="text-muted-foreground">STATUS</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
@@ -367,7 +379,7 @@ export default function PackagesPage() {
             <TableBody>
               {filteredPackages && filteredPackages.length > 0 ? (
                 filteredPackages.map((pkg) => (
-                  <TableRow key={pkg.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                  <TableRow key={pkg.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(pkg)}>
                     <TableCell className="font-medium text-foreground py-4">{pkg.sku}</TableCell>
                     <TableCell className="font-medium text-foreground py-4">{pkg.name}</TableCell>
                     <TableCell className="text-muted-foreground py-4 max-w-[200px] truncate">
@@ -387,20 +399,20 @@ export default function PackagesPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-foreground py-4">{pkg.discount_percentage?.toFixed(2) || '0.00'}%</TableCell>
-                    <TableCell className="text-foreground py-4">R$ {pkg.sum_of_services_price?.toFixed(2)}</TableCell> {/* NOVO */}
+                    <TableCell className="text-foreground py-4">R$ {pkg.sum_of_services_price?.toFixed(2)}</TableCell>
                     <TableCell className="text-foreground py-4">R$ {pkg.price?.toFixed(2)}</TableCell>
-                    <TableCell className="text-foreground py-4">R$ {pkg.annual_price_with_discount?.toFixed(2)}</TableCell> {/* NOVO */}
-                    <TableCell className="text-foreground py-4">R$ {pkg.monthly_price_from_annual?.toFixed(2)}</TableCell> {/* NOVO */}
+                    <TableCell className="text-foreground py-4">R$ {pkg.annual_price_with_discount?.toFixed(2)}</TableCell>
+                    <TableCell className="text-foreground py-4">R$ {pkg.monthly_price_from_annual?.toFixed(2)}</TableCell>
                     <TableCell className="py-4">
                       <Badge className={pkg.is_active ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}>
                         {pkg.is_active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(pkg)} className="text-primary hover:text-primary/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenDialog(pkg); }} className="text-primary hover:text-primary/80">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deletePackageMutation.mutate(pkg.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deletePackageMutation.mutate(pkg.id); }} className="text-destructive hover:text-destructive/80">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -408,7 +420,7 @@ export default function PackagesPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                     Nenhum pacote encontrado.
                   </TableCell>
                 </TableRow>
@@ -588,6 +600,13 @@ export default function PackagesPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Pop-up de Detalhes do Pacote */}
+        <DetailsPopup
+          isOpen={isDetailsPopupOpen}
+          onClose={() => setIsDetailsPopupOpen(false)}
+          data={selectedPackageForDetails}
+        />
       </motion.div>
     </DashboardLayout>
   );
