@@ -122,35 +122,42 @@ export default function ServicesPage() {
     const discountPercentage = service.discount_percentage || 0;
     const taxPercentage = service.tax_percentage || 0;
 
-    // Deduções fixas do lucro (baseadas no initialPriceInput)
+    // Deduções que afetam o lucro, mas são calculadas sobre o initialPriceInput
     const taxDeduction = parseFloat((initialPriceInput * (taxPercentage / 100)).toFixed(2));
     const discountDeduction = parseFloat((initialPriceInput * (discountPercentage / 100)).toFixed(2));
 
     let clientFinalPayment = initialPriceInput; // O que o cliente *realmente* paga
-    let companyNetRevenue = initialPriceInput; // O que a empresa *realmente* recebe
-    let installmentCostDeduction = 0; // Custo absorvido pelo lojista
+    let companyNetRevenue = initialPriceInput; // O que a empresa *realmente* recebe (antes de custos e impostos)
+    let installmentCostDeduction = 0; // Custo absorvido pela empresa devido ao parcelamento (taxa da operadora)
 
     switch (service.default_payment_option) {
       case 'vista':
         // Cliente recebe 10% de desconto sobre o initialPriceInput
         clientFinalPayment = parseFloat((initialPriceInput * 0.90).toFixed(2));
-        companyNetRevenue = clientFinalPayment;
+        companyNetRevenue = clientFinalPayment; // Empresa recebe o valor com desconto
         break;
       case 'lojista':
-        // Cliente paga o initialPriceInput. Lojista absorve os juros.
+        // Cliente paga o initialPriceInput. Lojista absorve os juros (taxa da operadora).
         clientFinalPayment = initialPriceInput;
         const lojistaInstallments = service.default_installments_lojista || 1;
         const lojistaRate = rates?.find(r => r.installments === lojistaInstallments)?.merchant_pays_rate || 0;
         installmentCostDeduction = parseFloat((initialPriceInput * lojistaRate).toFixed(2));
-        companyNetRevenue = parseFloat((initialPriceInput - installmentCostDeduction).toFixed(2));
+        companyNetRevenue = parseFloat((initialPriceInput - installmentCostDeduction).toFixed(2)); // Empresa recebe o valor base menos a taxa
         break;
       case 'cliente':
-        // Cliente paga o initialPriceInput + juros. Empresa recebe esse valor maior.
+        // Cliente paga o initialPriceInput + juros.
         const clienteInstallments = service.default_installments_cliente || 1;
         const clienteRate = rates?.find(r => r.installments === clienteInstallments)?.client_pays_rate || 0;
-        clientFinalPayment = parseFloat((initialPriceInput * (1 + clienteRate)).toFixed(2));
-        companyNetRevenue = clientFinalPayment;
-        // Não há installmentCostDeduction para o lojista aqui, pois o cliente paga.
+        clientFinalPayment = parseFloat((initialPriceInput * (1 + clienteRate)).toFixed(2)); // Cliente paga o valor base + juros
+
+        // A empresa ainda tem um custo de processamento (taxa da operadora) sobre o valor base,
+        // mesmo que o cliente pague os juros. Usamos a taxa do lojista para representar isso.
+        const lojistaRateForClientOption = rates?.find(r => r.installments === clienteInstallments)?.merchant_pays_rate || 0;
+        installmentCostDeduction = parseFloat((initialPriceInput * lojistaRateForClientOption).toFixed(2));
+        
+        // A receita líquida da empresa é o valor base (initialPriceInput) menos o custo de processamento da operadora.
+        // O valor extra pago pelo cliente (juros) cobre o custo da operadora, mas a empresa não o "lucra".
+        companyNetRevenue = parseFloat((initialPriceInput - installmentCostDeduction).toFixed(2));
         break;
       default:
         // Caso padrão, nenhuma opção de pagamento especial selecionada
@@ -167,7 +174,7 @@ export default function ServicesPage() {
       custoDisplay: cost,
       deducaoImpostoDisplay: taxDeduction,
       deducaoDescontoDisplay: discountDeduction,
-      custoParcelamentoDisplay: installmentCostDeduction, // Custo absorvido pelo lojista
+      custoParcelamentoDisplay: installmentCostDeduction, // Custo absorvido pela empresa
       lucroLiquidoDisplay: profit,
     };
   };
@@ -336,7 +343,7 @@ export default function ServicesPage() {
               <TableRow className="bg-muted/20">
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">CATEGORIA</TableHead>
-                <TableHead className="text-muted-foreground">PREÇO BASE</TableHead> {/* Preço inicial do input */}
+                <TableHead className="text-muted-foreground">VALOR INICIAL</TableHead> {/* Renomeado */}
                 <TableHead className="text-muted-foreground">IMPOSTO</TableHead>
                 <TableHead className="text-muted-foreground">DESCONTO</TableHead>
                 <TableHead className="text-muted-foreground">OPÇÃO PADRÃO</TableHead>
@@ -349,14 +356,14 @@ export default function ServicesPage() {
               {filteredServices && filteredServices.length > 0 ? (
                 filteredServices.map((service) => {
                   const { lucroLiquidoDisplay: rowLucro } = calculateMetrics(service, installmentRates);
-                  const defaultOptionText = service.default_payment_option === 'vista' ? 'À Vista' :
+                  const defaultOptionText = service.default_payment_option === 'vista' ? 'À Vista (10% OFF)' :
                                             service.default_payment_option === 'lojista' ? `Lojista (${service.default_installments_lojista}x)` :
                                             service.default_payment_option === 'cliente' ? `Cliente (${service.default_installments_cliente}x)` : 'N/A';
                   return (
                     <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                       <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
                       <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
-                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell> {/* Preço inicial */}
+                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell> {/* Valor inicial */}
                       <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
                       <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
                       <TableCell className="text-muted-foreground py-4">{defaultOptionText}</TableCell>
@@ -508,15 +515,15 @@ export default function ServicesPage() {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="vista" id="option-vista" />
-                    <Label htmlFor="option-vista">À Vista (Cliente Paga -10%)</Label>
+                    <Label htmlFor="option-vista">À Vista (10% de Desconto)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="lojista" id="option-lojista" />
-                    <Label htmlFor="option-lojista">Parcelado (Cliente Paga Valor Base)</Label>
+                    <Label htmlFor="option-lojista">Parcelado (Lojista Paga Juros)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cliente" id="option-cliente" />
-                    <Label htmlFor="option-cliente">Parcelado (Cliente Paga +Juros)</Label>
+                    <Label htmlFor="option-cliente">Parcelado (Cliente Paga Juros)</Label>
                   </div>
                 </RadioGroup>
               </div>
