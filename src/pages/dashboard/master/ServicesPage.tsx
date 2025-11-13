@@ -32,10 +32,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Edit, Trash2, Loader2, Package, DollarSign, Percent, CalendarDays } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, HardHat, DollarSign, Percent, CalendarDays } from 'lucide-react';
 
-// Tipos de dados
-interface Product {
+// Tipos de dados para Serviços (anteriormente Produtos)
+interface ServiceItem {
   id: string;
   name: string;
   category: 'Web' | 'Sistemas' | 'Marketing' | 'Design' | 'Completo';
@@ -50,19 +50,19 @@ interface Product {
   updated_at: string;
 }
 
-const productCategories = ['Web', 'Sistemas', 'Marketing', 'Design', 'Completo'];
+const serviceCategories = ['Web', 'Sistemas', 'Marketing', 'Design', 'Completo'];
 
-export default function ProductsPage() {
+export default function ServicesPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<Partial<Product>>({});
+  const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+  const [formData, setFormData] = useState<Partial<ServiceItem>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
 
-  // Fetch products
-  const { data: products, isLoading, isError, error } = useQuery<Product[], Error>({
-    queryKey: ['products'],
+  // Fetch services (from 'products' table)
+  const { data: services, isLoading, isError, error } = useQuery<ServiceItem[], Error>({
+    queryKey: ['services'],
     queryFn: async () => {
       const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (error) throw error;
@@ -70,65 +70,65 @@ export default function ProductsPage() {
     },
   });
 
-  // Calculate final price
-  const calculateFinalPrice = (product: Partial<Product>): number => {
-    let calculatedPrice = product.price || 0;
-    if (product.discount_percentage) {
-      calculatedPrice -= calculatedPrice * (product.discount_percentage / 100);
+  // Calculate final price for a service
+  const calculateFinalPrice = (service: Partial<ServiceItem>): number => {
+    let calculatedPrice = service.price || 0;
+    if (service.discount_percentage) {
+      calculatedPrice -= calculatedPrice * (service.discount_percentage / 100);
     }
-    if (product.tax_percentage) {
-      calculatedPrice += calculatedPrice * (product.tax_percentage / 100);
+    if (service.tax_percentage) {
+      calculatedPrice += calculatedPrice * (service.tax_percentage / 100);
     }
     return parseFloat(calculatedPrice.toFixed(2));
   };
 
-  // Add/Edit product mutation
-  const upsertProductMutation = useMutation<void, Error, Partial<Product>>({
-    mutationFn: async (newProduct) => {
-      const finalPrice = calculateFinalPrice(newProduct);
-      const productToSave = { ...newProduct, final_price: finalPrice };
+  // Add/Edit service mutation (to 'products' table)
+  const upsertServiceMutation = useMutation<void, Error, Partial<ServiceItem>>({
+    mutationFn: async (newService) => {
+      const finalPrice = calculateFinalPrice(newService);
+      const serviceToSave = { ...newService, final_price: finalPrice };
 
-      if (newProduct.id) {
-        const { error } = await supabase.from('products').update(productToSave).eq('id', newProduct.id);
+      if (newService.id) {
+        const { error } = await supabase.from('products').update(serviceToSave).eq('id', newService.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('products').insert(productToSave);
+        const { error } = await supabase.from('products').insert(serviceToSave);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success(editingProduct ? 'Produto atualizado com sucesso!' : 'Produto adicionado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      toast.success(editingService ? 'Serviço atualizado com sucesso!' : 'Serviço adicionado com sucesso!');
       setIsDialogOpen(false);
-      setEditingProduct(null);
+      setEditingService(null);
       setFormData({});
     },
     onError: (err) => {
-      toast.error(`Erro ao salvar produto: ${err.message}`);
+      toast.error(`Erro ao salvar serviço: ${err.message}`);
     },
   });
 
-  // Delete product mutation
-  const deleteProductMutation = useMutation<void, Error, string>({
-    mutationFn: async (productId) => {
-      const { error } = await supabase.from('products').delete().eq('id', productId);
+  // Delete service mutation (from 'products' table)
+  const deleteServiceMutation = useMutation<void, Error, string>({
+    mutationFn: async (serviceId) => {
+      const { error } = await supabase.from('products').delete().eq('id', serviceId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Produto excluído com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      toast.success('Serviço excluído com sucesso!');
     },
     onError: (err) => {
-      toast.error(`Erro ao excluir produto: ${err.message}`);
+      toast.error(`Erro ao excluir serviço: ${err.message}`);
     },
   });
 
-  const handleOpenDialog = (product?: Product) => {
-    if (product) {
-      setEditingProduct(product);
-      setFormData(product);
+  const handleOpenDialog = (service?: ServiceItem) => {
+    if (service) {
+      setEditingService(service);
+      setFormData(service);
     } else {
-      setEditingProduct(null);
+      setEditingService(null);
       setFormData({
         name: '',
         category: 'Web',
@@ -161,16 +161,16 @@ export default function ProductsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    upsertProductMutation.mutate(formData);
+    upsertServiceMutation.mutate(formData);
   };
 
-  const filteredProducts = products?.filter(product => {
+  const filteredServices = services?.filter(service => {
     const matchesSearch = searchTerm === '' ||
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = filterCategory === 'Todas' || product.category === filterCategory;
+    const matchesCategory = filterCategory === 'Todas' || service.category === filterCategory;
 
     return matchesSearch && matchesCategory;
   });
@@ -179,7 +179,7 @@ export default function ProductsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
-          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando produtos...
+          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando serviços...
         </div>
       </DashboardLayout>
     );
@@ -189,7 +189,7 @@ export default function ProductsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-destructive">
-          Erro ao carregar produtos: {error?.message}
+          Erro ao carregar serviços: {error?.message}
         </div>
       </DashboardLayout>
     );
@@ -204,19 +204,19 @@ export default function ProductsPage() {
         className="space-y-8"
       >
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-bold text-[#57e389]">Gerenciar Produtos</h1>
+          <h1 className="text-4xl font-bold text-[#57e389]">Gerenciar Serviços</h1>
           <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Produto
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Serviço
           </Button>
         </div>
         <p className="text-lg text-[#9ba8b5]">
-          Crie, edite e organize todos os produtos e serviços que a Pontedra oferece aos seus clientes.
+          Crie, edite e organize todos os serviços que a Pontedra oferece aos seus clientes.
         </p>
 
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <Input
-            placeholder="Buscar produto por nome ou descrição..."
+            placeholder="Buscar serviço por nome ou descrição..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -227,14 +227,14 @@ export default function ProductsPage() {
             </SelectTrigger>
             <SelectContent className="bg-popover border-border text-popover-foreground">
               <SelectItem value="Todas">Todas as Categorias</SelectItem>
-              {productCategories.map(category => (
+              {serviceCategories.map(category => (
                 <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Tabela de Produtos */}
+        {/* Tabela de Serviços */}
         <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
           <Table>
             <TableHeader>
@@ -249,20 +249,20 @@ export default function ProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts && filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
-                  <TableRow key={product.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                    <TableCell className="font-medium text-foreground py-4">{product.name}</TableCell>
-                    <TableCell className="text-muted-foreground py-4">{product.category}</TableCell>
-                    <TableCell className="text-foreground py-4">R$ {product.price?.toFixed(2)}</TableCell>
-                    <TableCell className="text-foreground py-4">{product.discount_percentage}%</TableCell>
-                    <TableCell className="text-foreground py-4">{product.tax_percentage}%</TableCell>
-                    <TableCell className="text-foreground py-4">R$ {product.final_price?.toFixed(2)}</TableCell>
+              {filteredServices && filteredServices.length > 0 ? (
+                filteredServices.map((service) => (
+                  <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                    <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
+                    <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
+                    <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
+                    <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
+                    <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
+                    <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell>
                     <TableCell className="text-right py-4">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(product)} className="text-primary hover:text-primary/80">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(service)} className="text-primary hover:text-primary/80">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteProductMutation.mutate(product.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="sm" onClick={() => deleteServiceMutation.mutate(service.id)} className="text-destructive hover:text-destructive/80">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -271,7 +271,7 @@ export default function ProductsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    Nenhum produto encontrado.
+                    Nenhum serviço encontrado.
                   </TableCell>
                 </TableRow>
               )}
@@ -279,15 +279,15 @@ export default function ProductsPage() {
           </Table>
         </div>
 
-        {/* Dialog para Adicionar/Editar Produto */}
+        {/* Dialog para Adicionar/Editar Serviço */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[600px] bg-card border-border text-foreground rounded-xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-primary">
-                {editingProduct ? 'Editar Produto' : 'Adicionar Novo Produto'}
+                {editingService ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
-                Preencha os detalhes do produto.
+                Preencha os detalhes do serviço.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="grid gap-6 py-4">
@@ -307,13 +307,13 @@ export default function ProductsPage() {
                 <Select
                   name="category"
                   value={formData.category || 'Web'}
-                  onValueChange={(value) => handleSelectChange('category', value as Product['category'])}
+                  onValueChange={(value) => handleSelectChange('category', value as ServiceItem['category'])}
                 >
                   <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
                     <SelectValue placeholder="Selecione a Categoria" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border text-popover-foreground">
-                    {productCategories.map(category => (
+                    {serviceCategories.map(category => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
@@ -402,9 +402,9 @@ export default function ProductsPage() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={upsertProductMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  {upsertProductMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {editingProduct ? 'Salvar Alterações' : 'Adicionar Produto'}
+                <Button type="submit" disabled={upsertServiceMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  {upsertServiceMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {editingService ? 'Salvar Alterações' : 'Adicionar Serviço'}
                 </Button>
               </DialogFooter>
             </form>

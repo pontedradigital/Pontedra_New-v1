@@ -19,12 +19,12 @@ import {
   FileText,
   CreditCard,
   Bot,
-  HardHat,
+  HardHat, // Ícone para Serviços
   MessageCircle, // Para WhatsApp Business
   Instagram,     // Para Instagram Direct
   Facebook,      // Para Facebook Messenger
   ChevronDown,   // Para indicar sub-menu
-  ShoppingCart,  // NOVO: Ícone para Produtos
+  // ShoppingCart,  // REMOVIDO: Ícone para Produtos
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -46,9 +46,8 @@ const navItems: NavItem[] = [
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
-  // { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] }, // REMOVIDO
+  { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] }, // NOVO: Item de menu para Serviços, reposicionado
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
-  { label: "Produtos", icon: ShoppingCart, href: "/dashboard/products", roles: ['master'] }, // NOVO: Item de menu para Produtos
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },

@@ -27,13 +27,13 @@ import ReportsPage from "./pages/dashboard/master/ReportsPage";
 import SettingsPage from "./pages/dashboard/common/SettingsPage";
 
 // Novas páginas para o Master
-// import ServicesPage from "./pages/dashboard/master/ServicesPage"; // REMOVIDO
+import ServicesPage from "./pages/dashboard/master/ServicesPage"; // AGORA É SERVICESPAGE
 import PackagesPage from "./pages/dashboard/master/PackagesPage";
 import BudgetsPage from "./pages/dashboard/master/BudgetsPage";
 import CostsPage from "./pages/dashboard/master/CostsPage";
 import FinancialPage from "./pages/dashboard/master/FinancialPage";
 import VedraAIPage from "./pages/dashboard/master/VedraAIPage";
-import ProductsPage from "./pages/dashboard/master/ProductsPage";
+// import ProductsPage from "./pages/dashboard/master/ProductsPage"; // REMOVIDO
 
 function App() {
   return (
@@ -65,13 +65,13 @@ function App() {
         <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} />
 
         {/* Novas Rotas para o Master */}
-        {/* <Route path="/dashboard/services" element={<ProtectedRoute allowedRoles={['master']}><ServicesPage /></ProtectedRoute>} /> */} {/* REMOVIDO */}
+        <Route path="/dashboard/services" element={<ProtectedRoute allowedRoles={['master']}><ServicesPage /></ProtectedRoute>} /> {/* ROTA ATUALIZADA */}
         <Route path="/dashboard/packages" element={<ProtectedRoute allowedRoles={['master']}><PackagesPage /></ProtectedRoute>} />
         <Route path="/dashboard/budgets" element={<ProtectedRoute allowedRoles={['master']}><BudgetsPage /></ProtectedRoute>} />
         <Route path="/dashboard/costs" element={<ProtectedRoute allowedRoles={['master']}><CostsPage /></ProtectedRoute>} />
         <Route path="/dashboard/financial" element={<ProtectedRoute allowedRoles={['master']}><FinancialPage /></ProtectedRoute>} />
         <Route path="/dashboard/vedra-ai" element={<ProtectedRoute allowedRoles={['master']}><VedraAIPage /></ProtectedRoute>} />
-        <Route path="/dashboard/products" element={<ProtectedRoute allowedRoles={['master']}><ProductsPage /></ProtectedRoute>} />
+        {/* <Route path="/dashboard/products" element={<ProtectedRoute allowedRoles={['master']}><ProductsPage /></ProtectedRoute>} /> */} {/* ROTA REMOVIDA */}
 
         <Route path="/dashboard/manage-users" element={<ProtectedRoute allowedRoles={['master']}><ManageUsersPage /></ProtectedRoute>} />
         <Route path="/dashboard/reports" element={<ProtectedRoute allowedRoles={['master']}><ReportsPage /></ProtectedRoute>} />
