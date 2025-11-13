@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const salesData = [
   { month: 'Jan', value: 15000 },
-  { month: 'Feb', value: 22000 },
+  { month: 'Fev', value: 22000 },
   { month: 'Mar', value: 10000 },
-  { month: 'Apr', value: 28000 },
-  { month: 'May', value: 35000 },
+  { month: 'Abr', value: 28000 },
+  { month: 'Mai', value: 35000 },
   { month: 'Jun', value: 30000 },
 ];
 
@@ -16,7 +16,7 @@ export default function SaleReportChart() {
   return (
     <Card className="bg-card border-border shadow-lg rounded-xl">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">Sale Report</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">Relatório de Vendas</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground mb-4">

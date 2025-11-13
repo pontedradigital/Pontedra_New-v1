@@ -22,7 +22,7 @@ export default function ActionButton({ icon: Icon, title, value, color }: Action
         <span className="text-xs font-medium opacity-80">{title}</span>
       </div>
       <span className="text-2xl font-bold">{value}</span>
-      <span className="text-xs opacity-70">this month</span>
+      <span className="text-xs opacity-70">este mês</span>
     </Button>
   );
 }

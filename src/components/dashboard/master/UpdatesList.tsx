@@ -4,22 +4,22 @@ import { CircleDot } from 'lucide-react';
 
 interface UpdateItem {
   id: string;
-  type: 'User confirmation' | 'Continuous evaluation' | 'Promotion';
+  type: 'Confirmação de Usuário' | 'Avaliação Contínua' | 'Promoção';
   text: string;
   time: string;
 }
 
 const updates: UpdateItem[] = [
-  { id: '1', type: 'User confirmation', text: "Tonight's the night. And it's going to happen again and again. It has to happen. I'm thinking two circus clowns dancing. Tonight's the night.", time: '7 months ago' },
-  { id: '2', type: 'Continuous evaluation', text: "It has to happen. I'm thinking two circus clowns dancing. Tonight's the night.", time: '7 months ago' },
-  { id: '3', type: 'Promotion', text: "It has to happen. I'm thinking two circus clowns dancing. Tonight's the night.", time: '7 months ago' },
+  { id: '1', type: 'Confirmação de Usuário', text: "Esta noite é a noite. E vai acontecer de novo e de novo. Tem que acontecer. Estou pensando em dois palhaços de circo dançando. Esta noite é a noite.", time: '7 meses atrás' },
+  { id: '2', type: 'Avaliação Contínua', text: "Tem que acontecer. Estou pensando em dois palhaços de circo dançando. Esta noite é a noite.", time: '7 meses atrás' },
+  { id: '3', type: 'Promoção', text: "Tem que acontecer. Estou pensando em dois palhaços de circo dançando. Esta noite é a noite.", time: '7 meses atrás' },
 ];
 
 const getTypeColor = (type: UpdateItem['type']) => {
   switch (type) {
-    case 'User confirmation': return 'text-green-500';
-    case 'Continuous evaluation': return 'text-blue-500';
-    case 'Promotion': return 'text-yellow-500';
+    case 'Confirmação de Usuário': return 'text-green-500';
+    case 'Avaliação Contínua': return 'text-blue-500';
+    case 'Promoção': return 'text-yellow-500';
     default: return 'text-muted-foreground';
   }
 };
@@ -28,7 +28,7 @@ export default function UpdatesList() {
   return (
     <Card className="bg-card border-border shadow-lg rounded-xl">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">Updates</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">Atualizações</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">

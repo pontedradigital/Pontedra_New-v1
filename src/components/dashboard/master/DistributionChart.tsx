@@ -20,7 +20,7 @@ export default function DistributionChart() {
   return (
     <Card className="bg-card border-border shadow-lg rounded-xl">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">Distribution</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">Distribuição</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center">
@@ -62,7 +62,7 @@ export default function DistributionChart() {
               </div>
             ))}
           </div>
-          <a href="#" className="mt-6 text-primary hover:underline text-sm">View More</a>
+          <a href="#" className="mt-6 text-primary hover:underline text-sm">Ver Mais</a>
         </div>
       </CardContent>
     </Card>

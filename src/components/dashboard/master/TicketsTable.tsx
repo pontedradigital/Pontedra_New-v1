@@ -16,11 +16,11 @@ interface Ticket {
 }
 
 const tickets: Ticket[] = [
-  { id: '1', name: 'Alta Lucas', location: 'Connecticut', date: '31 Aug 2018', time: '9:30 am', project: '6770 Verner Burgs', projectLink: '#' },
-  { id: '2', name: 'Teresa Shaw', location: 'Florida', date: '13 May 2018', time: '10:30 am', project: '1300 Gideon Divide Apt. 400', projectLink: '#' },
+  { id: '1', name: 'Alta Lucas', location: 'Connecticut', date: '31 Ago 2018', time: '9:30 am', project: '6770 Verner Burgs', projectLink: '#' },
+  { id: '2', name: 'Teresa Shaw', location: 'Florida', date: '13 Mai 2018', time: '10:30 am', project: '1300 Gideon Divide Apt. 400', projectLink: '#' },
   { id: '3', name: 'Rosa Underwood', location: 'North Dakota', date: '02 Jan 2018', time: '11:00 am', project: '9576 Rempel Extension' },
   { id: '4', name: 'Wilson Rowe', location: 'Denver', date: '05 Nov 2018', time: '02:30 am', project: '1072 Orion Expansion' },
-  { id: '5', name: 'Teresa Shaw', location: 'Florida', date: '13 May 2018', time: '10:30 am', project: '1300 Gideon Divide Apt. 400', projectLink: '#' },
+  { id: '5', name: 'Teresa Shaw', location: 'Florida', date: '13 Mai 2018', time: '10:30 am', project: '1300 Gideon Divide Apt. 400', projectLink: '#' },
 ];
 
 const getAvatarColor = (name: string) => {
@@ -41,8 +41,8 @@ export default function TicketsTable() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover border-border text-popover-foreground">
-            <DropdownMenuItem>View All</DropdownMenuItem>
-            <DropdownMenuItem>Refresh</DropdownMenuItem>
+            <DropdownMenuItem>Ver Todos</DropdownMenuItem>
+            <DropdownMenuItem>Atualizar</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -50,9 +50,9 @@ export default function TicketsTable() {
         <Table>
           <TableHeader>
             <TableRow className="border-b border-border">
-              <TableHead className="text-muted-foreground">NAME</TableHead>
-              <TableHead className="text-muted-foreground">DATE</TableHead>
-              <TableHead className="text-muted-foreground">PROJECTS</TableHead>
+              <TableHead className="text-muted-foreground">NOME</TableHead>
+              <TableHead className="text-muted-foreground">DATA</TableHead>
+              <TableHead className="text-muted-foreground">PROJETOS</TableHead>
               <TableHead className="text-muted-foreground text-right"></TableHead>
             </TableRow>
           </TableHeader>
@@ -76,7 +76,7 @@ export default function TicketsTable() {
                   <p className="font-medium text-foreground">{ticket.project}</p>
                   {ticket.projectLink && (
                     <a href={ticket.projectLink} className="text-xs text-primary hover:underline">
-                      View on map
+                      Ver no mapa
                     </a>
                   )}
                 </TableCell>

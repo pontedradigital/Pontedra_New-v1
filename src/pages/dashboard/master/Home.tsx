@@ -68,7 +68,7 @@ export default function MasterHome() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Downloads</h3>
               <p className="text-sm text-muted-foreground">
-                Watching toe melt. This is fun. Only you could make those words cute.
+                Assistindo o dedo do pé derreter. Isso é divertido. Só você poderia tornar essas palavras fofas.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
