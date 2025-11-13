@@ -75,7 +75,7 @@ export default function PackagesPage() {
         .select(`
           *,
           package_services(
-            service_id // Apenas o ID do serviço é buscado aqui
+            service_id
           )
         `)
         .order('created_at', { ascending: false });
