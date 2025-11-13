@@ -75,7 +75,7 @@ export default function PackagesPage() {
         .select(`
           *,
           package_services(
-            service_id
+            service_id // Apenas o ID do serviço é buscado aqui
           )
         `)
         .order('created_at', { ascending: false });
@@ -102,10 +102,13 @@ export default function PackagesPage() {
   const packages = useMemo(() => {
     if (!packagesData || !availableServices) return [];
 
+    // Criar um mapa para busca rápida de serviços por ID
+    const servicesMap = new Map(availableServices.map(s => [s.id, s]));
+
     return packagesData.map(pkg => {
       const servicesInPackage = pkg.package_services
-        .map((ps: { service_id: string }) => availableServices.find(s => s.id === ps.service_id))
-        .filter(Boolean) as ServiceItem[]; // Filter out undefined and cast
+        .map((ps: { service_id: string }) => servicesMap.get(ps.service_id))
+        .filter(Boolean) as ServiceItem[]; // Filtrar undefined e fazer cast
 
       return {
         ...pkg,
@@ -437,8 +440,11 @@ export default function PackagesPage() {
                             onChange={() => handleServiceSelection(service.id)}
                             className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                           />
-                          <Label htmlFor={`service-${service.id}`} className="text-foreground cursor-pointer">
-                            {service.name} <span className="text-muted-foreground text-sm">({service.sku})</span>
+                          <Label htmlFor={`service-${service.id}`} className="text-foreground cursor-pointer flex-1">
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{service.name} <span className="text-muted-foreground text-sm">({service.sku})</span></span>
+                              {service.description && <span className="text-muted-foreground text-xs line-clamp-1">{service.description}</span>}
+                            </div>
                           </Label>
                         </div>
                         <span className="text-primary font-semibold">R$ {service.final_price?.toFixed(2)}</span>
