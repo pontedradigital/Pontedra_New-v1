@@ -10,17 +10,20 @@ import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import NotFound from "./pages/NotFound";
 import ScrollToTopSpecific from "./components/ScrollToTopSpecific";
-import { AuthProvider } from "./context/AuthContext"; // Importando AuthProvider
-import ProtectedRoute from "./components/ProtectedRoute"; // Importando ProtectedRoute
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Importando as páginas de dashboard
 import MasterHome from "./pages/dashboard/master/Home";
 import ClientHome from "./pages/dashboard/client/Home";
 import ProspectHome from "./pages/dashboard/prospect/Home";
 
+// Importando o DashboardLayout
+import DashboardLayout from "./components/dashboard/DashboardLayout";
+
 function App() {
   return (
-    <AuthProvider> {/* Envolvendo toda a aplicação com AuthProvider */}
+    <AuthProvider>
       <Toaster position="top-right" richColors />
       <ScrollToTopSpecific />
       <Routes>
@@ -35,9 +38,13 @@ function App() {
         <Route path="/termos-uso" element={<TermosUso />} />
 
         {/* Rotas Protegidas */}
+        {/* As rotas de dashboard agora usam o DashboardLayout */}
         <Route path="/dashboard/master" element={<ProtectedRoute allowedRoles={['master']}><MasterHome /></ProtectedRoute>} />
         <Route path="/dashboard/client" element={<ProtectedRoute allowedRoles={['client', 'master']}><ClientHome /></ProtectedRoute>} />
         <Route path="/dashboard/prospect" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ProspectHome /></ProtectedRoute>} />
+        
+        {/* Rotas genéricas para o dashboard que podem ser adicionadas no futuro */}
+        {/* Exemplo: <Route path="/dashboard/profile" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><DashboardLayout><ProfilePage /></DashboardLayout></ProtectedRoute>} /> */}
 
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />
