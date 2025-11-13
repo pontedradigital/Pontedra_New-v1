@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] }, // NOVO: Item de menu para Serviços, reposicionado
-  { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
+  { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] }, // ATUALIZADO: Link para a página de pacotes
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
