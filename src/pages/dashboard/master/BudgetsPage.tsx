@@ -198,19 +198,37 @@ export default function BudgetsPage() {
     return items;
   }, [services, allPackages]);
 
-  const filteredAvailableItems = useMemo(() => {
-    if (!searchTerm) return allAvailableItems;
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return allAvailableItems.filter(item =>
-      item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.description?.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.sku.toLowerCase().includes(lowerCaseSearchTerm)
-    );
-  }, [searchTerm, allAvailableItems]);
-
   const totalAmount = useMemo(() => {
     return selectedItems.reduce((sum, item) => sum + item.price, 0);
   }, [selectedItems]);
+
+  // Determine the type of items already selected (if any)
+  const currentSelectionType = useMemo(() => {
+    if (selectedItems.length > 0) {
+      return selectedItems[0].type;
+    }
+    return null;
+  }, [selectedItems]);
+
+  const filteredAvailableItems = useMemo(() => {
+    let itemsToFilter = allAvailableItems;
+
+    // Apply type filtering based on current selection
+    if (currentSelectionType) {
+      itemsToFilter = itemsToFilter.filter(item => item.type === currentSelectionType);
+    }
+
+    // Apply search term filtering
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      itemsToFilter = itemsToFilter.filter(item =>
+        item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+        item.description?.toLowerCase().includes(lowerCaseSearchTerm) ||
+        item.sku.toLowerCase().includes(lowerCaseSearchTerm)
+      );
+    }
+    return itemsToFilter;
+  }, [searchTerm, allAvailableItems, currentSelectionType]);
 
   const calculateValidUntil = () => {
     let currentDate = new Date();
@@ -249,9 +267,16 @@ export default function BudgetsPage() {
   const handleToggleItem = (itemToToggle: { id: string; type: 'service' | 'package'; name: string; description: string | null; price: number; sku: string }) => {
     setSelectedItems(prev => {
       const isSelected = prev.some(item => item.id === itemToToggle.id && item.type === itemToToggle.type);
+
       if (isSelected) {
+        // If already selected, remove it
         return prev.filter(item => !(item.id === itemToToggle.id && item.type === itemToToggle.type));
       } else {
+        // If not selected, add it, but check for type consistency
+        if (prev.length > 0 && prev[0].type !== itemToToggle.type) {
+          toast.error(`Um orçamento não pode conter serviços e pacotes. Por favor, selecione apenas um tipo.`);
+          return prev; // Prevent adding
+        }
         return [...prev, {
           id: itemToToggle.id,
           type: itemToToggle.type,
@@ -709,7 +734,7 @@ export default function BudgetsPage() {
                 {/* Campo de busca para filtrar a lista de seleção */}
                 <div className="relative mb-4">
                   <Input
-                    placeholder="Filtrar serviços ou pacotes..."
+                    placeholder={`Filtrar ${currentSelectionType === 'service' ? 'serviços' : currentSelectionType === 'package' ? 'pacotes' : 'serviços ou pacotes'}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-background border-border text-foreground placeholder:text-muted-foreground"
@@ -743,7 +768,7 @@ export default function BudgetsPage() {
                     </div>
                   ) : (
                     <p className="text-muted-foreground text-center py-4">
-                      Nenhum serviço ou pacote encontrado.
+                      Nenhum {currentSelectionType === 'service' ? 'serviço' : currentSelectionType === 'package' ? 'pacote' : 'serviço ou pacote'} encontrado.
                     </p>
                   )}
                 </ScrollArea>
