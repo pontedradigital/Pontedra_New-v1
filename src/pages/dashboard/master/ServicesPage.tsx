@@ -70,22 +70,26 @@ export default function ServicesPage() {
     },
   });
 
-  // Calculate final price for a service
-  const calculateFinalPrice = (service: Partial<ServiceItem>): number => {
+  // Calculate final price and profit for a service
+  const calculateMetrics = (service: Partial<ServiceItem>) => {
+    const cost = service.cost || 0;
     let calculatedPrice = service.price || 0;
-    if (service.discount_percentage) {
-      calculatedPrice -= calculatedPrice * (service.discount_percentage / 100);
-    }
-    if (service.tax_percentage) {
-      calculatedPrice += calculatedPrice * (service.tax_percentage / 100);
-    }
-    return parseFloat(calculatedPrice.toFixed(2));
+    const discount = service.discount_percentage || 0;
+    const tax = service.tax_percentage || 0;
+
+    calculatedPrice -= calculatedPrice * (discount / 100);
+    calculatedPrice += calculatedPrice * (tax / 100);
+    
+    const finalPrice = parseFloat(calculatedPrice.toFixed(2));
+    const profit = parseFloat((finalPrice - cost).toFixed(2));
+
+    return { finalPrice, profit };
   };
 
   // Add/Edit service mutation (to 'products' table)
   const upsertServiceMutation = useMutation<void, Error, Partial<ServiceItem>>({
     mutationFn: async (newService) => {
-      const finalPrice = calculateFinalPrice(newService);
+      const { finalPrice } = calculateMetrics(newService);
       const serviceToSave = { ...newService, final_price: finalPrice };
 
       if (newService.id) {
@@ -175,6 +179,8 @@ export default function ServicesPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const { finalPrice, profit } = calculateMetrics(formData);
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -245,32 +251,39 @@ export default function ServicesPage() {
                 <TableHead className="text-muted-foreground">DESCONTO</TableHead>
                 <TableHead className="text-muted-foreground">IMPOSTO</TableHead>
                 <TableHead className="text-muted-foreground">VALOR FINAL</TableHead>
+                <TableHead className="text-muted-foreground">LUCRO</TableHead> {/* Nova coluna */}
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredServices && filteredServices.length > 0 ? (
-                filteredServices.map((service) => (
-                  <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                    <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
-                    <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
-                    <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
-                    <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
-                    <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
-                    <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell>
-                    <TableCell className="text-right py-4">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(service)} className="text-primary hover:text-primary/80">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteServiceMutation.mutate(service.id)} className="text-destructive hover:text-destructive/80">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredServices.map((service) => {
+                  const { profit: rowProfit } = calculateMetrics(service); // Calcular lucro para cada linha
+                  return (
+                    <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
+                      <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
+                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
+                      <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
+                      <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
+                      <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell>
+                      <TableCell className={`font-bold py-4 ${rowProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        R$ {rowProfit.toFixed(2)}
+                      </TableCell> {/* Exibir lucro */}
+                      <TableCell className="text-right py-4">
+                        <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(service)} className="text-primary hover:text-primary/80">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => deleteServiceMutation.mutate(service.id)} className="text-destructive hover:text-destructive/80">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Nenhum serviço encontrado.
                   </TableCell>
                 </TableRow>
@@ -393,9 +406,17 @@ export default function ServicesPage() {
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">Valor Final (R$)</Label>
                 <Input
-                  value={calculateFinalPrice(formData).toFixed(2)}
+                  value={finalPrice.toFixed(2)}
                   readOnly
                   className="col-span-3 bg-muted/50 border-border text-foreground font-bold"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">Lucro (R$)</Label>
+                <Input
+                  value={profit.toFixed(2)}
+                  readOnly
+                  className={`col-span-3 bg-muted/50 border-border font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
                 />
               </div>
               <DialogFooter>
