@@ -69,8 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (error) {
-      console.error("Erro ao buscar perfil:", error);
-      toast.error("Erro ao carregar perfil do usuário.");
+      // Loga a mensagem, detalhes e hint do erro do Supabase para melhor depuração
+      console.error("Erro ao buscar perfil:", error.message, error.details, error.hint);
+      toast.error(`Erro ao carregar perfil do usuário: ${error.message}`); // Exibe mensagem de erro específica
       setProfile(null);
     } else if (data) {
       setProfile(data as UserProfile);
