@@ -46,7 +46,7 @@ const navItems: NavItem[] = [
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
-  { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
+  // { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] }, // REMOVIDO
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
   { label: "Produtos", icon: ShoppingCart, href: "/dashboard/products", roles: ['master'] }, // NOVO: Item de menu para Produtos
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
