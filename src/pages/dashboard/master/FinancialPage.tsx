@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard'; // Importar o novo componente
+import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard'; // Importar o novo componente
 import { DollarSign } from 'lucide-react'; // Ícone para a página
 
 export default function FinancialPage() {
@@ -31,6 +32,9 @@ export default function FinancialPage() {
 
         {/* Adicionando o DefaultTaxSettingCard aqui */}
         <DefaultTaxSettingCard />
+
+        {/* Adicionando o InstallmentRatesSettingCard aqui */}
+        <InstallmentRatesSettingCard />
 
         {/* Outras seções financeiras podem ser adicionadas aqui */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6">

@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Importar RadioGroup
 import { PlusCircle, Edit, Trash2, Loader2, HardHat, DollarSign, Percent, CalendarDays } from 'lucide-react';
 
 // Tipos de dados para Serviços (anteriormente Produtos)
@@ -42,12 +43,24 @@ interface ServiceItem {
   description: string | null;
   initial_delivery_days: number | null;
   cost: number | null;
-  price: number;
+  price: number; // Preço base antes de impostos/descontos/juros
   discount_percentage: number | null;
   tax_percentage: number | null;
-  final_price: number | null;
+  
+  // Novos campos para opções de pagamento padrão
+  default_payment_option: 'vista' | 'lojista' | 'cliente';
+  default_installments_lojista: number | null; // Número de parcelas se lojista paga
+  default_installments_cliente: number | null; // Número de parcelas se cliente paga
+
+  final_price: number | null; // Preço final calculado com base na default_payment_option
   created_at: string;
   updated_at: string;
+}
+
+interface InstallmentRate {
+  installments: number;
+  merchant_pays_rate: number;
+  client_pays_rate: number;
 }
 
 const serviceCategories = ['Web', 'Sistemas', 'Marketing', 'Design', 'Completo'];
@@ -87,26 +100,83 @@ export default function ServicesPage() {
     staleTime: Infinity, // This setting doesn't change often
   });
 
-  // Calculate final price and profit for a service
-  const calculateMetrics = (service: Partial<ServiceItem>) => {
+  // Fetch installment rates
+  const { data: installmentRates, isLoading: isLoadingRates } = useQuery<InstallmentRate[], Error>({
+    queryKey: ['installment_rates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('installment_rates')
+        .select('*')
+        .order('installments', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: Infinity, // These rates don't change often
+  });
+
+  // Calculate all pricing metrics for a service
+  const calculateMetrics = (service: Partial<ServiceItem>, rates: InstallmentRate[] | undefined) => {
     const cost = service.cost || 0;
-    let calculatedPrice = service.price || 0;
+    const basePrice = service.price || 0;
     const discount = service.discount_percentage || 0;
     const tax = service.tax_percentage || 0;
 
-    calculatedPrice -= calculatedPrice * (discount / 100);
-    calculatedPrice += calculatedPrice * (tax / 100);
-    
-    const finalPrice = parseFloat(calculatedPrice.toFixed(2));
+    // Preço após desconto e imposto (base para cálculos de parcelamento)
+    let priceAfterDiscountAndTax = basePrice * (1 - discount / 100);
+    priceAfterDiscountAndTax *= (1 + tax / 100);
+    priceAfterDiscountAndTax = parseFloat(priceAfterDiscountAndTax.toFixed(2));
+
+    // 1. Valor à vista (10% de desconto sobre o valor final)
+    const priceVista = parseFloat((priceAfterDiscountAndTax * 0.90).toFixed(2));
+
+    // 2. Valor parcelado (lojista paga juros)
+    let priceLojista = priceAfterDiscountAndTax;
+    const lojistaInstallments = service.default_installments_lojista || 1;
+    const lojistaRate = rates?.find(r => r.installments === lojistaInstallments)?.merchant_pays_rate || 0;
+    if (lojistaRate > 0) {
+      priceLojista = parseFloat((priceAfterDiscountAndTax / (1 - lojistaRate)).toFixed(2));
+    }
+
+    // 3. Valor parcelado (cliente paga juros)
+    let priceCliente = priceAfterDiscountAndTax;
+    const clienteInstallments = service.default_installments_cliente || 1;
+    const clienteRate = rates?.find(r => r.installments === clienteInstallments)?.client_pays_rate || 0;
+    if (clienteRate > 0) {
+      priceCliente = parseFloat((priceAfterDiscountAndTax * (1 + clienteRate)).toFixed(2));
+    }
+
+    let finalPrice = 0;
+    switch (service.default_payment_option) {
+      case 'vista':
+        finalPrice = priceVista;
+        break;
+      case 'lojista':
+        finalPrice = priceLojista;
+        break;
+      case 'cliente':
+        finalPrice = priceCliente;
+        break;
+      default:
+        finalPrice = priceAfterDiscountAndTax; // Fallback
+    }
+    finalPrice = parseFloat(finalPrice.toFixed(2));
+
     const profit = parseFloat((finalPrice - cost).toFixed(2));
 
-    return { finalPrice, profit };
+    return {
+      priceAfterDiscountAndTax,
+      priceVista,
+      priceLojista,
+      priceCliente,
+      finalPrice,
+      profit,
+    };
   };
 
   // Add/Edit service mutation (to 'products' table)
   const upsertServiceMutation = useMutation<void, Error, Partial<ServiceItem>>({
     mutationFn: async (newService) => {
-      const { finalPrice } = calculateMetrics(newService);
+      const { finalPrice } = calculateMetrics(newService, installmentRates);
       const serviceToSave = { ...newService, final_price: finalPrice };
 
       if (newService.id) {
@@ -159,6 +229,9 @@ export default function ServicesPage() {
         price: 0,
         discount_percentage: 0,
         tax_percentage: defaultTaxSetting?.value || 18, // Usa o valor do banco ou 18 como fallback
+        default_payment_option: 'vista', // Padrão
+        default_installments_lojista: 1,
+        default_installments_cliente: 1,
         final_price: 0,
       });
     }
@@ -196,13 +269,13 @@ export default function ServicesPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const { finalPrice, profit } = calculateMetrics(formData);
+  const { priceAfterDiscountAndTax, priceVista, priceLojista, priceCliente, finalPrice, profit } = calculateMetrics(formData, installmentRates);
 
-  if (isLoading) {
+  if (isLoading || isLoadingRates) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
-          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando serviços...
+          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando serviços e taxas...
         </div>
       </DashboardLayout>
     );
@@ -264,29 +337,34 @@ export default function ServicesPage() {
               <TableRow className="bg-muted/20">
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">CATEGORIA</TableHead>
-                <TableHead className="text-muted-foreground">PREÇO</TableHead>
-                <TableHead className="text-muted-foreground">DESCONTO</TableHead>
+                <TableHead className="text-muted-foreground">PREÇO BASE</TableHead>
                 <TableHead className="text-muted-foreground">IMPOSTO</TableHead>
+                <TableHead className="text-muted-foreground">DESCONTO</TableHead>
+                <TableHead className="text-muted-foreground">OPÇÃO PADRÃO</TableHead>
                 <TableHead className="text-muted-foreground">VALOR FINAL</TableHead>
-                <TableHead className="text-muted-foreground">LUCRO</TableHead> {/* Nova coluna */}
+                <TableHead className="text-muted-foreground">LUCRO</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredServices && filteredServices.length > 0 ? (
                 filteredServices.map((service) => {
-                  const { profit: rowProfit } = calculateMetrics(service); // Calcular lucro para cada linha
+                  const { finalPrice: rowFinalPrice, profit: rowProfit } = calculateMetrics(service, installmentRates);
+                  const defaultOptionText = service.default_payment_option === 'vista' ? 'À Vista' :
+                                            service.default_payment_option === 'lojista' ? `Lojista (${service.default_installments_lojista}x)` :
+                                            service.default_payment_option === 'cliente' ? `Cliente (${service.default_installments_cliente}x)` : 'N/A';
                   return (
                     <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                       <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
                       <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
                       <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
-                      <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
                       <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
-                      <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell>
+                      <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
+                      <TableCell className="text-muted-foreground py-4">{defaultOptionText}</TableCell>
+                      <TableCell className="text-foreground py-4">R$ {rowFinalPrice?.toFixed(2)}</TableCell>
                       <TableCell className={`font-bold py-4 ${rowProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         R$ {rowProfit.toFixed(2)}
-                      </TableCell> {/* Exibir lucro */}
+                      </TableCell>
                       <TableCell className="text-right py-4">
                         <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(service)} className="text-primary hover:text-primary/80">
                           <Edit className="h-4 w-4" />
@@ -300,7 +378,7 @@ export default function ServicesPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     Nenhum serviço encontrado.
                   </TableCell>
                 </TableRow>
@@ -384,7 +462,7 @@ export default function ServicesPage() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">Preço de Venda (R$)</Label>
+                <Label htmlFor="price" className="text-right">Preço Base (R$)</Label>
                 <Input
                   id="price"
                   name="price"
@@ -420,20 +498,111 @@ export default function ServicesPage() {
                   className="col-span-3 bg-background border-border text-foreground"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Valor Final (R$)</Label>
+
+              {/* Opções de Pagamento Padrão */}
+              <div className="col-span-4 mt-4">
+                <h3 className="text-xl font-bold text-primary mb-4">Opções de Pagamento Padrão</h3>
+                <RadioGroup
+                  value={formData.default_payment_option || 'vista'}
+                  onValueChange={(value: 'vista' | 'lojista' | 'cliente') => handleSelectChange('default_payment_option', value)}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="vista" id="option-vista" />
+                    <Label htmlFor="option-vista">À Vista (10% OFF)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="lojista" id="option-lojista" />
+                    <Label htmlFor="option-lojista">Lojista Paga Juros</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="cliente" id="option-cliente" />
+                    <Label htmlFor="option-cliente">Cliente Paga Juros</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {formData.default_payment_option === 'lojista' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="installments-lojista" className="text-right">Parcelas (Lojista)</Label>
+                  <Select
+                    name="default_installments_lojista"
+                    value={String(formData.default_installments_lojista || 1)}
+                    onValueChange={(value) => handleSelectChange('default_installments_lojista', parseInt(value))}
+                  >
+                    <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
+                      <SelectValue placeholder="Número de Parcelas" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      {installmentRates?.filter(r => r.installments <= 6).map(rate => ( // Lojista paga até 6x
+                        <SelectItem key={rate.installments} value={String(rate.installments)}>
+                          {rate.installments}x ({ (rate.merchant_pays_rate * 100).toFixed(2) }%)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {formData.default_payment_option === 'cliente' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="installments-cliente" className="text-right">Parcelas (Cliente)</Label>
+                  <Select
+                    name="default_installments_cliente"
+                    value={String(formData.default_installments_cliente || 1)}
+                    onValueChange={(value) => handleSelectChange('default_installments_cliente', parseInt(value))}
+                  >
+                    <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
+                      <SelectValue placeholder="Número de Parcelas" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      {installmentRates?.filter(r => r.installments >= 6 && r.installments <= 10).map(rate => ( // Cliente paga de 6x a 10x
+                        <SelectItem key={rate.installments} value={String(rate.installments)}>
+                          {rate.installments}x ({ (rate.client_pays_rate * 100).toFixed(2) }%)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Valores Calculados */}
+              <div className="col-span-4 mt-4 pt-4 border-t border-border">
+                <h3 className="text-xl font-bold text-primary mb-4">Valores Calculados</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Preço após Desc. e Imposto</Label>
+                    <Input value={`R$ ${priceAfterDiscountAndTax.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Preço À Vista (10% OFF)</Label>
+                    <Input value={`R$ ${priceVista.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Preço Parcelado (Lojista)</Label>
+                    <Input value={`R$ ${priceLojista.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Preço Parcelado (Cliente)</Label>
+                    <Input value={`R$ ${priceCliente.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4 mt-4 pt-4 border-t border-border">
+                <Label className="text-right font-bold">VALOR FINAL (R$)</Label>
                 <Input
                   value={finalPrice.toFixed(2)}
                   readOnly
-                  className="col-span-3 bg-muted/50 border-border text-foreground font-bold"
+                  className="col-span-3 bg-muted/50 border-border text-foreground font-bold text-lg"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right font-bold">Lucro (R$)</Label>
+                <Label className="text-right font-bold">LUCRO (R$)</Label>
                 <Input
                   value={profit.toFixed(2)}
                   readOnly
-                  className={`col-span-3 bg-muted/50 border-border font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                  className={`col-span-3 bg-muted/50 border-border font-bold text-lg ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
                 />
               </div>
               <DialogFooter>
