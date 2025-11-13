@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { User, Mail, Phone, Settings as SettingsIcon } from 'lucide-react';
+import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard'; // Importar o novo componente
 
 export default function SettingsPage() {
   const { user, profile, loading, updateProfile } = useAuth();
@@ -155,6 +156,11 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Seção de Imposto Padrão (apenas para Master) */}
+        {profile.role === 'master' && (
+          <DefaultTaxSettingCard />
+        )}
 
         {/* Outras Configurações (Placeholder) */}
         <Card className="bg-card border-border shadow-lg rounded-xl">

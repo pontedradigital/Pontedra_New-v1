@@ -70,6 +70,23 @@ export default function ServicesPage() {
     },
   });
 
+  // Fetch default tax percentage from settings
+  const { data: defaultTaxSetting } = useQuery<{ key: string; value: number } | null, Error>({
+    queryKey: ['settings', 'default_tax_percentage'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'default_tax_percentage')
+        .single();
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity, // This setting doesn't change often
+  });
+
   // Calculate final price and profit for a service
   const calculateMetrics = (service: Partial<ServiceItem>) => {
     const cost = service.cost || 0;
@@ -141,7 +158,7 @@ export default function ServicesPage() {
         cost: 0,
         price: 0,
         discount_percentage: 0,
-        tax_percentage: 18, // Imposto automático de 18%
+        tax_percentage: defaultTaxSetting?.value || 18, // Usa o valor do banco ou 18 como fallback
         final_price: 0,
       });
     }
