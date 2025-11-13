@@ -26,9 +26,9 @@ export default function MasterHome() {
         className="p-0 space-y-8"
       >
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <h1 className="text-3xl font-bold text-foreground">Olá, {profile?.nome || 'Master'}!</h1>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">Importar</Button>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md w-full sm:w-auto">Importar</Button>
         </div>
 
         {/* Top Stat Cards */}
@@ -54,10 +54,10 @@ export default function MasterHome() {
           <StatCard
             title="Vendas Totais"
             value="13,956"
-            change="27,219" // This seems to be 'Returns' in the image, not a change percentage
-            changeType="up" // Placeholder, as it's not a percentage
+            change="27,219"
+            changeType="up"
             description="Audiência à qual os usuários pertenciam enquanto na data atual Audiência à qual os usuários pertenciam enquanto na data atual"
-            chartData={[10, 20, 15, 30, 25, 40, 35]} // Placeholder for the line chart
+            chartData={[10, 20, 15, 30, 25, 40, 35]}
             chartColor="#e35b57"
           />
         </div>
@@ -79,11 +79,11 @@ export default function MasterHome() {
           <div className="lg:col-span-2">
             <StatCard
               title="Gráfico de Vendas"
-              value="" // No main value for this card in the image
+              value=""
               change=""
               changeType="up"
               description="Audiência à qual os usuários pertenciam enquanto na data atual"
-              chartData={[100, 250, 180, 320, 200, 280, 150]} // Placeholder for the larger line chart
+              chartData={[100, 250, 180, 320, 200, 280, 150]}
               chartColor="#00b4ff"
             />
           </div>
