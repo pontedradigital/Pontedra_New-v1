@@ -56,6 +56,7 @@ interface ServiceItem {
   final_price: number | null; // Este campo no DB armazenará o valor que o cliente paga
   created_at: string;
   updated_at: string;
+  // REMOVIDO: is_active: boolean; // Esta coluna não existe na tabela 'products'
 }
 
 interface InstallmentRate {
@@ -333,10 +334,10 @@ export default function ServicesPage() {
               <SelectValue placeholder="Filtrar por Categoria" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border text-popover-foreground">
-              <SelectItem value="Todas">Todas as Categorias</SelectItem>
-              {serviceCategories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
-              ))}
+                <SelectItem value="Todas">Todas as Categorias</SelectItem>
+                {serviceCategories.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>

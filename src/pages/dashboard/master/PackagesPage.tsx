@@ -55,7 +55,7 @@ interface ServiceItem {
   name: string;
   description: string | null;
   final_price: number; // O preço final que o cliente paga pelo serviço individual
-  is_active: boolean; // Adicionado para filtragem client-side
+  // REMOVIDO: is_active: boolean; // Esta coluna não existe na tabela 'products'
 }
 
 export default function PackagesPage() {
@@ -91,7 +91,7 @@ export default function PackagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, sku, name, description, final_price, is_active')
+        .select('id, sku, name, description, final_price') // REMOVIDO: is_active
         .order('name', { ascending: true });
       if (error) throw error;
       return data;
@@ -117,14 +117,15 @@ export default function PackagesPage() {
     });
   }, [packagesData, availableServices]);
 
-  // Filtrar serviços ativos no lado do cliente
-  const activeAvailableServices = availableServices?.filter(service => service.is_active) || [];
+  // REMOVIDO: Filtrar serviços ativos no lado do cliente
+  // const activeAvailableServices = availableServices?.filter(service => service.is_active) || [];
+  const allAvailableServices = availableServices || []; // Usar todos os serviços disponíveis
 
   // Calculate total price of selected services
   const calculateTotalServicesPrice = () => {
-    if (!activeAvailableServices) return 0;
+    if (!allAvailableServices) return 0;
     return selectedServiceIds.reduce((total, serviceId) => {
-      const service = activeAvailableServices.find(s => s.id === serviceId);
+      const service = allAvailableServices.find(s => s.id === serviceId);
       return total + (service?.final_price || 0);
     }, 0);
   };
@@ -200,7 +201,7 @@ export default function PackagesPage() {
         name: '',
         description: '',
         price: 0,
-        is_active: true,
+        is_active: true, // Manter como true para novos pacotes, se aplicável
         sku: '', // Será gerado automaticamente
       });
       setSelectedServiceIds([]);
@@ -430,26 +431,32 @@ export default function PackagesPage() {
                 </p>
                 <ScrollArea className="h-60 w-full rounded-md border border-border p-4 bg-background">
                   <div className="grid grid-cols-1 gap-3">
-                    {activeAvailableServices.map(service => ( // Usando serviços ativos filtrados
-                      <div key={service.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/20 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            id={`service-${service.id}`}
-                            checked={selectedServiceIds.includes(service.id)}
-                            onChange={() => handleServiceSelection(service.id)}
-                            className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
-                          />
-                          <Label htmlFor={`service-${service.id}`} className="text-foreground cursor-pointer flex-1">
-                            <div className="flex flex-col items-start">
-                              <span className="font-medium">{service.name} <span className="text-muted-foreground text-sm">({service.sku})</span></span>
-                              {service.description && <span className="text-muted-foreground text-xs line-clamp-1">{service.description}</span>}
-                            </div>
-                          </Label>
+                    {allAvailableServices.length > 0 ? (
+                      allAvailableServices.map(service => ( // Usando todos os serviços disponíveis
+                        <div key={service.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/20 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              id={`service-${service.id}`}
+                              checked={selectedServiceIds.includes(service.id)}
+                              onChange={() => handleServiceSelection(service.id)}
+                              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                            />
+                            <Label htmlFor={`service-${service.id}`} className="text-foreground cursor-pointer flex-1">
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium">{service.name} <span className="text-muted-foreground text-sm">({service.sku})</span></span>
+                                {service.description && <span className="text-muted-foreground text-xs line-clamp-1">{service.description}</span>}
+                              </div>
+                            </Label>
+                          </div>
+                          <span className="text-primary font-semibold">R$ {service.final_price?.toFixed(2)}</span>
                         </div>
-                        <span className="text-primary font-semibold">R$ {service.final_price?.toFixed(2)}</span>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-center py-4">
+                        Nenhum serviço encontrado. Certifique-se de que há serviços cadastrados na página de Gerenciar Serviços.
+                      </p>
+                    )}
                   </div>
                 </ScrollArea>
                 <div className="mt-4 flex justify-between items-center text-lg font-bold text-foreground">
