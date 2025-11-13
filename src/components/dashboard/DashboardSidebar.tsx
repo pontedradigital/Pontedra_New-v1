@@ -20,42 +20,61 @@ import {
   CreditCard,
   Bot,
   HardHat,
+  MessageCircle, // Para WhatsApp Business
+  Instagram,     // Para Instagram Direct
+  Facebook,      // Para Facebook Messenger
+  ChevronDown,   // Para indicar sub-menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"; // Importar Collapsible
 import { useAuth } from "@/context/AuthContext";
 
 interface NavItem {
   label: string;
-  icon: React.ElementType;
-  href: string;
+  icon?: React.ElementType; // Ícone é opcional para sub-itens
+  href?: string; // href é opcional para itens pai com sub-menus
   roles: ('prospect' | 'client' | 'master')[];
+  children?: NavItem[]; // Para sub-menus
 }
 
 const navItems: NavItem[] = [
   { label: "Início", icon: HomeIcon, href: "/dashboard/home", roles: ['prospect', 'client', 'master'] },
-  // { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/profile", roles: ['prospect', 'client', 'master'] }, // REMOVIDO
-  { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
+  { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] },
+  { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] }, // Mantido 'Gerenciar Usuários' para abranger 'Clientes'
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
-  { label: "Recursos", icon: BookOpen, href: "/dashboard/resources", roles: ['prospect', 'client', 'master'] },
-  // Novas páginas para o Master
+  { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
+  { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
-  { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
-  { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
-  { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] }, // AGORA É COMUM A TODOS
+  {
+    label: "Redes Sociais",
+    icon: MessageCircle, // Ícone para o item pai
+    roles: ['master'], // Apenas master pode gerenciar redes sociais
+    children: [
+      { label: "WhatsApp Business", icon: MessageCircle, href: "#", roles: ['master'] }, // href temporário
+      { label: "Instagram Direct", icon: Instagram, href: "#", roles: ['master'] }, // href temporário
+      { label: "Facebook Messenger", icon: Facebook, href: "#", roles: ['master'] }, // href temporário
+    ],
+  },
+  { label: "Blog", icon: BookOpen, href: "/blog", roles: ['master'] }, // Link para o blog público, acessível do dashboard
 ];
 
 export default function DashboardSidebar() {
   const { user, profile, logout } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
 
-  const filteredNavItems = navItems.filter(item => 
+  const toggleCollapsible = (label: string) => {
+    setOpenCollapsibles(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const filteredNavItems = navItems.filter(item =>
     profile && item.roles.includes(profile.role)
   );
 
@@ -71,37 +90,63 @@ export default function DashboardSidebar() {
     return "/dashboard/prospect";
   };
 
-  const renderNavLinks = (onLinkClick?: () => void) => (
-    <nav className="space-y-2">
-      {filteredNavItems.map((item) => {
+  const renderNavLinks = (items: NavItem[], onLinkClick?: () => void, isSubMenu = false) => (
+    <ul className={isSubMenu ? "ml-4 space-y-1" : "space-y-2"}>
+      {items.map((item) => {
         const itemHref = item.label === "Início" ? getDashboardHomeLink() : item.href;
-        const isActive = location.pathname.startsWith(itemHref);
+        const isActive = itemHref ? location.pathname.startsWith(itemHref) : false;
         const Icon = item.icon;
 
+        if (item.children && item.children.length > 0) {
+          return (
+            <li key={item.label}>
+              <Collapsible
+                open={openCollapsibles[item.label]}
+                onOpenChange={() => toggleCollapsible(item.label)}
+                className="w-full"
+              >
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition-colors duration-200 ${
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {Icon && <Icon className="w-5 h-5" />}
+                      <span className="font-medium">{item.label}</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${openCollapsibles[item.label] ? "rotate-180" : ""}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2">
+                  {renderNavLinks(item.children, onLinkClick, true)}
+                </CollapsibleContent>
+              </Collapsible>
+            </li>
+          );
+        }
+
         return (
-          <Link
-            key={item.label}
-            to={itemHref}
-            onClick={onLinkClick}
-            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${
-              isActive
-                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            }`}
-          >
-            <Icon className="w-5 h-5" />
-            <span className="font-medium">{item.label}</span>
-          </Link>
+          <li key={item.label}>
+            <Link
+              to={itemHref || "#"} // Fallback para '#' se href não estiver definido
+              onClick={onLinkClick}
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${
+                isActive
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              }`}
+            >
+              {Icon && <Icon className="w-5 h-5" />}
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          </li>
         );
       })}
-      <Button
-        onClick={handleLogout}
-        className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 bg-destructive hover:bg-destructive/90 text-destructive-foreground mt-4"
-      >
-        <LogOutIcon className="w-5 h-5" />
-        <span className="font-medium">Sair</span>
-      </Button>
-    </nav>
+    </ul>
   );
 
   return (
@@ -130,8 +175,15 @@ export default function DashboardSidebar() {
             </div>
           )}
           <div className="flex-grow overflow-y-auto custom-scrollbar">
-            {renderNavLinks(() => setIsMobileMenuOpen(false))}
+            {renderNavLinks(filteredNavItems, () => setIsMobileMenuOpen(false))}
           </div>
+          <Button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 bg-destructive hover:bg-destructive/90 text-destructive-foreground mt-4"
+          >
+            <LogOutIcon className="w-5 h-5" />
+            <span className="font-medium">Sair</span>
+          </Button>
         </SheetContent>
       </Sheet>
 
@@ -154,7 +206,14 @@ export default function DashboardSidebar() {
             <p className="text-sm text-sidebar-muted-foreground capitalize">{profile.role}</p>
           </div>
         )}
-        {renderNavLinks()}
+        {renderNavLinks(filteredNavItems)}
+        <Button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 bg-destructive hover:bg-destructive/90 text-destructive-foreground mt-4"
+        >
+          <LogOutIcon className="w-5 h-5" />
+          <span className="font-medium">Sair</span>
+        </Button>
       </motion.aside>
     </>
   );
