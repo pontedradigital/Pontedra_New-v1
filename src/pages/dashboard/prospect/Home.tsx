@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button'; // Importando o componente Button
 
 export default function ProspectHome() {
-  const { profile } = useAuth();
+  const { profile, logout } = useAuth(); // Obtendo a função logout do AuthContext
 
   return (
     <motion.div
@@ -22,6 +23,15 @@ export default function ProspectHome() {
         Bem-vindo à sua área de degustação da plataforma Pontedra! Explore algumas funcionalidades e descubra como podemos impulsionar seu negócio.
       </p>
       {/* Conteúdo futuro para degustação */}
+
+      <div className="mt-8">
+        <Button 
+          onClick={logout} 
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+        >
+          Sair
+        </Button>
+      </div>
     </motion.div>
   );
 }

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button'; // Importando o componente Button
 
 export default function MasterHome() {
-  const { profile } = useAuth();
+  const { profile, logout } = useAuth(); // Obtendo a função logout do AuthContext
 
   return (
     <motion.div
@@ -22,6 +23,15 @@ export default function MasterHome() {
         Esta é a página inicial do seu dashboard Master. Em breve, você verá um resumo das informações mais importantes da plataforma, atividades recentes, e muito mais!
       </p>
       {/* Conteúdo futuro para gráficos, atividades, etc. */}
+
+      <div className="mt-8">
+        <Button 
+          onClick={logout} 
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+        >
+          Sair
+        </Button>
+      </div>
     </motion.div>
   );
 }
