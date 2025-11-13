@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Edit, Trash2, Loader2, Package, Check, X, Percent } from 'lucide-react'; // Adicionado Percent icon
+import { PlusCircle, Edit, Trash2, Loader2, Package, Check, X, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -42,11 +42,11 @@ interface PackageItem {
   name: string;
   description: string | null;
   price: number; // Preço mensal final calculado
-  discount_percentage: number | null; // NOVO: Desconto total do pacote
+  discount_percentage: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  services_in_package?: ServiceItem[]; // Serviços associados ao pacote
+  services_in_package?: ServiceItem[];
 }
 
 // Tipos de dados para Serviços (do products table)
@@ -64,7 +64,7 @@ export default function PackagesPage() {
   const [editingPackage, setEditingPackage] = useState<PackageItem | null>(null);
   const [formData, setFormData] = useState<Partial<PackageItem>>({});
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [packageDiscount, setPackageDiscount] = useState<number>(0); // Estado para o input de desconto do pacote
+  const [packageDiscount, setPackageDiscount] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch packages with their associated service_ids
@@ -97,6 +97,23 @@ export default function PackagesPage() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch annual package discount percentage from settings
+  const { data: annualDiscountSetting, isLoading: isLoadingAnnualDiscount } = useQuery<{ key: string; value: number } | null, Error>({
+    queryKey: ['settings', 'annual_package_discount_percentage'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'annual_package_discount_percentage')
+        .single();
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity, // This setting doesn't change often
   });
 
   // Combine packagesData with availableServices on the client side
@@ -138,15 +155,15 @@ export default function PackagesPage() {
     return parseFloat((sumOfSelectedServicesPrice * (1 - discount / 100)).toFixed(2));
   }, [sumOfSelectedServicesPrice, packageDiscount]);
 
-  // Calculate suggested annual price
+  // Calculate suggested annual price using the fetched annual discount
   const suggestedAnnualPrice = useMemo(() => {
     const monthlyPrice = finalPackagePrice;
     const annualRaw = monthlyPrice * 12;
-    const annualDiscount = 0.10; // 10% de desconto para pagamento anual
-    return parseFloat((annualRaw * (1 - annualDiscount)).toFixed(2));
-  }, [finalPackagePrice]);
+    const annualDiscountRate = (annualDiscountSetting?.value || 10) / 100; // Use fetched value or 10% fallback
+    return parseFloat((annualRaw * (1 - annualDiscountRate)).toFixed(2));
+  }, [finalPackagePrice, annualDiscountSetting]);
 
-  // NOVO: Calcular o valor mensal do pacote anual
+  // Calcular o valor mensal do pacote anual
   const monthlyAnnualPrice = useMemo(() => {
     return parseFloat((suggestedAnnualPrice / 12).toFixed(2));
   }, [suggestedAnnualPrice]);
@@ -269,11 +286,11 @@ export default function PackagesPage() {
     );
   });
 
-  if (isLoading || isLoadingServices) {
+  if (isLoading || isLoadingServices || isLoadingAnnualDiscount) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
-          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando pacotes e serviços...
+          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando pacotes e configurações...
         </div>
       </DashboardLayout>
     );
@@ -327,7 +344,7 @@ export default function PackagesPage() {
                 <TableHead className="text-muted-foreground">DESCRIÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">SERVIÇOS INCLUÍDOS</TableHead>
                 <TableHead className="text-muted-foreground">DESCONTO TOTAL</TableHead>
-                <TableHead className="text-muted-foreground">SUGESTÃO MENSAL</TableHead> {/* Renomeado */}
+                <TableHead className="text-muted-foreground">SUGESTÃO MENSAL</TableHead>
                 <TableHead className="text-muted-foreground">STATUS</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
@@ -518,7 +535,7 @@ export default function PackagesPage() {
                 </div>
               </div>
 
-              {/* NOVO: Resumo de Valores */}
+              {/* Resumo de Valores */}
               <div className="md:col-span-2 mt-4 pt-4 border-t border-border">
                 <h3 className="text-xl font-bold text-primary mb-4">Resumo de Valores</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -531,10 +548,10 @@ export default function PackagesPage() {
                     <Input value={`R$ ${finalPackagePrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-foreground">Sugestão de Valor Anual (10% OFF)</Label>
+                    <Label className="text-foreground">Sugestão de Valor Anual ({annualDiscountSetting?.value || 10}% OFF)</Label> {/* Atualizado para mostrar o valor dinâmico */}
                     <Input value={`R$ ${suggestedAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
                   </div>
-                  {/* NOVO: Valor Mensal do Pacote Anual */}
+                  {/* Valor Mensal do Pacote Anual */}
                   <div className="space-y-2">
                     <Label className="text-foreground">Valor Mensal do Pacote Anual</Label>
                     <Input value={`R$ ${monthlyAnnualPrice.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />

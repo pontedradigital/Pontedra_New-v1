@@ -2,8 +2,9 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard'; // Importar o novo componente
-import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard'; // Importar o novo componente
+import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard';
+import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard';
+import AnnualPackageDiscountSettingCard from '@/components/dashboard/master/AnnualPackageDiscountSettingCard'; // NOVO: Importar o novo componente
 import { DollarSign } from 'lucide-react'; // Ícone para a página
 
 export default function FinancialPage() {
@@ -15,7 +16,7 @@ export default function FinancialPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-8 max-w-3xl mx-auto" // Adicionado max-w e mx-auto para centralizar
+        className="space-y-8 max-w-3xl mx-auto"
       >
         <div className="flex items-center gap-4 mb-8">
           <DollarSign className="w-10 h-10 text-[#57e389]" />
@@ -30,11 +31,12 @@ export default function FinancialPage() {
           Nesta página, você terá acesso a um resumo financeiro, fluxo de caixa, contas a pagar e a receber, e outras ferramentas de gestão financeira.
         </p>
 
-        {/* Adicionando o DefaultTaxSettingCard aqui */}
         <DefaultTaxSettingCard />
 
-        {/* Adicionando o InstallmentRatesSettingCard aqui */}
         <InstallmentRatesSettingCard />
+
+        {/* NOVO: Adicionando o AnnualPackageDiscountSettingCard aqui */}
+        <AnnualPackageDiscountSettingCard />
 
         {/* Outras seções financeiras podem ser adicionadas aqui */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6">
