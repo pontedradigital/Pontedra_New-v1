@@ -38,6 +38,7 @@ import { PlusCircle, Edit, Trash2, Loader2, HardHat, DollarSign, Percent, Calend
 // Tipos de dados para Serviços (anteriormente Produtos)
 interface ServiceItem {
   id: string;
+  sku: string; // NOVO: Adicionado campo SKU
   name: string;
   category: 'Web' | 'Sistemas' | 'Marketing' | 'Design' | 'Completo';
   description: string | null;
@@ -186,9 +187,11 @@ export default function ServicesPage() {
       const serviceToSave = { ...newService, final_price: valorBrutoCobradoDisplay }; // Salvar este valor em final_price
 
       if (newService.id) {
+        // Ao editar, não alteramos o SKU, pois ele é gerado apenas na criação
         const { error } = await supabase.from('products').update(serviceToSave).eq('id', newService.id);
         if (error) throw error;
       } else {
+        // Ao adicionar, o SKU será gerado automaticamente pelo trigger no banco de dados
         const { error } = await supabase.from('products').insert(serviceToSave);
         if (error) throw error;
       }
@@ -239,6 +242,7 @@ export default function ServicesPage() {
         default_installments_lojista: 1,
         default_installments_cliente: 1,
         final_price: 0,
+        sku: '', // Inicializa SKU vazio para novos serviços
       });
     }
     setIsDialogOpen(true);
@@ -268,7 +272,8 @@ export default function ServicesPage() {
     const matchesSearch = searchTerm === '' ||
       service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.category.toLowerCase().includes(searchTerm.toLowerCase());
+      service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.sku.toLowerCase().includes(searchTerm.toLowerCase()); // NOVO: Busca por SKU
     
     const matchesCategory = filterCategory === 'Todas' || service.category === filterCategory;
 
@@ -318,7 +323,7 @@ export default function ServicesPage() {
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <Input
-            placeholder="Buscar serviço por nome ou descrição..."
+            placeholder="Buscar serviço por nome, descrição ou SKU..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -341,13 +346,14 @@ export default function ServicesPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
+                <TableHead className="text-muted-foreground">SKU</TableHead> {/* NOVO: Coluna SKU */}
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">CATEGORIA</TableHead>
-                <TableHead className="text-muted-foreground">VALOR INICIAL</TableHead> {/* Renomeado */}
+                <TableHead className="text-muted-foreground">VALOR INICIAL</TableHead>
                 <TableHead className="text-muted-foreground">IMPOSTO</TableHead>
                 <TableHead className="text-muted-foreground">DESCONTO</TableHead>
                 <TableHead className="text-muted-foreground">OPÇÃO PADRÃO</TableHead>
-                <TableHead className="text-muted-foreground">VALOR FINAL</TableHead> {/* Valor que o cliente paga */}
+                <TableHead className="text-muted-foreground">VALOR FINAL</TableHead>
                 <TableHead className="text-muted-foreground">LUCRO</TableHead>
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
@@ -361,13 +367,14 @@ export default function ServicesPage() {
                                             service.default_payment_option === 'cliente' ? `Cliente (${service.default_installments_cliente}x)` : 'N/A';
                   return (
                     <TableRow key={service.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableCell className="font-medium text-foreground py-4">{service.sku}</TableCell> {/* NOVO: Exibindo SKU */}
                       <TableCell className="font-medium text-foreground py-4">{service.name}</TableCell>
                       <TableCell className="text-muted-foreground py-4">{service.category}</TableCell>
-                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell> {/* Valor inicial */}
+                      <TableCell className="text-foreground py-4">R$ {service.price?.toFixed(2)}</TableCell>
                       <TableCell className="text-foreground py-4">{service.tax_percentage}%</TableCell>
                       <TableCell className="text-foreground py-4">{service.discount_percentage}%</TableCell>
                       <TableCell className="text-muted-foreground py-4">{defaultOptionText}</TableCell>
-                      <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell> {/* Valor final do DB */}
+                      <TableCell className="text-foreground py-4">R$ {service.final_price?.toFixed(2)}</TableCell>
                       <TableCell className={`font-bold py-4 ${rowLucro >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         R$ {rowLucro.toFixed(2)}
                       </TableCell>
@@ -384,7 +391,7 @@ export default function ServicesPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
                     Nenhum serviço encontrado.
                   </TableCell>
                 </TableRow>
@@ -405,6 +412,17 @@ export default function ServicesPage() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
+              {/* NOVO: Campo SKU (somente leitura) */}
+              <div className="space-y-2">
+                <Label htmlFor="sku" className="text-left">SKU</Label>
+                <Input
+                  id="sku"
+                  name="sku"
+                  value={editingService?.sku || 'Gerado Automaticamente'}
+                  readOnly
+                  className="w-full bg-muted/50 border-border text-foreground"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-left">Nome</Label>
                 <Input
@@ -422,6 +440,7 @@ export default function ServicesPage() {
                   name="category"
                   value={formData.category || 'Web'}
                   onValueChange={(value) => handleSelectChange('category', value as ServiceItem['category'])}
+                  disabled={!!editingService} // Desabilita a mudança de categoria ao editar para manter o SKU consistente
                 >
                   <SelectTrigger className="w-full bg-background border-border text-foreground">
                     <SelectValue placeholder="Selecione a Categoria" />
