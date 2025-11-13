@@ -254,14 +254,14 @@ export default function BudgetsPage() {
     setIsDialogOpen(true);
   };
 
-  const createBudgetMutation = useMutation<void, Error, { budgetData: Partial<Budget>; items: typeof selectedItems }>({
+  const createBudgetMutation = useMutation<Budget, Error, { budgetData: Partial<Budget>; items: typeof selectedItems }>({
     mutationFn: async ({ budgetData, items }) => {
       if (!user) throw new Error("Usuário não autenticado.");
 
       const validUntil = calculateValidUntil();
       const total = items.reduce((sum, item) => sum + item.price, 0);
 
-      const { data: newBudget, error: budgetError } = await supabase
+      const { data: newBudgetResult, error: budgetError } = await supabase
         .from('budgets')
         .insert({
           user_id: user.id,
@@ -273,14 +273,14 @@ export default function BudgetsPage() {
           valid_until: validUntil,
           total_amount: total,
         })
-        .select('id')
+        .select('*') // Agora seleciona todas as colunas para obter o proposal_number
         .single();
 
       if (budgetError) throw budgetError;
-      if (!newBudget) throw new Error("Falha ao criar orçamento.");
+      if (!newBudgetResult) throw new Error("Falha ao criar orçamento.");
 
       const budgetItemsToInsert = items.map(item => ({
-        budget_id: newBudget.id,
+        budget_id: newBudgetResult.id,
         service_id: item.type === 'service' ? item.id : null,
         package_id: item.type === 'package' ? item.id : null,
         item_type: item.type,
@@ -291,13 +291,16 @@ export default function BudgetsPage() {
 
       const { error: itemsError } = await supabase.from('budget_items').insert(budgetItemsToInsert);
       if (itemsError) throw itemsError;
+
+      return newBudgetResult as Budget; // Retorna o objeto completo do orçamento
     },
-    onSuccess: () => {
+    onSuccess: (newlyCreatedBudget) => { // Recebe o orçamento recém-criado
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       toast.success('Orçamento criado com sucesso!');
       setIsDialogOpen(false);
       setFormData({});
       setSelectedItems([]);
+      generatePdf(newlyCreatedBudget); // Gera o PDF imediatamente com o novo orçamento
     },
     onError: (err) => {
       toast.error(`Erro ao criar orçamento: ${err.message}`);
@@ -314,9 +317,6 @@ export default function BudgetsPage() {
   };
 
   const generatePdf = async (budget: Budget) => {
-    console.log("Generating PDF for budget:", budget); // Log para depuração
-    console.log("Proposal Number for PDF:", budget.proposal_number); // Log para depuração
-
     const input = pdfContentRef.current;
     if (!input) {
       toast.error("Erro: Conteúdo do PDF não encontrado.");
