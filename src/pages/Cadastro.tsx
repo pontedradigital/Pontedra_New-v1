@@ -2,20 +2,20 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, User, ArrowRight } from "lucide-react";
-import { useAuth } from "@/context/AuthContext"; // Importando useAuth
-import { toast } from "sonner"; // Importando toast
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export default function Cadastro() {
   const [formData, setFormData] = useState({
-    nome: "",
-    sobrenome: "",
+    first_name: "", // Renomeado de 'nome'
+    last_name: "",  // Renomeado de 'sobrenome'
     email: "",
     password: "",
     confirmPassword: ""
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register, loading } = useAuth(); // Usando useAuth
+  const { register, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +33,7 @@ export default function Cadastro() {
       return;
     }
 
-    const success = await register(formData.email, formData.password, formData.nome, formData.sobrenome);
+    const success = await register(formData.email, formData.password, formData.first_name, formData.last_name);
     
     if (success) {
       navigate("/login");
@@ -112,16 +112,16 @@ export default function Cadastro() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Nome */}
             <div>
-              <label htmlFor="nome" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+              <label htmlFor="first_name" className="block text-[#e1e8f0] text-sm font-medium mb-2">
                 Nome
               </label>
               <div className="relative group">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
                 <input
                   type="text"
-                  id="nome"
-                  name="nome"
-                  value={formData.nome}
+                  id="first_name"
+                  name="first_name"
+                  value={formData.first_name}
                   onChange={handleChange}
                   placeholder="Seu nome"
                   required
@@ -132,16 +132,16 @@ export default function Cadastro() {
 
             {/* Sobrenome */}
             <div>
-              <label htmlFor="sobrenome" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+              <label htmlFor="last_name" className="block text-[#e1e8f0] text-sm font-medium mb-2">
                 Sobrenome
               </label>
               <div className="relative group">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
                 <input
                   type="text"
-                  id="sobrenome"
-                  name="sobrenome"
-                  value={formData.sobrenome}
+                  id="last_name"
+                  name="last_name"
+                  value={formData.last_name}
                   onChange={handleChange}
                   placeholder="Seu sobrenome"
                   required

@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
-  nome: string | null;
-  sobrenome: string | null;
+  first_name: string | null; // Renomeado de 'nome'
+  last_name: string | null;  // Renomeado de 'sobrenome'
   telefone: string | null;
   role: 'prospect' | 'client' | 'master';
   status: 'ativo' | 'inativo';
@@ -18,7 +18,8 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, nome: string, sobrenome: string) => Promise<boolean>;
+  register: (email: string, password: string, first_name: string, last_name: string) => Promise<boolean>; // Atualizado para first_name, last_name
+  updateProfile: (updates: Partial<UserProfile & { email?: string }>) => Promise<boolean>; // Nova função
   logout: () => Promise<void>;
 }
 
@@ -27,10 +28,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true); // Start as true, indicating we are checking auth state
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Function to fetch user profile
   const fetchProfile = async (userId: string) => {
     console.log("AuthContext: Attempting to fetch profile for userId:", userId);
     const { data, error } = await supabase
@@ -55,13 +55,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleAuthSession = async (session: Session | null) => {
       console.log("AuthContext: handleAuthSession triggered. Current session:", session);
-      setLoading(true); // Ensure loading is true at the start of processing any session change
+      setLoading(true);
       try {
         setUser(session?.user || null);
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
-          setProfile(null); // Clear profile if no user
+          setProfile(null);
         }
       } catch (err) {
         console.error("AuthContext: Unexpected error in handleAuthSession:", err);
@@ -69,20 +69,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
       } finally {
         console.log("AuthContext: handleAuthSession finished. Setting loading to false.");
-        setLoading(false); // Crucial: ensure loading is always set to false here
+        setLoading(false);
       }
     };
 
-    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("AuthContext: Initial getSession result:", session);
       handleAuthSession(session);
     });
 
-    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("AuthContext: onAuthStateChange event:", event, "session:", session);
-      // Only re-process the session if it's a significant event
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') {
         handleAuthSession(session);
       }
@@ -93,19 +90,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Navigation effect
   useEffect(() => {
     console.log("AuthContext: Navigation Effect - loading:", loading, "user:", !!user, "profile:", !!profile, "currentPath:", window.location.pathname);
     if (!loading && user && profile) {
       const currentPath = window.location.pathname;
-      // Only navigate if not already on a dashboard route
       if (!currentPath.startsWith('/dashboard')) {
         console.log("AuthContext: Navigating to dashboard based on role:", profile.role);
         if (profile.role === "master") {
           navigate("/dashboard/master");
         } else if (profile.role === "client") {
           navigate("/dashboard/client");
-        } else { // Default to prospect
+        } else {
           navigate("/dashboard/prospect");
         }
       } else {
@@ -113,7 +108,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } else if (!loading && !user) {
       const currentPath = window.location.pathname;
-      // If not loading and no user, and currently on a dashboard route, redirect to login
       if (currentPath.startsWith('/dashboard')) {
         console.log("AuthContext: No user and on dashboard route, redirecting to login.");
         navigate('/login');
@@ -135,15 +129,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
 
-  const register = async (email: string, password: string, nome: string, sobrenome: string): Promise<boolean> => {
+  const register = async (email: string, password: string, first_name: string, last_name: string): Promise<boolean> => {
     console.log("AuthContext: Attempting registration for:", email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          nome,
-          sobrenome,
+          first_name, // Usando first_name
+          last_name,  // Usando last_name
         },
       },
     });
@@ -162,6 +156,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
+  const updateProfile = async (updates: Partial<UserProfile & { email?: string }>): Promise<boolean> => {
+    if (!user) {
+      toast.error("Você precisa estar logado para atualizar o perfil.");
+      return false;
+    }
+
+    setLoading(true);
+    try {
+      // Update auth.users table for email
+      if (updates.email && updates.email !== user.email) {
+        const { error: userUpdateError } = await supabase.auth.updateUser({ email: updates.email });
+        if (userUpdateError) {
+          throw new Error(`Erro ao atualizar e-mail: ${userUpdateError.message}`);
+        }
+        toast.success("E-mail atualizado com sucesso! Verifique sua caixa de entrada para confirmar o novo e-mail.");
+      }
+
+      // Update public.profiles table for other fields
+      const profileUpdates: Partial<UserProfile> = {};
+      if (updates.first_name !== undefined) profileUpdates.first_name = updates.first_name;
+      if (updates.last_name !== undefined) profileUpdates.last_name = updates.last_name;
+      if (updates.telefone !== undefined) profileUpdates.telefone = updates.telefone;
+
+      if (Object.keys(profileUpdates).length > 0) {
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', user.id);
+
+        if (profileUpdateError) {
+          throw new Error(`Erro ao atualizar perfil: ${profileUpdateError.message}`);
+        }
+        toast.success("Perfil atualizado com sucesso!");
+        await fetchProfile(user.id); // Re-fetch profile to update context state
+      }
+      return true;
+    } catch (error: any) {
+      console.error("AuthContext: Error updating profile:", error.message);
+      toast.error(error.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     console.log("AuthContext: Attempting logout.");
     const { error } = await supabase.auth.signOut();
@@ -172,12 +211,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       console.log("AuthContext: Logout successful, waiting for onAuthStateChange.");
       toast.success("Logout realizado com sucesso!");
-      navigate('/login'); // Navigate immediately after successful logout
+      navigate('/login');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, register, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

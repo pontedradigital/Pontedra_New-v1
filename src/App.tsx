@@ -17,13 +17,16 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MasterHome from "./pages/dashboard/master/Home";
 import ClientHome from "./pages/dashboard/client/Home";
 import ProspectHome from "./pages/dashboard/prospect/Home";
-import ProfilePage from "./pages/dashboard/common/ProfilePage";
+// import ProfilePage from "./pages/dashboard/common/ProfilePage"; // REMOVIDO
 import ResourcesPage from "./pages/dashboard/common/ResourcesPage";
 import ProjectsPage from "./pages/dashboard/client/ProjectsPage";
 import AppointmentsPage from "./pages/dashboard/client/AppointmentsPage";
 import ManageUsersPage from "./pages/dashboard/master/ManageUsersPage";
 import ReportsPage from "./pages/dashboard/master/ReportsPage";
-import SettingsPage from "./pages/dashboard/master/SettingsPage";
+// import SettingsPage from "./pages/dashboard/master/SettingsPage"; // REMOVIDO
+
+// Nova página de configurações combinada
+import SettingsPage from "./pages/dashboard/common/SettingsPage"; // NOVO
 
 // Novas páginas para o Master
 import ServicesPage from "./pages/dashboard/master/ServicesPage";
@@ -32,9 +35,6 @@ import BudgetsPage from "./pages/dashboard/master/BudgetsPage";
 import CostsPage from "./pages/dashboard/master/CostsPage";
 import FinancialPage from "./pages/dashboard/master/FinancialPage";
 import VedraAIPage from "./pages/dashboard/master/VedraAIPage";
-
-// Importando o DashboardLayout (já importado, mas mantendo para clareza)
-// import DashboardLayout from "./components/dashboard/DashboardLayout";
 
 function App() {
   return (
@@ -59,7 +59,8 @@ function App() {
         <Route path="/dashboard/prospect" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ProspectHome /></ProtectedRoute>} />
         
         {/* Rotas comuns e específicas dentro do DashboardLayout */}
-        <Route path="/dashboard/profile" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ProfilePage /></ProtectedRoute>} />
+        {/* <Route path="/dashboard/profile" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ProfilePage /></ProtectedRoute>} /> */}
+        <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><SettingsPage /></ProtectedRoute>} /> {/* Rota de configurações combinada */}
         <Route path="/dashboard/resources" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ResourcesPage /></ProtectedRoute>} />
         
         <Route path="/dashboard/projects" element={<ProtectedRoute allowedRoles={['client', 'master']}><ProjectsPage /></ProtectedRoute>} />
@@ -75,7 +76,7 @@ function App() {
 
         <Route path="/dashboard/manage-users" element={<ProtectedRoute allowedRoles={['master']}><ManageUsersPage /></ProtectedRoute>} />
         <Route path="/dashboard/reports" element={<ProtectedRoute allowedRoles={['master']}><ReportsPage /></ProtectedRoute>} />
-        <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={['master']}><SettingsPage /></ProtectedRoute>} />
+        {/* <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={['master']}><SettingsPage /></ProtectedRoute>} /> */} {/* REMOVIDO */}
 
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />

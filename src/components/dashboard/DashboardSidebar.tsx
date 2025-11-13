@@ -14,12 +14,12 @@ import {
   Users,
   ClipboardList,
   BarChart,
-  Package, // Novo ícone para Pacotes
-  DollarSign, // Novo ícone para Financeiro
-  FileText, // Novo ícone para Orçamentos
-  CreditCard, // Novo ícone para Custos
-  Bot, // Novo ícone para IA Atendimento
-  HardHat, // Novo ícone para Serviços (representando trabalho/construção)
+  Package,
+  DollarSign,
+  FileText,
+  CreditCard,
+  Bot,
+  HardHat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -34,7 +34,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Início", icon: HomeIcon, href: "/dashboard/home", roles: ['prospect', 'client', 'master'] },
-  { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/profile", roles: ['prospect', 'client', 'master'] },
+  // { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/profile", roles: ['prospect', 'client', 'master'] }, // REMOVIDO
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Recursos", icon: BookOpen, href: "/dashboard/resources", roles: ['prospect', 'client', 'master'] },
@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
-  { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['master'] },
+  { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] }, // AGORA É COMUM A TODOS
 ];
 
 export default function DashboardSidebar() {
@@ -65,7 +65,7 @@ export default function DashboardSidebar() {
   };
 
   const getDashboardHomeLink = () => {
-    if (!profile) return "/login"; // Fallback
+    if (!profile) return "/login";
     if (profile.role === "master") return "/dashboard/master";
     if (profile.role === "client") return "/dashboard/client";
     return "/dashboard/prospect";
@@ -74,7 +74,6 @@ export default function DashboardSidebar() {
   const renderNavLinks = (onLinkClick?: () => void) => (
     <nav className="space-y-2">
       {filteredNavItems.map((item) => {
-        // Ajusta o link 'Início' para a rota específica do papel
         const itemHref = item.label === "Início" ? getDashboardHomeLink() : item.href;
         const isActive = location.pathname.startsWith(itemHref);
         const Icon = item.icon;
@@ -126,11 +125,10 @@ export default function DashboardSidebar() {
               <div className="w-16 h-16 rounded-full bg-sidebar-accent flex items-center justify-center mx-auto mb-3">
                 <UserIcon className="w-8 h-8 text-sidebar-accent-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-sidebar-foreground">{profile.nome} {profile.sobrenome}</h3>
+              <h3 className="text-lg font-semibold text-sidebar-foreground">{profile.first_name} {profile.last_name}</h3>
               <p className="text-sm text-sidebar-muted-foreground capitalize">{profile.role}</p>
             </div>
           )}
-          {/* Adicionado flex-grow e overflow-y-auto para o scroll no mobile */}
           <div className="flex-grow overflow-y-auto custom-scrollbar">
             {renderNavLinks(() => setIsMobileMenuOpen(false))}
           </div>
@@ -152,7 +150,7 @@ export default function DashboardSidebar() {
             <div className="w-20 h-20 rounded-full bg-sidebar-accent flex items-center justify-center mx-auto mb-4">
               <UserIcon className="w-10 h-10 text-sidebar-accent-foreground" />
             </div>
-            <h3 className="text-xl font-semibold text-sidebar-foreground">{profile.nome} {profile.sobrenome}</h3>
+            <h3 className="text-xl font-semibold text-sidebar-foreground">{profile.first_name} {profile.last_name}</h3>
             <p className="text-sm text-sidebar-muted-foreground capitalize">{profile.role}</p>
           </div>
         )}
