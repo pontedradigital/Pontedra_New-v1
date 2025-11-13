@@ -14,6 +14,12 @@ import {
   Users,
   ClipboardList,
   BarChart,
+  Package, // Novo ícone para Pacotes
+  DollarSign, // Novo ícone para Financeiro
+  FileText, // Novo ícone para Orçamentos
+  CreditCard, // Novo ícone para Custos
+  Bot, // Novo ícone para IA Atendimento
+  HardHat, // Novo ícone para Serviços (representando trabalho/construção)
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -32,6 +38,13 @@ const navItems: NavItem[] = [
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Recursos", icon: BookOpen, href: "/dashboard/resources", roles: ['prospect', 'client', 'master'] },
+  // Novas páginas para o Master
+  { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
+  { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
+  { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
+  { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
+  { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
+  { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
   { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['master'] },
