@@ -92,6 +92,12 @@ interface Budget {
   budget_items: BudgetItem[];
 }
 
+interface InstallmentRate {
+  installments: number;
+  merchant_pays_rate: number;
+  client_pays_rate: number;
+}
+
 export default function BudgetsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -175,6 +181,37 @@ export default function BudgetsPage() {
     },
   });
 
+  // Fetch default cash discount percentage from settings
+  const { data: defaultCashDiscountSetting, isLoading: isLoadingCashDiscount } = useQuery<{ key: string; value: number } | null, Error>({
+    queryKey: ['settings', 'default_cash_discount_percentage'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'default_cash_discount_percentage')
+        .single();
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity,
+  });
+
+  // Fetch installment rates
+  const { data: installmentRates, isLoading: isLoadingRates } = useQuery<InstallmentRate[], Error>({
+    queryKey: ['installment_rates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('installment_rates')
+        .select('*')
+        .order('installments', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: Infinity,
+  });
+
   // Combine packagesData with availableServices on the client side for full package details
   const allPackages = useMemo(() => {
     if (!packagesData || !services) return [];
@@ -229,6 +266,34 @@ export default function BudgetsPage() {
     }
     return itemsToFilter;
   }, [searchTerm, allAvailableItems, currentSelectionType]);
+
+  // --- NOVOS CÁLCULOS PARA OPÇÕES DE PAGAMENTO ---
+  const cashDiscountPercentage = useMemo(() => defaultCashDiscountSetting?.value || 10, [defaultCashDiscountSetting]);
+
+  const valorAVistaComDesconto = useMemo(() => {
+    if (totalAmount === 0) return 0;
+    return parseFloat((totalAmount * (1 - cashDiscountPercentage / 100)).toFixed(2));
+  }, [totalAmount, cashDiscountPercentage]);
+
+  const getInstallmentDetails = useCallback((installments: number) => {
+    if (totalAmount === 0 || !installmentRates) return { total: 0, parcela: 0, taxa: 0 };
+
+    const rate = installmentRates.find(r => r.installments === installments);
+    const clientRate = rate ? rate.client_pays_rate : 0; // Usar a taxa que o cliente paga
+
+    const totalComJuros = totalAmount * (1 + clientRate);
+    const valorParcela = totalComJuros / installments;
+
+    return {
+      total: parseFloat(totalComJuros.toFixed(2)),
+      parcela: parseFloat(valorParcela.toFixed(2)),
+      taxa: parseFloat((clientRate * 100).toFixed(2)),
+    };
+  }, [totalAmount, installmentRates]);
+
+  const parcelamento6x = useMemo(() => getInstallmentDetails(6), [getInstallmentDetails]);
+  const parcelamento10x = useMemo(() => getInstallmentDetails(10), [getInstallmentDetails]);
+  // --- FIM DOS NOVOS CÁLCULOS ---
 
   const calculateValidUntil = () => {
     let currentDate = new Date();
@@ -415,6 +480,27 @@ export default function BudgetsPage() {
       budget.client_cep ? ` - CEP: ${budget.client_cep}` : '',
     ].filter(Boolean).join('');
 
+    // Recalcular os valores para o PDF, garantindo que estão atualizados
+    const pdfTotalAmount = budget.total_amount;
+    const pdfCashDiscountPercentage = defaultCashDiscountSetting?.value || 10;
+    const pdfValorAVistaComDesconto = parseFloat((pdfTotalAmount * (1 - pdfCashDiscountPercentage / 100)).toFixed(2));
+
+    const getPdfInstallmentDetails = (installments: number) => {
+      if (pdfTotalAmount === 0 || !installmentRates) return { total: 0, parcela: 0, taxa: 0 };
+      const rate = installmentRates.find(r => r.installments === installments);
+      const clientRate = rate ? rate.client_pays_rate : 0;
+      const totalComJuros = pdfTotalAmount * (1 + clientRate);
+      const valorParcela = totalComJuros / installments;
+      return {
+        total: parseFloat(totalComJuros.toFixed(2)),
+        parcela: parseFloat(valorParcela.toFixed(2)),
+        taxa: parseFloat((clientRate * 100).toFixed(2)),
+      };
+    };
+
+    const pdfParcelamento6x = getPdfInstallmentDetails(6);
+    const pdfParcelamento10x = getPdfInstallmentDetails(10);
+
     // Temporarily set the budget data to the ref for PDF generation
     // This is a workaround as html2canvas needs the content to be in the DOM
     // A more robust solution would be to render the PDF content in a separate component
@@ -467,7 +553,10 @@ export default function BudgetsPage() {
               `).join('')}
             </tbody>
           </table>
-          <p style="font-size: 16px; text-align: right; margin-top: 20px;"><strong>Valor Total: R$ ${budget.total_amount.toFixed(2)}</strong></p>
+          <p style="font-size: 16px; text-align: right; margin-top: 20px;"><strong>Valor Total: R$ ${pdfTotalAmount.toFixed(2)}</strong></p>
+          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor à Vista (${pdfCashDiscountPercentage}% de desconto): R$ ${pdfValorAVistaComDesconto.toFixed(2)}</strong></p>
+          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 6x: 6x de R$ ${pdfParcelamento6x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento6x.total.toFixed(2)})</strong></p>
+          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 10x: 10x de R$ ${pdfParcelamento10x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento10x.total.toFixed(2)})</strong></p>
         </div>
 
         <div style="text-align: center; margin-bottom: 30px; padding: 15px; background-color: #e0ffe0; border-radius: 8px;">
@@ -513,11 +602,11 @@ export default function BudgetsPage() {
     }
   };
 
-  if (isLoadingBudgets || isLoadingServices || isLoadingPackages) {
+  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
-          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando orçamentos...
+          <Loader2 className="w-8 h-8 animate-spin mr-3" /> Carregando orçamentos e configurações financeiras...
         </div>
       </DashboardLayout>
     );
@@ -800,6 +889,25 @@ export default function BudgetsPage() {
                 <div className="flex justify-between items-center text-lg font-bold text-foreground mt-4">
                   <span>Valor Total do Orçamento:</span>
                   <span className="text-primary">R$ {totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Resumo de Valores Adicionais */}
+              <div className="md:col-span-2 mt-4 pt-4 border-t border-border">
+                <h3 className="text-xl font-bold text-primary mb-4">Opções de Pagamento</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Valor à Vista ({cashDiscountPercentage}% de desconto)</Label>
+                    <Input value={`R$ ${valorAVistaComDesconto.toFixed(2)}`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Valor Parcelado em até 6x</Label>
+                    <Input value={`6x de R$ ${parcelamento6x.parcela.toFixed(2)} (Total: R$ ${parcelamento6x.total.toFixed(2)})`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Valor Parcelado em até 10x</Label>
+                    <Input value={`10x de R$ ${parcelamento10x.parcela.toFixed(2)} (Total: R$ ${parcelamento10x.total.toFixed(2)})`} readOnly className="bg-muted/50 border-border text-foreground font-semibold" />
+                  </div>
                 </div>
               </div>
 
