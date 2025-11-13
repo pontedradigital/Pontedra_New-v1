@@ -381,8 +381,8 @@ export default function BudgetsPage() {
         description: item.item_description,
         price: item.item_price,
       })));
-      // When duplicating, we are creating a NEW budget, so currentEditableBudget should be null initially
-      setCurrentEditableBudget(null);
+      // When duplicating, set currentEditableBudget to the duplicated budget
+      setCurrentEditableBudget(budgetToDuplicate); 
     } else {
       setFormData({
         client_name: '',
