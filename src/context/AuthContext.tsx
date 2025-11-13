@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { useNavigate } => 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // Correção aqui
 
 interface UserProfile {
   id: string;
