@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom'; // Correção aqui
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -27,11 +27,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true); // Começa como true, indicando que estamos verificando o estado de autenticação
+  const [loading, setLoading] = useState(true); // Start as true, indicating we are checking auth state
   const navigate = useNavigate();
 
-  // Função para buscar o perfil do usuário
+  // Function to fetch user profile
   const fetchProfile = async (userId: string) => {
+    console.log("AuthContext: Attempting to fetch profile for userId:", userId);
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -39,88 +40,103 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (error) {
-      console.error("Erro ao buscar perfil:", error.message, error.details, error.hint);
+      console.error("AuthContext: Error fetching profile:", error.message, error.details, error.hint);
       toast.error(`Erro ao carregar perfil do usuário: ${error.message}`);
       setProfile(null);
     } else if (data) {
+      console.log("AuthContext: Profile fetched successfully:", data);
       setProfile(data as UserProfile);
     } else {
-      // Caso não encontre perfil, mas sem erro explícito do Supabase (improvável com .single())
-      console.warn("Nenhum dado de perfil encontrado para o usuário, mas nenhum erro reportado pelo Supabase. Definindo perfil como null.");
+      console.warn("AuthContext: No profile data found for user, setting profile to null.");
       setProfile(null);
     }
   };
 
   useEffect(() => {
-    // Esta função irá lidar com a definição do usuário, busca do perfil e, finalmente, a definição de loading para false
     const handleAuthSession = async (session: Session | null) => {
-      setLoading(true); // Sempre define loading como true ao processar um novo estado de sessão
+      console.log("AuthContext: handleAuthSession triggered. Current session:", session);
+      setLoading(true); // Ensure loading is true at the start of processing any session change
       try {
         setUser(session?.user || null);
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
-          setProfile(null); // Limpa o perfil se não houver usuário
+          setProfile(null); // Clear profile if no user
         }
       } catch (err) {
-        console.error("Erro inesperado em handleAuthSession:", err);
+        console.error("AuthContext: Unexpected error in handleAuthSession:", err);
         toast.error("Erro inesperado ao processar sessão de autenticação.");
-        setProfile(null); // Garante que o perfil seja limpo em caso de erro
+        setProfile(null);
       } finally {
-        setLoading(false); // O estado de autenticação e o perfil estão agora resolvidos
+        console.log("AuthContext: handleAuthSession finished. Setting loading to false.");
+        setLoading(false); // Crucial: ensure loading is always set to false here
       }
     };
 
-    // Escuta as mudanças no estado de autenticação
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("AuthContext: Initial getSession result:", session);
+      handleAuthSession(session);
+    });
+
+    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
-      await handleAuthSession(session);
+      console.log("AuthContext: onAuthStateChange event:", event, "session:", session);
+      // Only re-process the session if it's a significant event
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') {
+        handleAuthSession(session);
+      }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []); // Array de dependências vazio significa que isso é executado uma vez na montagem
+  }, []);
 
-  // NOVO useEffect para navegação após o perfil ser carregado
+  // Navigation effect
   useEffect(() => {
-    // Só navega se não estiver carregando, se houver um usuário e um perfil
+    console.log("AuthContext: Navigation Effect - loading:", loading, "user:", !!user, "profile:", !!profile, "currentPath:", window.location.pathname);
     if (!loading && user && profile) {
-      // Verifica se a rota atual não é uma rota de dashboard para evitar redirecionamentos desnecessários
       const currentPath = window.location.pathname;
+      // Only navigate if not already on a dashboard route
       if (!currentPath.startsWith('/dashboard')) {
+        console.log("AuthContext: Navigating to dashboard based on role:", profile.role);
         if (profile.role === "master") {
           navigate("/dashboard/master");
         } else if (profile.role === "client") {
           navigate("/dashboard/client");
-        } else { // Default para prospect
+        } else { // Default to prospect
           navigate("/dashboard/prospect");
         }
+      } else {
+        console.log("AuthContext: Already on a dashboard route, no navigation needed.");
       }
     } else if (!loading && !user) {
-      // Se não estiver carregando e não houver usuário (deslogado),
-      // e a rota atual for uma rota de dashboard, redireciona para o login.
-      // Isso complementa o ProtectedRoute para casos onde o usuário desloga.
       const currentPath = window.location.pathname;
+      // If not loading and no user, and currently on a dashboard route, redirect to login
       if (currentPath.startsWith('/dashboard')) {
+        console.log("AuthContext: No user and on dashboard route, redirecting to login.");
         navigate('/login');
       }
     }
-  }, [loading, user, profile, navigate]); // Dependências para este efeito
+  }, [loading, user, profile, navigate]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log("AuthContext: Attempting login for:", email);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+      console.error("AuthContext: Login failed:", error.message);
       toast.error(error.message);
-      setLoading(false); // Garante que loading seja false se o login falhar
       return false;
     }
+    console.log("AuthContext: Login successful, waiting for onAuthStateChange.");
     toast.success("Login realizado com sucesso!");
     return true;
   };
 
   const register = async (email: string, password: string, nome: string, sobrenome: string): Promise<boolean> => {
+    console.log("AuthContext: Attempting registration for:", email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -133,27 +149,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (error) {
+      console.error("AuthContext: Registration failed:", error.message);
       toast.error(error.message);
-      setLoading(false); // Se o registro falhar, garante que o loading global seja false
       return false;
     }
     if (data.user) {
+      console.log("AuthContext: Registration successful, user:", data.user.id);
       toast.success("Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta.");
       return true;
     }
-    setLoading(false); // Fallback se data.user for null, mas sem erro
+    console.warn("AuthContext: Registration completed, but no user data returned.");
     return false;
   };
 
   const logout = async () => {
+    console.log("AuthContext: Attempting logout.");
     const { error } = await supabase.auth.signOut();
 
     if (error) {
+      console.error("AuthContext: Logout failed:", error.message);
       toast.error(error.message);
-      setLoading(false); // Se o logout falhar, garante que o loading global seja false
     } else {
+      console.log("AuthContext: Logout successful, waiting for onAuthStateChange.");
       toast.success("Logout realizado com sucesso!");
-      navigate('/login');
+      navigate('/login'); // Navigate immediately after successful logout
     }
   };
 
