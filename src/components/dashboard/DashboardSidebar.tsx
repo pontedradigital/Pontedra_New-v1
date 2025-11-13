@@ -130,7 +130,10 @@ export default function DashboardSidebar() {
               <p className="text-sm text-sidebar-muted-foreground capitalize">{profile.role}</p>
             </div>
           )}
-          {renderNavLinks(() => setIsMobileMenuOpen(false))}
+          {/* Adicionado flex-grow e overflow-y-auto para o scroll no mobile */}
+          <div className="flex-grow overflow-y-auto custom-scrollbar">
+            {renderNavLinks(() => setIsMobileMenuOpen(false))}
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -139,7 +142,7 @@ export default function DashboardSidebar() {
         initial={{ x: -200 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.3 }}
-        className="hidden lg:flex flex-col w-64 bg-sidebar-background border-r border-sidebar-border h-screen p-6 sticky top-0 left-0"
+        className="hidden lg:flex flex-col w-64 bg-sidebar-background border-r border-sidebar-border h-screen p-6 sticky top-0 left-0 overflow-y-auto custom-scrollbar"
       >
         <div className="mb-10 text-center">
           <img src="/pontedra-logo.webp" alt="Pontedra Logo" className="h-16 w-auto mx-auto" />

@@ -40,34 +40,36 @@ export default function OpenInvoicesTable() {
         <p className="text-sm text-muted-foreground mb-4">
           Lorem ipsum dolor sit amet consectetur adipisicing elit. Temporibus, quibusdam eum, totam ut minus dolor eaque alias ratione repellat voluptate, libero beatae nobis facere quod. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Cumque harum maxime quaerat quasi quam totam et.
         </p>
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-border">
-              <TableHead className="text-muted-foreground">FATURA</TableHead>
-              <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-              <TableHead className="text-muted-foreground">ENVIO</TableHead>
-              <TableHead className="text-muted-foreground">MELHOR PREÇO</TableHead>
-              <TableHead className="text-muted-foreground">PREÇO COMPRADO</TableHead>
-              <TableHead className="text-muted-foreground">STATUS</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invoices.map((invoice) => (
-              <TableRow key={invoice.id} className="border-b border-border last:border-b-0">
-                <TableCell className="font-medium text-foreground">{invoice.id}</TableCell>
-                <TableCell className="text-muted-foreground">{invoice.customer}</TableCell>
-                <TableCell className="text-muted-foreground">{invoice.ship}</TableCell>
-                <TableCell className="text-foreground">{invoice.bestPrice}</TableCell>
-                <TableCell className="text-foreground">{invoice.purchasedPrice}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusBadgeVariant(invoice.status)}>
-                    {invoice.status}
-                  </Badge>
-                </TableCell>
+        <div className="overflow-x-auto"> {/* Adicionado para scroll horizontal da tabela */}
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-border">
+                <TableHead className="text-muted-foreground">FATURA</TableHead>
+                <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                <TableHead className="text-muted-foreground">ENVIO</TableHead>
+                <TableHead className="text-muted-foreground">MELHOR PREÇO</TableHead>
+                <TableHead className="text-muted-foreground">PREÇO COMPRADO</TableHead>
+                <TableHead className="text-muted-foreground">STATUS</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice) => (
+                <TableRow key={invoice.id} className="border-b border-border last:border-b-0">
+                  <TableCell className="font-medium text-foreground">{invoice.id}</TableCell>
+                  <TableCell className="text-muted-foreground">{invoice.customer}</TableCell>
+                  <TableCell className="text-muted-foreground">{invoice.ship}</TableCell>
+                  <TableCell className="text-foreground">{invoice.bestPrice}</TableCell>
+                  <TableCell className="text-foreground">{invoice.purchasedPrice}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusBadgeVariant(invoice.status)}>
+                      {invoice.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

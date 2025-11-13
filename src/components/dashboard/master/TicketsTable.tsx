@@ -47,48 +47,50 @@ export default function TicketsTable() {
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-border">
-              <TableHead className="text-muted-foreground">NOME</TableHead>
-              <TableHead className="text-muted-foreground">DATA</TableHead>
-              <TableHead className="text-muted-foreground">PROJETOS</TableHead>
-              <TableHead className="text-muted-foreground text-right"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tickets.map((ticket) => (
-              <TableRow key={ticket.id} className="border-b border-border last:border-b-0">
-                <TableCell className="flex items-center py-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3 ${getAvatarColor(ticket.name)}`}>
-                    {ticket.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{ticket.name}</p>
-                    <p className="text-xs text-muted-foreground">{ticket.location}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium text-foreground">{ticket.date}</p>
-                  <p className="text-xs text-muted-foreground">{ticket.time}</p>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium text-foreground">{ticket.project}</p>
-                  {ticket.projectLink && (
-                    <a href={ticket.projectLink} className="text-xs text-primary hover:underline">
-                      Ver no mapa
-                    </a>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto"> {/* Adicionado para scroll horizontal da tabela */}
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-border">
+                <TableHead className="text-muted-foreground">NOME</TableHead>
+                <TableHead className="text-muted-foreground">DATA</TableHead>
+                <TableHead className="text-muted-foreground">PROJETOS</TableHead>
+                <TableHead className="text-muted-foreground text-right"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {tickets.map((ticket) => (
+                <TableRow key={ticket.id} className="border-b border-border last:border-b-0">
+                  <TableCell className="flex items-center py-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3 ${getAvatarColor(ticket.name)}`}>
+                      {ticket.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{ticket.name}</p>
+                      <p className="text-xs text-muted-foreground">{ticket.location}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium text-foreground">{ticket.date}</p>
+                    <p className="text-xs text-muted-foreground">{ticket.time}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium text-foreground">{ticket.project}</p>
+                    {ticket.projectLink && (
+                      <a href={ticket.projectLink} className="text-xs text-primary hover:underline">
+                        Ver no mapa
+                      </a>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
