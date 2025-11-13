@@ -36,7 +36,7 @@ import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } => '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Tipos de dados para Serviços (products)
