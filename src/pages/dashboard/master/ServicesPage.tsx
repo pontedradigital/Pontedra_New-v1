@@ -389,7 +389,7 @@ export default function ServicesPage() {
 
         {/* Dialog para Adicionar/Editar Serviço */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[750px] bg-card border-border text-foreground rounded-xl"> {/* Aumentado o max-w */}
+          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border text-foreground rounded-xl"> {/* Ajustado max-w e adicionado rolagem */}
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-primary">
                 {editingService ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
