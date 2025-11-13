@@ -55,6 +55,7 @@ interface ServiceItem {
   name: string;
   description: string | null;
   final_price: number; // O preço final que o cliente paga pelo serviço individual
+  is_active: boolean; // Adicionado para filtragem client-side
 }
 
 export default function PackagesPage() {
@@ -75,7 +76,7 @@ export default function PackagesPage() {
           *,
           package_services(
             service_id,
-            products(id, sku, name, description, final_price)
+            products(id, sku, name, description, final_price, is_active)
           )
         `)
         .order('created_at', { ascending: false });
@@ -95,19 +96,22 @@ export default function PackagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, sku, name, description, final_price')
-        .eq('is_active', true) // Apenas serviços ativos
+        .select('id, sku, name, description, final_price, is_active') // Incluir is_active para filtragem client-side
+        // .eq('is_active', true) // REMOVIDO: Este filtro estava causando o erro 400
         .order('name', { ascending: true });
       if (error) throw error;
       return data;
     },
   });
 
+  // Filtrar serviços ativos no lado do cliente
+  const activeAvailableServices = availableServices?.filter(service => service.is_active) || [];
+
   // Calculate total price of selected services
   const calculateTotalServicesPrice = () => {
-    if (!availableServices) return 0;
+    if (!activeAvailableServices) return 0;
     return selectedServiceIds.reduce((total, serviceId) => {
-      const service = availableServices.find(s => s.id === serviceId);
+      const service = activeAvailableServices.find(s => s.id === serviceId);
       return total + (service?.final_price || 0);
     }, 0);
   };
@@ -413,7 +417,7 @@ export default function PackagesPage() {
                 </p>
                 <ScrollArea className="h-60 w-full rounded-md border border-border p-4 bg-background">
                   <div className="grid grid-cols-1 gap-3">
-                    {availableServices?.map(service => (
+                    {activeAvailableServices.map(service => ( // Usando serviços ativos filtrados
                       <div key={service.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/20 transition-colors">
                         <div className="flex items-center gap-3">
                           <input
