@@ -141,7 +141,7 @@ export default function ServicesPage() {
         cost: 0,
         price: 0,
         discount_percentage: 0,
-        tax_percentage: 0,
+        tax_percentage: 18, // Imposto automático de 18%
         final_price: 0,
       });
     }
