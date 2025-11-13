@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } => 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -24,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true); // Começa como true, indicando que estamos verificando o estado de autenticação
@@ -44,6 +44,10 @@ export const AuthProvider = ({ children }: { ReactNode }) => {
       setProfile(null);
     } else if (data) {
       setProfile(data as UserProfile);
+    } else {
+      // Caso não encontre perfil, mas sem erro explícito do Supabase (improvável com .single())
+      console.warn("Nenhum dado de perfil encontrado para o usuário, mas nenhum erro reportado pelo Supabase. Definindo perfil como null.");
+      setProfile(null);
     }
   };
 
@@ -51,13 +55,20 @@ export const AuthProvider = ({ children }: { ReactNode }) => {
     // Esta função irá lidar com a definição do usuário, busca do perfil e, finalmente, a definição de loading para false
     const handleAuthSession = async (session: Session | null) => {
       setLoading(true); // Sempre define loading como true ao processar um novo estado de sessão
-      setUser(session?.user || null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null); // Limpa o perfil se não houver usuário
+      try {
+        setUser(session?.user || null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null); // Limpa o perfil se não houver usuário
+        }
+      } catch (err) {
+        console.error("Erro inesperado em handleAuthSession:", err);
+        toast.error("Erro inesperado ao processar sessão de autenticação.");
+        setProfile(null); // Garante que o perfil seja limpo em caso de erro
+      } finally {
+        setLoading(false); // O estado de autenticação e o perfil estão agora resolvidos
       }
-      setLoading(false); // O estado de autenticação e o perfil estão agora resolvidos
     };
 
     // Escuta as mudanças no estado de autenticação
