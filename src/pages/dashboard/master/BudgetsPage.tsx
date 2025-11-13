@@ -281,16 +281,23 @@ export default function BudgetsPage() {
   const getInstallmentDetails = useCallback((installments: number) => {
     if (totalAmount === 0 || !installmentRates) return { total: 0, parcela: 0, taxa: 0 };
 
-    const rate = installmentRates.find(r => r.installments === installments);
-    const clientRate = rate ? rate.client_pays_rate : 0; // Usar a taxa que o cliente paga
+    let effectiveClientRate = 0;
+    let totalComJuros = totalAmount; // Começa com o valor total, sem juros
 
-    const totalComJuros = totalAmount * (1 + clientRate);
+    // Cliente paga juros apenas para parcelas de 7 a 10
+    if (installments >= 7 && installments <= 10) {
+      const rate = installmentRates.find(r => r.installments === installments);
+      effectiveClientRate = rate ? rate.client_pays_rate : 0;
+      totalComJuros = totalAmount * (1 + effectiveClientRate);
+    }
+    // Para parcelas <= 6, effectiveClientRate permanece 0, então totalComJuros é igual a totalAmount.
+
     const valorParcela = totalComJuros / installments;
 
     return {
       total: parseFloat(totalComJuros.toFixed(2)),
       parcela: parseFloat(valorParcela.toFixed(2)),
-      taxa: parseFloat((clientRate * 100).toFixed(2)),
+      taxa: parseFloat((effectiveClientRate * 100).toFixed(2)),
     };
   }, [totalAmount, installmentRates]);
 
@@ -485,14 +492,24 @@ export default function BudgetsPage() {
 
     const getPdfInstallmentDetails = (installments: number) => {
       if (pdfTotalAmount === 0 || !installmentRates) return { total: 0, parcela: 0, taxa: 0 };
-      const rate = installmentRates.find(r => r.installments === installments);
-      const clientRate = rate ? rate.client_pays_rate : 0;
-      const totalComJuros = pdfTotalAmount * (1 + clientRate);
+      
+      let effectiveClientRate = 0;
+      let totalComJuros = pdfTotalAmount; // Começa com o valor total, sem juros
+
+      // Cliente paga juros apenas para parcelas de 7 a 10
+      if (installments >= 7 && installments <= 10) {
+        const rate = installmentRates.find(r => r.installments === installments);
+        effectiveClientRate = rate ? rate.client_pays_rate : 0;
+        totalComJuros = pdfTotalAmount * (1 + effectiveClientRate);
+      }
+      // Para parcelas <= 6, effectiveClientRate permanece 0, então totalComJuros é igual a pdfTotalAmount.
+
       const valorParcela = totalComJuros / installments;
+
       return {
         total: parseFloat(totalComJuros.toFixed(2)),
         parcela: parseFloat(valorParcela.toFixed(2)),
-        taxa: parseFloat((clientRate * 100).toFixed(2)),
+        taxa: parseFloat((effectiveClientRate * 100).toFixed(2)),
       };
     };
 
@@ -545,8 +562,8 @@ export default function BudgetsPage() {
           </table>
           <p style="font-size: 16px; text-align: right; margin-top: 20px;"><strong>Valor Total: R$ ${pdfTotalAmount.toFixed(2)}</strong></p>
           <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor à Vista (${pdfCashDiscountPercentage}% de desconto): R$ ${pdfValorAVistaComDesconto.toFixed(2)}</strong></p>
-          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 6x: 6x de R$ ${pdfParcelamento6x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento6x.total.toFixed(2)})</strong></p>
-          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 10x: 10x de R$ ${pdfParcelamento10x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento10x.total.toFixed(2)})</strong></p>
+          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 6x (sem juros): 6x de R$ ${pdfParcelamento6x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento6x.total.toFixed(2)})</strong></p>
+          <p style="font-size: 16px; text-align: right; margin-top: 10px;"><strong>Valor Parcelado em até 10x (com juros): 10x de R$ ${pdfParcelamento10x.parcela.toFixed(2)} (Total: R$ ${pdfParcelamento10x.total.toFixed(2)})</strong></p>
         </div>
 
         <div style="text-align: center; margin-bottom: 30px; padding: 15px; background-color: #e0ffe0; border-radius: 8px;">
