@@ -79,7 +79,12 @@ interface Budget {
   client_name: string;
   client_phone: string | null;
   client_email: string | null;
-  client_address: string | null;
+  client_street: string | null; // NOVO
+  client_number: string | null; // NOVO
+  client_complement: string | null; // NOVO
+  client_neighborhood: string | null; // NOVO
+  client_city: string | null; // NOVO
+  client_state: string | null; // NOVO
   client_cep: string | null;
   valid_until: string;
   total_amount: number;
@@ -95,7 +100,12 @@ export default function BudgetsPage() {
     client_name: '',
     client_phone: '',
     client_email: '',
-    client_address: '',
+    client_street: '', // NOVO
+    client_number: '', // NOVO
+    client_complement: '', // NOVO
+    client_neighborhood: '', // NOVO
+    client_city: '', // NOVO
+    client_state: '', // NOVO
     client_cep: '',
   });
   const [selectedItems, setSelectedItems] = useState<Array<{ id: string; type: 'service' | 'package'; name: string; description: string | null; price: number }>>([]);
@@ -147,7 +157,12 @@ export default function BudgetsPage() {
           client_name,
           client_phone,
           client_email,
-          client_address,
+          client_street,
+          client_number,
+          client_complement,
+          client_neighborhood,
+          client_city,
+          client_state,
           client_cep,
           valid_until,
           total_amount,
@@ -208,12 +223,27 @@ export default function BudgetsPage() {
     return format(currentDate, 'yyyy-MM-dd');
   };
 
+  const formatCep = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length > 5) {
+      return `${cleaned.slice(0, 5)}-${cleaned.slice(5, 8)}`;
+    }
+    return cleaned;
+  };
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === 'client_cep') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: formatCep(value),
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleAddItem = (item: { id: string; type: 'service' | 'package'; name: string; description: string | null; price: number }) => {
@@ -231,7 +261,12 @@ export default function BudgetsPage() {
         client_name: budgetToDuplicate.client_name,
         client_phone: budgetToDuplicate.client_phone,
         client_email: budgetToDuplicate.client_email,
-        client_address: budgetToDuplicate.client_address,
+        client_street: budgetToDuplicate.client_street,
+        client_number: budgetToDuplicate.client_number,
+        client_complement: budgetToDuplicate.client_complement,
+        client_neighborhood: budgetToDuplicate.client_neighborhood,
+        client_city: budgetToDuplicate.client_city,
+        client_state: budgetToDuplicate.client_state,
         client_cep: budgetToDuplicate.client_cep,
       });
       setSelectedItems(budgetToDuplicate.budget_items.map(item => ({
@@ -246,7 +281,12 @@ export default function BudgetsPage() {
         client_name: '',
         client_phone: '',
         client_email: '',
-        client_address: '',
+        client_street: '',
+        client_number: '',
+        client_complement: '',
+        client_neighborhood: '',
+        client_city: '',
+        client_state: '',
         client_cep: '',
       });
       setSelectedItems([]);
@@ -268,7 +308,12 @@ export default function BudgetsPage() {
           client_name: budgetData.client_name,
           client_phone: budgetData.client_phone,
           client_email: budgetData.client_email,
-          client_address: budgetData.client_address,
+          client_street: budgetData.client_street, // NOVO
+          client_number: budgetData.client_number, // NOVO
+          client_complement: budgetData.client_complement, // NOVO
+          client_neighborhood: budgetData.client_neighborhood, // NOVO
+          client_city: budgetData.client_city, // NOVO
+          client_state: budgetData.client_state, // NOVO
           client_cep: budgetData.client_cep,
           valid_until: validUntil,
           total_amount: total,
@@ -323,6 +368,16 @@ export default function BudgetsPage() {
       return;
     }
 
+    const clientAddressFull = [
+      budget.client_street,
+      budget.client_number ? `, ${budget.client_number}` : '',
+      budget.client_complement ? ` - ${budget.client_complement}` : '',
+      budget.client_neighborhood ? ` - ${budget.client_neighborhood}` : '',
+      budget.client_city ? ` - ${budget.client_city}` : '',
+      budget.client_state ? `/${budget.client_state}` : '',
+      budget.client_cep ? ` - CEP: ${budget.client_cep}` : '',
+    ].filter(Boolean).join('');
+
     // Temporarily set the budget data to the ref for PDF generation
     // This is a workaround as html2canvas needs the content to be in the DOM
     // A more robust solution would be to render the PDF content in a separate component
@@ -345,8 +400,7 @@ export default function BudgetsPage() {
           <p style="font-size: 14px; margin-bottom: 5px;"><strong>Nome:</strong> ${budget.client_name}</p>
           ${budget.client_email ? `<p style="font-size: 14px; margin-bottom: 5px;"><strong>E-mail:</strong> ${budget.client_email}</p>` : ''}
           ${budget.client_phone ? `<p style="font-size: 14px; margin-bottom: 5px;"><strong>Telefone:</strong> ${budget.client_phone}</p>` : ''}
-          ${budget.client_address ? `<p style="font-size: 14px; margin-bottom: 5px;"><strong>Endereço:</strong> ${budget.client_address}</p>` : ''}
-          ${budget.client_cep ? `<p style="font-size: 14px; margin-bottom: 5px;"><strong>CEP:</strong> ${budget.client_cep}</p>` : ''}
+          ${clientAddressFull ? `<p style="font-size: 14px; margin-bottom: 5px;"><strong>Endereço:</strong> ${clientAddressFull}</p>` : ''}
         </div>
 
         <div style="border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 30px; background-color: #f9f9f9;">
@@ -455,7 +509,7 @@ export default function BudgetsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
-                <TableHead className="text-muted-foreground">Nº PROPOSTA</TableHead> {/* NOVO */}
+                <TableHead className="text-muted-foreground">Nº PROPOSTA</TableHead>
                 <TableHead className="text-muted-foreground">CLIENTE</TableHead>
                 <TableHead className="text-muted-foreground">DATA CRIAÇÃO</TableHead>
                 <TableHead className="text-muted-foreground">VALIDADE</TableHead>
@@ -468,7 +522,7 @@ export default function BudgetsPage() {
               {budgets && budgets.length > 0 ? (
                 budgets.map((budget) => (
                   <TableRow key={budget.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                    <TableCell className="font-medium text-foreground py-4">{budget.proposal_number}</TableCell> {/* NOVO */}
+                    <TableCell className="font-medium text-foreground py-4">{budget.proposal_number}</TableCell>
                     <TableCell className="font-medium text-foreground py-4">
                       {budget.client_name}
                       {budget.client_email && <p className="text-sm text-muted-foreground">{budget.client_email}</p>}
@@ -504,7 +558,7 @@ export default function BudgetsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum orçamento encontrado.
                   </TableCell>
                 </TableRow>
@@ -562,24 +616,75 @@ export default function BudgetsPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="client_street">Endereço</Label>
+                    <Input
+                      id="client_street"
+                      name="client_street"
+                      value={formData.client_street || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_number">Número</Label>
+                    <Input
+                      id="client_number"
+                      name="client_number"
+                      value={formData.client_number || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_complement">Complemento</Label>
+                    <Input
+                      id="client_complement"
+                      name="client_complement"
+                      value={formData.client_complement || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_neighborhood">Bairro</Label>
+                    <Input
+                      id="client_neighborhood"
+                      name="client_neighborhood"
+                      value={formData.client_neighborhood || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_city">Cidade</Label>
+                    <Input
+                      id="client_city"
+                      name="client_city"
+                      value={formData.client_city || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_state">Estado</Label>
+                    <Input
+                      id="client_state"
+                      name="client_state"
+                      value={formData.client_state || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="client_cep">CEP</Label>
                     <Input
                       id="client_cep"
                       name="client_cep"
                       value={formData.client_cep || ''}
                       onChange={handleFormChange}
+                      maxLength={9} // 00000-000
+                      placeholder="00000-000"
                       className="bg-background border-border text-foreground"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="client_address">Endereço Completo</Label>
-                    <Textarea
-                      id="client_address"
-                      name="client_address"
-                      value={formData.client_address || ''}
-                      onChange={handleFormChange}
-                      className="bg-background border-border text-foreground"
-                      rows={2}
                     />
                   </div>
                 </div>
