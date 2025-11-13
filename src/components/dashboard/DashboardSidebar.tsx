@@ -16,53 +16,52 @@ import {
   BarChart,
   Package,
   DollarSign,
-  FileText,
+  FileText, // Ícone para Orçamentos
   CreditCard,
   Bot,
-  HardHat, // Ícone para Serviços
-  MessageCircle, // Para WhatsApp Business
-  Instagram,     // Para Instagram Direct
-  Facebook,      // Para Facebook Messenger
-  ChevronDown,   // Para indicar sub-menu
-  // ShoppingCart,  // REMOVIDO: Ícone para Produtos
+  HardHat,
+  MessageCircle,
+  Instagram,
+  Facebook,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"; // Importar Collapsible
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/context/AuthContext";
 
 interface NavItem {
   label: string;
-  icon?: React.ElementType; // Ícone é opcional para sub-itens
-  href?: string; // href é opcional para itens pai com sub-menus
+  icon?: React.ElementType;
+  href?: string;
   roles: ('prospect' | 'client' | 'master')[];
-  children?: NavItem[]; // Para sub-menus
+  children?: NavItem[];
 }
 
 const navItems: NavItem[] = [
   { label: "Início", icon: HomeIcon, href: "/dashboard/home", roles: ['prospect', 'client', 'master'] },
   { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] },
-  { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] }, // Mantido 'Gerenciar Usuários' para abranger 'Clientes'
+  { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
-  { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] }, // NOVO: Item de menu para Serviços, reposicionado
-  { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] }, // ATUALIZADO: Link para a página de pacotes
-  { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
+  { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
+  { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
+  { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] }, // NOVO: Item de menu para Orçamentos
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   {
     label: "Redes Sociais",
-    icon: MessageCircle, // Ícone para o item pai
-    roles: ['master'], // Apenas master pode gerenciar redes sociais
+    icon: MessageCircle,
+    roles: ['master'],
     children: [
-      { label: "WhatsApp Business", icon: MessageCircle, href: "#", roles: ['master'] }, // href temporário
-      { label: "Instagram Direct", icon: Instagram, href: "#", roles: ['master'] }, // href temporário
-      { label: "Facebook Messenger", icon: Facebook, href: "#", roles: ['master'] }, // href temporário
+      { label: "WhatsApp Business", icon: MessageCircle, href: "#", roles: ['master'] },
+      { label: "Instagram Direct", icon: Instagram, href: "#", roles: ['master'] },
+      { label: "Facebook Messenger", icon: Facebook, href: "#", roles: ['master'] },
     ],
   },
-  { label: "Blog", icon: BookOpen, href: "/blog", roles: ['master'] }, // Link para o blog público, acessível do dashboard
+  { label: "Blog", icon: BookOpen, href: "/blog", roles: ['master'] },
 ];
 
 export default function DashboardSidebar() {
@@ -133,7 +132,7 @@ export default function DashboardSidebar() {
         return (
           <li key={item.label}>
             <Link
-              to={itemHref || "#"} // Fallback para '#' se href não estiver definido
+              to={itemHref || "#"}
               onClick={onLinkClick}
               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${
                 isActive
