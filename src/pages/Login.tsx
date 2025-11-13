@@ -1,27 +1,35 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
-import LandingNavbar from "@/components/LandingNavbar"; // Importando a Navbar padrão
-import Footer from "@/sections/Footer"; // Importando o Footer padrão
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import LandingNavbar from "@/components/LandingNavbar";
+import Footer from "@/sections/Footer";
+import { useAuth } from "@/context/AuthContext"; // Importando useAuth
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, profile, loading } = useAuth(); // Usando useAuth
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    const success = await login(email, password);
     
-    // Simular processo de login
-    setTimeout(() => {
-      setIsLoading(false);
-      // Aqui você implementaria a lógica real de autenticação
+    if (success && profile) {
+      if (profile.role === "master") {
+        navigate("/dashboard/master");
+      } else if (profile.role === "client") {
+        navigate("/dashboard/client");
+      } else { // Default para prospect
+        navigate("/dashboard/prospect");
+      }
+    } else if (success && !profile) {
+      // Se o login foi bem-sucedido mas o perfil ainda não carregou, aguardar ou redirecionar para uma página de carregamento
+      // Por simplicidade, vamos redirecionar para a home por enquanto, e o AuthContext cuidará do redirecionamento correto quando o perfil carregar
       navigate("/"); 
-    }, 1500);
+    }
   };
 
   return (
@@ -81,9 +89,9 @@ export default function Login() {
         ))}
       </div>
 
-      <LandingNavbar /> {/* Navbar padrão da Landing Page */}
+      <LandingNavbar />
 
-      <main className="flex-grow flex items-center justify-center py-12 my-16 md:my-24"> {/* Centraliza o conteúdo e adiciona espaçamento vertical */}
+      <main className="flex-grow flex items-center justify-center py-12 my-16 md:my-24">
         {/* Login Card */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
@@ -174,12 +182,12 @@ export default function Login() {
               {/* Botão Entrar */}
               <motion.button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full bg-gradient-to-r from-[#57e389] to-[#4bc979] hover:from-[#4bc979] hover:to-[#57e389] text-[#0D1B2A] font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-[#57e389]/30 hover:shadow-[#57e389]/50 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
               >
-                {isLoading ? (
+                {loading ? (
                   <div className="flex items-center justify-center gap-2">
                     <motion.div
                       className="w-5 h-5 border-2 border-[#0D1B2A] border-t-transparent rounded-full"
@@ -231,7 +239,7 @@ export default function Login() {
         </motion.div>
       </main>
 
-      <Footer /> {/* Footer padrão do site */}
+      <Footer />
     </div>
   );
 }

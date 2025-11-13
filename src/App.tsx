@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-// Removendo a importação de BrowserRouter daqui, pois já é importado em main.tsx
 import { Toaster } from 'sonner';
 import Index from "@/pages/Index";
 import Blog from "@/pages/Blog";
@@ -11,10 +10,17 @@ import Login from "@/pages/Login";
 import Cadastro from "@/pages/Cadastro";
 import NotFound from "./pages/NotFound";
 import ScrollToTopSpecific from "./components/ScrollToTopSpecific";
+import { AuthProvider } from "./context/AuthContext"; // Importando AuthProvider
+import ProtectedRoute from "./components/ProtectedRoute"; // Importando ProtectedRoute
+
+// Importando as páginas de dashboard
+import MasterHome from "./pages/dashboard/master/Home";
+import ClientHome from "./pages/dashboard/client/Home";
+import ProspectHome from "./pages/dashboard/prospect/Home";
 
 function App() {
   return (
-    <> {/* Substituído BrowserRouter por um Fragment */}
+    <AuthProvider> {/* Envolvendo toda a aplicação com AuthProvider */}
       <Toaster position="top-right" richColors />
       <ScrollToTopSpecific />
       <Routes>
@@ -28,10 +34,15 @@ function App() {
         <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
         <Route path="/termos-uso" element={<TermosUso />} />
 
+        {/* Rotas Protegidas */}
+        <Route path="/dashboard/master" element={<ProtectedRoute allowedRoles={['master']}><MasterHome /></ProtectedRoute>} />
+        <Route path="/dashboard/client" element={<ProtectedRoute allowedRoles={['client', 'master']}><ClientHome /></ProtectedRoute>} />
+        <Route path="/dashboard/prospect" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ProspectHome /></ProtectedRoute>} />
+
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </AuthProvider>
   );
 }
 

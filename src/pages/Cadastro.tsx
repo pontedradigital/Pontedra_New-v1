@@ -1,18 +1,21 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext"; // Importando useAuth
+import { toast } from "sonner"; // Importando toast
 
 export default function Cadastro() {
   const [formData, setFormData] = useState({
     nome: "",
+    sobrenome: "",
     email: "",
     password: "",
     confirmPassword: ""
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { register, loading } = useAuth(); // Usando useAuth
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,16 +29,15 @@ export default function Cadastro() {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      alert("As senhas não coincidem!");
+      toast.error("As senhas não coincidem!");
       return;
     }
 
-    setIsLoading(true);
+    const success = await register(formData.email, formData.password, formData.nome, formData.sobrenome);
     
-    setTimeout(() => {
-      setIsLoading(false);
+    if (success) {
       navigate("/login");
-    }, 1500);
+    }
   };
 
   return (
@@ -111,7 +113,7 @@ export default function Cadastro() {
             {/* Nome */}
             <div>
               <label htmlFor="nome" className="block text-[#e1e8f0] text-sm font-medium mb-2">
-                Nome Completo
+                Nome
               </label>
               <div className="relative group">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
@@ -121,7 +123,27 @@ export default function Cadastro() {
                   name="nome"
                   value={formData.nome}
                   onChange={handleChange}
-                  placeholder="Seu nome completo"
+                  placeholder="Seu nome"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Sobrenome */}
+            <div>
+              <label htmlFor="sobrenome" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Sobrenome
+              </label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
+                <input
+                  type="text"
+                  id="sobrenome"
+                  name="sobrenome"
+                  value={formData.sobrenome}
+                  onChange={handleChange}
+                  placeholder="Seu sobrenome"
                   required
                   className="w-full pl-12 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
                 />
@@ -205,12 +227,12 @@ export default function Cadastro() {
             {/* Botão Cadastrar */}
             <motion.button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full bg-gradient-to-r from-[#57e389] to-[#4bc979] hover:from-[#4bc979] hover:to-[#57e389] text-[#0D1B2A] font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-[#57e389]/30 hover:shadow-[#57e389]/50 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <motion.div
                     className="w-5 h-5 border-2 border-[#0D1B2A] border-t-transparent rounded-full"
