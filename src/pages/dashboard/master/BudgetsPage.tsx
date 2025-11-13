@@ -100,16 +100,16 @@ export default function BudgetsPage() {
     client_name: '',
     client_phone: '',
     client_email: '',
-    client_street: '', // NOVO
-    client_number: '', // NOVO
-    client_complement: '', // NOVO
-    client_neighborhood: '', // NOVO
-    client_city: '', // NOVO
-    client_state: '', // NOVO
+    client_street: '',
+    client_number: '',
+    client_complement: '',
+    client_neighborhood: '',
+    client_city: '',
+    client_state: '',
     client_cep: '',
   });
   const [selectedItems, setSelectedItems] = useState<Array<{ id: string; type: 'service' | 'package'; name: string; description: string | null; price: number }>>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(''); // Mantido para a busca interna da lista de seleção
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
   // Fetch all services
@@ -246,9 +246,21 @@ export default function BudgetsPage() {
     }
   };
 
-  const handleAddItem = (item: { id: string; type: 'service' | 'package'; name: string; description: string | null; price: number }) => {
-    setSelectedItems(prev => [...prev, item]);
-    setSearchTerm(''); // Clear search after adding
+  const handleToggleItem = (itemToToggle: { id: string; type: 'service' | 'package'; name: string; description: string | null; price: number; sku: string }) => {
+    setSelectedItems(prev => {
+      const isSelected = prev.some(item => item.id === itemToToggle.id && item.type === itemToToggle.type);
+      if (isSelected) {
+        return prev.filter(item => !(item.id === itemToToggle.id && item.type === itemToToggle.type));
+      } else {
+        return [...prev, {
+          id: itemToToggle.id,
+          type: itemToToggle.type,
+          name: itemToToggle.name,
+          description: itemToToggle.description,
+          price: itemToToggle.price,
+        }];
+      }
+    });
   };
 
   const handleRemoveItem = (index: number) => {
@@ -690,36 +702,53 @@ export default function BudgetsPage() {
                 </div>
               </div>
 
-              {/* Adicionar Serviços/Pacotes */}
+              {/* Adicionar Serviços/Pacotes - AGORA COM LISTA DE SELEÇÃO */}
               <div className="md:col-span-2 mt-4 pt-4 border-t border-border">
                 <h3 className="text-xl font-bold text-primary mb-4">Adicionar Serviços/Pacotes</h3>
+                
+                {/* Campo de busca para filtrar a lista de seleção */}
                 <div className="relative mb-4">
                   <Input
-                    placeholder="Buscar serviço ou pacote por nome ou SKU..."
+                    placeholder="Filtrar serviços ou pacotes..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-background border-border text-foreground placeholder:text-muted-foreground"
                   />
-                  {searchTerm && filteredAvailableItems.length > 0 && (
-                    <div className="absolute z-10 w-full bg-popover border border-border rounded-md mt-1 shadow-lg max-h-60 overflow-y-auto custom-scrollbar">
+                </div>
+
+                {/* Lista de Itens Disponíveis com Checkboxes */}
+                <ScrollArea className="h-60 w-full rounded-md border border-border p-4 bg-background mb-4">
+                  {filteredAvailableItems.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3">
                       {filteredAvailableItems.map(item => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between p-3 hover:bg-muted/20 cursor-pointer"
-                          onClick={() => handleAddItem(item)}
-                        >
-                          <div>
-                            <p className="font-medium text-foreground">{item.name} <span className="text-muted-foreground text-sm">({item.sku})</span></p>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{item.description || (item.type === 'package' ? 'Pacote de serviços' : 'Serviço individual')}</p>
+                        <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/20 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              id={`${item.type}-${item.id}`}
+                              checked={selectedItems.some(selected => selected.id === item.id && selected.type === item.type)}
+                              onChange={() => handleToggleItem(item)}
+                              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                            />
+                            <Label htmlFor={`${item.type}-${item.id}`} className="text-foreground cursor-pointer flex-1">
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium">{item.name} <span className="text-muted-foreground text-sm">({item.sku})</span></span>
+                                {item.description && <span className="text-muted-foreground text-xs line-clamp-1">{item.description || (item.type === 'package' ? 'Pacote de serviços' : 'Serviço individual')}</span>}
+                              </div>
+                            </Label>
                           </div>
-                          <span className="font-semibold text-primary">R$ {item.price.toFixed(2)}</span>
+                          <span className="text-primary font-semibold">R$ {item.price.toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">
+                      Nenhum serviço ou pacote encontrado.
+                    </p>
                   )}
-                </div>
+                </ScrollArea>
 
-                {/* Itens Selecionados */}
+                {/* Itens Selecionados (mantido como está, mas agora reflete a seleção por checkbox) */}
                 <h4 className="text-lg font-semibold text-foreground mb-3">Itens Selecionados ({selectedItems.length})</h4>
                 <ScrollArea className="h-40 w-full rounded-md border border-border p-4 bg-background mb-4">
                   {selectedItems.length > 0 ? (
