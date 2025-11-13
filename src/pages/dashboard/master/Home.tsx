@@ -23,7 +23,7 @@ export default function MasterHome() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="p-0 space-y-8"
+        className="space-y-8" // Removido 'p-0' para que o padding do DashboardLayout seja aplicado
       >
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -62,7 +62,7 @@ export default function MasterHome() {
           />
         </div>
 
-        {/* Downloads and Sales Chart */}
+        {/* Downloads e Gráfico de Vendas (StatCard genérico) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <div className="space-y-4">
@@ -77,13 +77,14 @@ export default function MasterHome() {
             </div>
           </div>
           <div className="lg:col-span-2">
+            {/* Este é o StatCard genérico para "Gráfico de Vendas" como na imagem */}
             <StatCard
               title="Gráfico de Vendas"
               value=""
               change=""
               changeType="up"
               description="Audiência à qual os usuários pertenciam enquanto na data atual"
-              chartData={[100, 250, 180, 320, 200, 280, 150]}
+              chartData={[100, 250, 180, 320, 200, 280, 150]} // Placeholder para o gráfico de linha
               chartColor="#00b4ff"
             />
           </div>
@@ -97,20 +98,20 @@ export default function MasterHome() {
           <ActionButton icon={TrendingUp} title="Crescimento Total" value="$231" color="yellow" />
         </div>
 
-        {/* Tickets and Updates */}
+        {/* Tickets e Atualizações */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TicketsTable />
           <UpdatesList />
         </div>
 
-        {/* Distribution, Sale Report, and Sales Overview */}
+        {/* Distribuição, Relatório de Vendas (SaleReportChart) e Visão Geral de Vendas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DistributionChart />
-          <SaleReportChart />
+          <SaleReportChart /> {/* Este é o gráfico de barras "Relatório de Vendas" */}
           <SalesOverviewCard />
         </div>
 
-        {/* Open Invoices Table */}
+        {/* Tabela de Faturas Abertas */}
         <OpenInvoicesTable />
       </motion.div>
     </DashboardLayout>
