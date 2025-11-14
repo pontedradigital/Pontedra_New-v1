@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle } from 'lucide-react'; // Added CheckCircle icon
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle, RotateCcw } from 'lucide-react'; // Added RotateCcw icon
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -137,6 +137,9 @@ export default function BudgetsPage() {
 
   const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState(false); // Estado para o pop-up de confirmação de aprovação
   const [budgetToApprove, setBudgetToApprove] = useState<Budget | null>(null); // Orçamento a ser aprovado
+
+  const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false); // NOVO: Estado para o pop-up de confirmação de reversão
+  const [budgetToRevert, setBudgetToRevert] = useState<Budget | null>(null); // NOVO: Orçamento a ser revertido
 
   // Helper function for badge styling
   const getBudgetStatusBadgeVariant = (status: Budget['status']) => {
@@ -968,8 +971,8 @@ export default function BudgetsPage() {
             start_date: approvedAt,
             end_date: format(estimatedCompletionDate, 'yyyy-MM-dd'), // Usar a data calculada
             price_agreed: budgetToApproveData.total_amount,
-            is_paid: false, // Padrão para não pago
-            payment_due_date: null, // Pode ser definido posteriormente
+            is_paid: true, // Padrão para pago
+            payment_due_date: null, // Padrão para null
             service_id: firstItem.item_type === 'service' ? firstItem.service_id : null,
             package_id: firstItem.item_type === 'package' ? firstItem.package_id : null,
           });
@@ -985,6 +988,35 @@ export default function BudgetsPage() {
     },
     onError: (err) => {
       toast.error(`Erro ao aprovar orçamento ou criar projeto: ${err.message}`);
+    },
+  });
+
+  // NOVO: Mutação para reverter aprovação de orçamento e deletar projeto
+  const revertBudgetMutation = useMutation<void, Error, string>({
+    mutationFn: async (budgetId) => {
+      // 1. Deletar o registro correspondente em 'client_contracts'
+      const { error: deleteContractError } = await supabase
+        .from('client_contracts')
+        .delete()
+        .eq('budget_id', budgetId);
+      if (deleteContractError) throw deleteContractError;
+
+      // 2. Atualizar o status do orçamento para 'pending' e remover a data de aprovação
+      const { error: updateBudgetError } = await supabase
+        .from('budgets')
+        .update({ status: 'pending', approved_at: null })
+        .eq('id', budgetId);
+      if (updateBudgetError) throw updateBudgetError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] }); // Invalidar a query de projetos do cliente
+      toast.success('Aprovação de orçamento revertida e projeto removido com sucesso!');
+      setIsRevertConfirmOpen(false); // Fechar o pop-up de confirmação de reversão
+      setBudgetToRevert(null); // Limpar o orçamento em reversão
+    },
+    onError: (err) => {
+      toast.error(`Erro ao reverter aprovação: ${err.message}`);
     },
   });
 
@@ -1079,6 +1111,11 @@ export default function BudgetsPage() {
                       {profile?.role === 'master' && budget.status === 'pending' && (
                         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setBudgetToApprove(budget); setIsApproveConfirmOpen(true); }} className="text-green-500 hover:text-green-600">
                           <CheckCircle className="h-4 w-4 mr-2" /> Aprovar
+                        </Button>
+                      )}
+                      {profile?.role === 'master' && budget.status === 'converted' && ( // NOVO: Botão Rever
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setBudgetToRevert(budget); setIsRevertConfirmOpen(true); }} className="text-red-500 hover:text-red-600">
+                          <RotateCcw className="h-4 w-4 mr-2" /> Rever
                         </Button>
                       )}
                       <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(budget)} className="text-primary hover:text-primary/80">
@@ -1424,6 +1461,28 @@ export default function BudgetsPage() {
               <Button onClick={() => budgetToApprove && approveBudgetMutation.mutate(budgetToApprove.id)} disabled={approveBudgetMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
                 {approveBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
                 Aprovar e Criar Projeto
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* NOVO: Pop-up de Confirmação de Reversão */}
+        <Dialog open={isRevertConfirmOpen} onOpenChange={setIsRevertConfirmOpen}>
+          <DialogContent className="sm:max-w-md bg-card border-border text-foreground rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-destructive">Confirmar Reversão</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Tem certeza que deseja <span className="font-semibold text-destructive">reverter a aprovação</span> do orçamento <span className="font-semibold text-white">#{budgetToRevert?.proposal_number}</span>?
+                Esta ação irá remover o projeto correspondente e não poderá ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsRevertConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+                Cancelar
+              </Button>
+              <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                Reverter Aprovação
               </Button>
             </DialogFooter>
           </DialogContent>
