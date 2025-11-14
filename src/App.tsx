@@ -35,12 +35,11 @@ import FinancialOverviewPage from "./pages/dashboard/master/FinancialOverviewPag
 import FinancialCalculatorsPage from "./pages/dashboard/master/FinancialCalculatorsPage";
 import VedraAIPage from "./pages/dashboard/master/VedraAIPage";
 import ClientsPage from "./pages/dashboard/master/ClientsPage";
-
-// NOVO: Importar as novas páginas de redes sociais e blog do dashboard
 import WhatsAppPage from "./pages/dashboard/master/WhatsAppPage";
 import InstagramPage from "./pages/dashboard/master/InstagramPage";
 import FacebookPage from "./pages/dashboard/master/FacebookPage";
 import BlogPage from "./pages/dashboard/master/BlogPage";
+import AvailabilityPage from "./pages/dashboard/master/AvailabilityPage"; // NOVO: Importar a página de disponibilidade
 
 
 function App() {
@@ -81,10 +80,11 @@ function App() {
         <Route path="/dashboard/financial/overview" element={<ProtectedRoute allowedRoles={['master']}><FinancialOverviewPage /></ProtectedRoute>} />
         <Route path="/dashboard/financial/calculators" element={<ProtectedRoute allowedRoles={['master']}><FinancialCalculatorsPage /></ProtectedRoute>} />
         <Route path="/dashboard/vedra-ai" element={<ProtectedRoute allowedRoles={['master']}><VedraAIPage /></ProtectedRoute>} />
-        <Route path="/dashboard/whatsapp" element={<ProtectedRoute allowedRoles={['master']}><WhatsAppPage /></ProtectedRoute>} /> {/* NOVA ROTA */}
-        <Route path="/dashboard/instagram" element={<ProtectedRoute allowedRoles={['master']}><InstagramPage /></ProtectedRoute>} /> {/* NOVA ROTA */}
-        <Route path="/dashboard/facebook" element={<ProtectedRoute allowedRoles={['master']}><FacebookPage /></ProtectedRoute>} /> {/* NOVA ROTA */}
-        <Route path="/dashboard/blog-manager" element={<ProtectedRoute allowedRoles={['master']}><BlogPage /></ProtectedRoute>} /> {/* NOVA ROTA */}
+        <Route path="/dashboard/whatsapp" element={<ProtectedRoute allowedRoles={['master']}><WhatsAppPage /></ProtectedRoute>} />
+        <Route path="/dashboard/instagram" element={<ProtectedRoute allowedRoles={['master']}><InstagramPage /></ProtectedRoute>} />
+        <Route path="/dashboard/facebook" element={<ProtectedRoute allowedRoles={['master']}><FacebookPage /></ProtectedRoute>} />
+        <Route path="/dashboard/blog-manager" element={<ProtectedRoute allowedRoles={['master']}><BlogPage /></ProtectedRoute>} />
+        <Route path="/dashboard/availability" element={<ProtectedRoute allowedRoles={['master']}><AvailabilityPage /></ProtectedRoute>} /> {/* NOVA ROTA */}
 
         <Route path="/dashboard/manage-users" element={<ProtectedRoute allowedRoles={['master']}><ManageUsersPage /></ProtectedRoute>} />
         <Route path="/dashboard/reports" element={<ProtectedRoute allowedRoles={['master']}><ReportsPage /></ProtectedRoute>} />

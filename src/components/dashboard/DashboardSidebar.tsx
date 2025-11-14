@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Calculator,
   LayoutDashboard,
+  Clock, // NOVO: Importar Clock para disponibilidade
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -72,7 +73,8 @@ const navItems: NavItem[] = [
       { label: "Facebook Messenger", icon: Facebook, href: "/dashboard/facebook", roles: ['master'] },
     ],
   },
-  { label: "Gerenciar Blog", icon: BookOpen, href: "/dashboard/blog-manager", roles: ['master'] }, // Rota para o blog do dashboard
+  { label: "Gerenciar Blog", icon: BookOpen, href: "/dashboard/blog-manager", roles: ['master'] },
+  { label: "Gerenciar Disponibilidade", icon: Clock, href: "/dashboard/availability", roles: ['master'] }, // NOVO: Item de navegação
 ];
 
 export default function DashboardSidebar() {
