@@ -16,7 +16,7 @@ import {
   CheckCircle,
   XCircle,
   Edit,
-  Trash2,
+  Trash2, // Adicionado Trash2 para o botão de cancelar
 } from 'lucide-react';
 import {
   format,
@@ -380,6 +380,10 @@ export default function AppointmentsPage() {
     setIsAddAppointmentDialogOpen(true);
   };
 
+  const handleCancelAppointment = (appointmentId: string) => {
+    deleteAppointmentMutation.mutate(appointmentId);
+  };
+
   if (authLoading || isLoadingAppointments || (isMaster ? false : isLoadingSingleMasterProfile)) {
     return (
       <DashboardLayout>
@@ -454,6 +458,7 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">DATA</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -472,11 +477,22 @@ export default function AppointmentsPage() {
                         <TableCell className="text-muted-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
+                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleCancelAppointment(app.id); }}
+                            className="text-destructive hover:text-destructive/80"
+                            disabled={deleteAppointmentMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
                         Nenhum agendamento recente.
                       </TableCell>
                     </TableRow>
@@ -516,6 +532,7 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">NOME</TableHead>
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -531,11 +548,22 @@ export default function AppointmentsPage() {
                         <TableCell className="font-medium text-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
+                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleCancelAppointment(app.id); }}
+                            className="text-destructive hover:text-destructive/80"
+                            disabled={deleteAppointmentMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
                         Nenhum agendamento.
                       </TableCell>
                     </TableRow>
@@ -565,6 +593,7 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">DATA</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -583,11 +612,22 @@ export default function AppointmentsPage() {
                         <TableCell className="text-muted-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
+                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleCancelAppointment(app.id); }}
+                            className="text-destructive hover:text-destructive/80"
+                            disabled={deleteAppointmentMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
                         Nenhum agendamento para esta semana.
                       </TableCell>
                     </TableRow>
@@ -617,6 +657,7 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">DATA</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -635,11 +676,22 @@ export default function AppointmentsPage() {
                         <TableCell className="text-muted-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
+                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleCancelAppointment(app.id); }}
+                            className="text-destructive hover:text-destructive/80"
+                            disabled={deleteAppointmentMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
                         Nenhum agendamento para este mês.
                       </TableCell>
                     </TableRow>
