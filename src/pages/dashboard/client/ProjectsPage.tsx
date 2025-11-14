@@ -94,7 +94,7 @@ export default function ProjectsPage() {
     priceAgreed: number;
     startDate: string;
     estimatedCompletionDate: string;
-    budget_id: string;
+    budget_id: string | undefined; // Alterado para undefined
     is_paid: boolean;
     payment_due_date: string;
   }>({
@@ -104,7 +104,7 @@ export default function ProjectsPage() {
     priceAgreed: 0,
     startDate: format(new Date(), 'yyyy-MM-dd'),
     estimatedCompletionDate: '',
-    budget_id: '',
+    budget_id: undefined, // Alterado para undefined
     is_paid: false,
     payment_due_date: '',
   });
@@ -280,7 +280,7 @@ export default function ProjectsPage() {
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
         estimatedCompletionDate: '',
-        budget_id: '',
+        budget_id: undefined, // Alterado para undefined
         is_paid: false,
         payment_due_date: '',
       });
@@ -315,7 +315,7 @@ export default function ProjectsPage() {
         priceAgreed: project.price_agreed,
         startDate: project.start_date,
         estimatedCompletionDate: project.end_date || '', // Usar end_date como estimatedCompletionDate
-        budget_id: project.budget_id || '',
+        budget_id: project.budget_id || undefined, // Garante undefined se for null
         is_paid: project.is_paid,
         payment_due_date: project.payment_due_date || '',
       });
@@ -328,7 +328,7 @@ export default function ProjectsPage() {
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
         estimatedCompletionDate: '',
-        budget_id: '',
+        budget_id: undefined, // Alterado para undefined
         is_paid: false,
         payment_due_date: '',
       });
@@ -607,7 +607,7 @@ export default function ProjectsPage() {
                     <SelectValue placeholder="Vincular a um orçamento existente" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border text-popover-foreground">
-                    <SelectItem value="">Nenhum Orçamento</SelectItem>
+                    <SelectItem value={undefined}>Nenhum Orçamento</SelectItem> {/* CORRIGIDO AQUI */}
                     {budgets?.map(budget => (
                       <SelectItem key={budget.id} value={budget.id}>
                         {budget.client_name} - R$ {budget.total_amount.toFixed(2)}
