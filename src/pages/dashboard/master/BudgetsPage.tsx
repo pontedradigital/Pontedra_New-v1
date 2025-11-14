@@ -130,8 +130,9 @@ export default function BudgetsPage() {
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<Budget>>({
-    client_name: '',
+  const [formData, setFormData] = useState<Partial<Budget> & { client_first_name?: string; client_last_name?: string }>({
+    client_first_name: '', // NOVO
+    client_last_name: '',  // NOVO
     client_phone: '',
     client_email: '',
     client_street: '',
@@ -541,8 +542,10 @@ export default function BudgetsPage() {
 
   const handleOpenDialog = (budgetToDuplicate?: Budget) => {
     if (budgetToDuplicate) {
+      const { firstName, lastName } = splitFullName(budgetToDuplicate.client_name);
       setFormData({
-        client_name: budgetToDuplicate.client_name,
+        client_first_name: firstName,
+        client_last_name: lastName,
         client_phone: budgetToDuplicate.client_phone,
         client_email: budgetToDuplicate.client_email,
         client_street: budgetToDuplicate.client_street,
@@ -564,7 +567,8 @@ export default function BudgetsPage() {
       setCurrentEditableBudget(budgetToDuplicate); 
     } else {
       setFormData({
-        client_name: '',
+        client_first_name: '',
+        client_last_name: '',
         client_phone: '',
         client_email: '',
         client_street: '',
@@ -586,8 +590,10 @@ export default function BudgetsPage() {
   const handleClientSelect = (clientId: string) => {
     if (clientId === 'new') {
       setSelectedClientId(null);
-      setFormData({
-        client_name: '',
+      setFormData(prev => ({
+        ...prev,
+        client_first_name: '',
+        client_last_name: '',
         client_phone: '',
         client_email: '',
         client_street: '',
@@ -597,14 +603,15 @@ export default function BudgetsPage() {
         client_city: '',
         client_state: '',
         client_cep: '',
-      });
+      }));
     } else {
       const client = clientProfiles?.find(p => p.id === clientId);
       if (client) {
         setSelectedClientId(clientId);
         setFormData(prev => ({
           ...prev,
-          client_name: `${client.first_name || ''} ${client.last_name || ''}`.trim(),
+          client_first_name: client.first_name || '',
+          client_last_name: client.last_name || '',
           client_phone: client.telefone || '',
           client_email: client.email || '',
           // Endereço não está no perfil, então não preenche
@@ -620,28 +627,26 @@ export default function BudgetsPage() {
     }
   };
 
-  const saveBudgetMutation = useMutation<Budget, Error, { budgetData: Partial<Budget>; items: typeof selectedItems }>({
+  const saveBudgetMutation = useMutation<Budget, Error, { budgetData: Partial<Budget> & { client_first_name?: string; client_last_name?: string }; items: typeof selectedItems }>({
     mutationFn: async ({ budgetData, items }) => {
       if (!user) throw new Error("Usuário não autenticado.");
 
       let finalUserId = selectedClientId;
+      const fullClientName = `${budgetData.client_first_name || ''} ${budgetData.client_last_name || ''}`.trim();
 
       if (!finalUserId) { // Se nenhum cliente existente for selecionado, crie um novo
-        if (!budgetData.client_email || !budgetData.client_name) {
+        if (!budgetData.client_email || !budgetData.client_first_name) { // Apenas first_name é obrigatório para novo usuário
           throw new Error("E-mail e nome do cliente são obrigatórios para criar um novo usuário.");
         }
-
-        const { firstName, lastName } = splitFullName(budgetData.client_name);
-        const tempPassword = generateTemporaryPassword();
 
         console.log("Attempting to create new user for email:", budgetData.client_email);
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: budgetData.client_email,
-          password: tempPassword, // Senha temporária
+          password: generateTemporaryPassword(), // Senha temporária
           options: {
             data: {
-              first_name: firstName,
-              last_name: lastName,
+              first_name: budgetData.client_first_name,
+              last_name: budgetData.client_last_name || null, // Sobrenome pode ser nulo
               telefone: budgetData.client_phone || null,
               // company_organization não está em budgetData, então não é passado aqui
             },
@@ -670,7 +675,7 @@ export default function BudgetsPage() {
         .from('budgets')
         .insert({
           user_id: finalUserId, // Usa o ID do cliente recém-criado ou selecionado
-          client_name: budgetData.client_name,
+          client_name: fullClientName, // Usa o nome completo construído
           client_phone: budgetData.client_phone,
           client_email: budgetData.client_email,
           client_street: budgetData.client_street,
@@ -720,7 +725,7 @@ export default function BudgetsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.client_name || selectedItems.length === 0) {
+    if (!formData.client_first_name || selectedItems.length === 0) { // Apenas first_name é obrigatório
       toast.error('Nome do cliente e pelo menos um item são obrigatórios.');
       return;
     }
@@ -881,7 +886,7 @@ export default function BudgetsPage() {
       budgetToUse = currentEditableBudget;
     } else {
       // If not saved, create a temporary budget from form data
-      if (!formData.client_name || selectedItems.length === 0) {
+      if (!formData.client_first_name || selectedItems.length === 0) {
         toast.error("Preencha o nome do cliente e adicione pelo menos um item para gerar o PDF.");
         return;
       }
@@ -898,11 +903,13 @@ export default function BudgetsPage() {
         created_at: new Date().toISOString(),
       }));
 
+      const fullClientName = `${formData.client_first_name || ''} ${formData.client_last_name || ''}`.trim();
+
       budgetToUse = {
         id: 'temp-budget-id', // Placeholder ID
         user_id: selectedClientId || user?.id || 'anonymous', // Use selected client ID or current user ID
         proposal_number: 'PREVIEW', // Placeholder for unsaved budget
-        client_name: formData.client_name || 'Cliente Desconhecido',
+        client_name: fullClientName, // Usa o nome completo construído
         client_phone: formData.client_phone || null,
         client_email: formData.client_email || null,
         client_street: formData.client_street || null,
@@ -976,7 +983,19 @@ export default function BudgetsPage() {
   // Function to close dialog and reset state
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
-    setFormData({});
+    setFormData({
+      client_first_name: '',
+      client_last_name: '',
+      client_phone: '',
+      client_email: '',
+      client_street: '',
+      client_number: '',
+      client_complement: '',
+      client_neighborhood: '',
+      client_city: '',
+      client_state: '',
+      client_cep: '',
+    });
     setSelectedItems([]);
     setSelectedClientId(null); // Reset selected client
     setCurrentEditableBudget(null);
@@ -1079,8 +1098,8 @@ export default function BudgetsPage() {
     },
   });
 
-  const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId);
-  const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId); // Updated condition
+  const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_first_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId);
+  const isPdfActionDisabled = !formData.client_first_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId); // Updated condition
 
   if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber || isLoadingClientProfilesData || isLoadingClientEmails) {
     return (
@@ -1251,14 +1270,25 @@ export default function BudgetsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="client_name">Nome do Cliente *</Label>
+                    <Label htmlFor="client_first_name">Nome *</Label>
                     <Input
-                      id="client_name"
-                      name="client_name"
-                      value={formData.client_name || ''}
+                      id="client_first_name"
+                      name="client_first_name"
+                      value={formData.client_first_name || ''}
                       onChange={handleFormChange}
                       className="bg-background border-border text-foreground"
                       required
+                      disabled={!!selectedClientId} // Desabilita se um cliente for selecionado
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client_last_name">Sobrenome</Label>
+                    <Input
+                      id="client_last_name"
+                      name="client_last_name"
+                      value={formData.client_last_name || ''}
+                      onChange={handleFormChange}
+                      className="bg-background border-border text-foreground"
                       disabled={!!selectedClientId} // Desabilita se um cliente for selecionado
                     />
                   </div>
