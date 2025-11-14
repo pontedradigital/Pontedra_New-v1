@@ -3,7 +3,78 @@ import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
-import { useQuery, useMutation, useQueryClient } => {
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Loader2,
+  Calendar as CalendarIcon,
+  Clock,
+  User,
+  Mail,
+  Phone,
+  Info,
+  PlusCircle,
+  CheckCircle,
+  XCircle,
+  Edit,
+  Trash2,
+} from 'lucide-react';
+import {
+  format,
+  parseISO,
+  isSameDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isWithinInterval,
+  setHours,
+  setMinutes,
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
+import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog';
+import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog';
+import { toast } from 'sonner';
+// import { Calendar } from '@/components/ui/calendar'; // Removido o componente Calendar
+
+// Interfaces para as tabelas
+interface Appointment {
+  id: string;
+  client_id: string;
+  master_id: string;
+  start_time: string; // TIMESTAMP WITH TIME ZONE
+  end_time:   string;   // TIMESTAMP WITH TIME ZONE
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  notes: string | null;
+  created_at: string;
+  client_profile?: { // Alias para o perfil do cliente
+    first_name: string | null;
+    last_name: string | null;
+    telefone: string | null;
+  };
+  master_profile?: { // Alias para o perfil do master
+    first_name: string | null;
+    last_name: string | null;
+    telefone: string | null;
+  };
+  client_email?: string; // Adicionado para o email do cliente
+  master_email?: string; // Adicionado para o email do master
+}
+
+interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  telefone: string | null;
+  email: string;
+  role: 'prospect' | 'client' | 'master';
+}
+
+export default function AppointmentsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
@@ -351,80 +422,6 @@ import { useQuery, useMutation, useQueryClient } => {
             isMasterBooking={isMaster} // Passa a nova propriedade
           />
         )}
-
-        {/* Tabela de Agendamentos do Dia */}
-        <Card className="bg-card border-border shadow-lg rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-blue-500" /> Agendamentos para {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : 'o dia selecionado'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos.
-            </p>
-            <div className="overflow-x-auto max-h-60 custom-scrollbar">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/20">
-                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-                    {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
-                    <TableHead className="text-muted-foreground">STATUS</TableHead>
-                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {todayAppointments.length > 0 ? (
-                    todayAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                        <TableCell className="font-medium text-foreground py-3">
-                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground py-3">
-                          {app.client_profile?.first_name} {app.client_profile?.last_name}
-                          {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
-                        </TableCell>
-                        {isMaster && (
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.master_profile?.first_name} {app.master_profile?.last_name}
-                            {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
-                          </TableCell>
-                        )}
-                        <TableCell className="py-3">
-                          <Badge className={getStatusBadgeVariant(app.status)}>
-                            {app.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right py-3">
-                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
-                            <Info className="h-4 w-4" />
-                          </Button>
-                          {isMaster && (
-                            <>
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
-                        Nenhum agendamento.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
       </motion.div>
 
       {/* Diálogo de Seleção de Horário (para clientes) */}
