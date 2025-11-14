@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup'; // Importar o novo componente
 
 // Tipos de dados para o perfil do usuário (atualizado)
 interface UserProfile {
@@ -78,11 +79,14 @@ interface UserProfile {
 
 export default function ClientsPage() {
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // Renomeado para evitar conflito
   const [editingClient, setEditingClient] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'prospect' | 'client' | 'master'>('all');
+
+  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
+  const [selectedClientForDetails, setSelectedClientForDetails] = useState<UserProfile | null>(null); // Cliente para exibir no pop-up
 
   // Fetch all user profiles
   const { data: profilesData, isLoading, isError, error } = useQuery<Omit<UserProfile, 'email'>[], Error>({
@@ -166,7 +170,7 @@ export default function ClientsPage() {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['clientEmails'] }); // Invalidate emails cache too
       toast.success('Perfil do cliente atualizado com sucesso!');
-      setIsDialogOpen(false);
+      setIsEditDialogOpen(false);
       setEditingClient(null);
       setFormData({});
     },
@@ -194,13 +198,13 @@ export default function ClientsPage() {
     },
   });
 
-  const handleOpenDialog = (client: UserProfile) => {
+  const handleOpenEditDialog = (client: UserProfile) => {
     setEditingClient(client);
     setFormData({
       ...client,
       date_of_birth: client.date_of_birth ? format(parseISO(client.date_of_birth), 'yyyy-MM-dd') : '', // Formata para input date
     });
-    setIsDialogOpen(true);
+    setIsEditDialogOpen(true);
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -268,6 +272,11 @@ export default function ClientsPage() {
       return matchesRole && matchesSearch;
     });
   }, [clients, searchTerm, filterRole]);
+
+  const handleRowClick = (client: UserProfile) => {
+    setSelectedClientForDetails(client);
+    setIsDetailsPopupOpen(true);
+  };
 
   if (isLoading || isLoadingEmails) {
     return (
@@ -344,7 +353,7 @@ export default function ClientsPage() {
             <TableBody>
               {filteredClients && filteredClients.length > 0 ? (
                 filteredClients.map((client) => (
-                  <TableRow key={client.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                  <TableRow key={client.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(client)}>
                     <TableCell className="font-medium text-foreground py-4">
                       <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-primary" />
@@ -383,10 +392,10 @@ export default function ClientsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(client)} className="text-primary hover:text-primary/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenEditDialog(client); }} className="text-primary hover:text-primary/80">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteClientMutation.mutate(client.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deleteClientMutation.mutate(client.id); }} className="text-destructive hover:text-destructive/80">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -404,7 +413,7 @@ export default function ClientsPage() {
         </div>
 
         {/* Dialog para Editar Cliente */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border text-foreground rounded-xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-primary">
@@ -576,7 +585,7 @@ export default function ClientsPage() {
               </div>
 
               <DialogFooter className="md:col-span-2 mt-6">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                   <XCircle className="mr-2 h-4 w-4" /> Cancelar
                 </Button>
                 <Button type="submit" disabled={updateClientMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -587,6 +596,13 @@ export default function ClientsPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Pop-up de Detalhes do Cliente */}
+        <ClientDetailsPopup
+          isOpen={isDetailsPopupOpen}
+          onClose={() => setIsDetailsPopupOpen(false)}
+          client={selectedClientForDetails}
+        />
       </motion.div>
     </DashboardLayout>
   );
