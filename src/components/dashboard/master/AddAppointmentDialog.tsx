@@ -40,6 +40,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // Importar DateSelectionList
+import { useAuth } from '@/context/AuthContext'; // Importar useAuth
 
 interface AddAppointmentDialogProps {
   isOpen: boolean;
@@ -84,12 +85,15 @@ interface MasterException {
 }
 
 const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onClose, onSave, isSaving }) => {
+  const { profile } = useAuth(); // Usar useAuth para obter o perfil do usuário logado
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   const [selectedMasterId, setSelectedMasterId] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
   const [status, setStatus] = useState<'pending' | 'confirmed' | 'cancelled' | 'completed'>('pending');
   const [notes, setNotes] = useState('');
+
+  const isMaster = profile?.role === 'master'; // Determina se o usuário logado é master
 
   // Fetch all clients (prospects and clients)
   const { data: clientProfiles, isLoading: isLoadingClientProfiles } = useQuery<UserProfile[], Error>({
@@ -220,11 +224,17 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
     } else {
       // Check recurring availability if no exception
       const recurringAvailability = masterAvailability?.find(a => a.day_of_week === dayOfWeek);
-      if (!recurringAvailability || isWeekend(selectedDate)) {
-        return []; // No recurring availability or it's a weekend
+      // Se for master booking, fins de semana são permitidos. Caso contrário, verifica disponibilidade recorrente e fins de semana.
+      if (!isMaster && (!recurringAvailability || isWeekend(selectedDate))) {
+        return []; // No recurring availability or it's a weekend for non-master
       }
-      startHour = parseInt(recurringAvailability.start_time.split(':')[0]);
-      endHour = parseInt(recurringAvailability.end_time.split(':')[0]);
+      if (recurringAvailability) { // Se houver disponibilidade recorrente, usa-a
+        startHour = parseInt(recurringAvailability.start_time.split(':')[0]);
+        endHour = parseInt(recurringAvailability.end_time.split(':')[0]);
+      } else if (!isMaster) { // Se não houver recorrente e não for master, não há slots
+        return [];
+      }
+      // Se for master, e não houver recorrente, assume o padrão 10-16h para permitir agendamento
     }
 
     let currentTime = setHours(setMinutes(selectedDate, 0), startHour);
@@ -245,9 +255,10 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       const slotTime = format(slot, 'HH:mm');
       const isBooked = booked.has(slotTime);
       const isPastSlot = isBefore(slot, new Date());
-      return !isBooked && !isPastSlot;
+      // Se for master booking, slots passados são permitidos. Caso contrário, filtra.
+      return !isBooked && (isMaster || !isPastSlot);
     });
-  }, [selectedDate, selectedMasterId, masterAvailability, masterExceptions, existingAppointments, isLoadingMasterAvailability, isLoadingMasterExceptions, isLoadingExistingAppointments]);
+  }, [selectedDate, selectedMasterId, masterAvailability, masterExceptions, existingAppointments, isLoadingMasterAvailability, isLoadingMasterExceptions, isLoadingExistingAppointments, isMaster]);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -374,6 +385,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
               masterId={selectedMasterId || ''} // Passa o masterId selecionado
               onDateSelect={setSelectedDate}
               selectedDate={selectedDate}
+              isMasterBooking={isMaster} // Passa a nova propriedade
             />
           </div>
 

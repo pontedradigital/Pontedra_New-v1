@@ -25,9 +25,10 @@ interface DateSelectionListProps {
   masterId: string;
   onDateSelect: (date: Date) => void;
   selectedDate: Date | undefined;
+  isMasterBooking?: boolean; // NOVA PROPRIEDADE
 }
 
-const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateSelect, selectedDate }) => {
+const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateSelect, selectedDate, isMasterBooking = false }) => {
   const [dates, setDates] = useState<Date[]>([]);
 
   // Fetch master's recurring availability
@@ -59,15 +60,16 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
     enabled: !!masterId,
   });
 
-  // Generate next 30 days
+  // Generate next 30 days (or more if master booking)
   useEffect(() => {
     const today = startOfDay(new Date());
     const generatedDates: Date[] = [];
-    for (let i = 0; i < 30; i++) {
+    const daysToGenerate = isMasterBooking ? 90 : 30; // Master pode ver mais dias
+    for (let i = 0; i < daysToGenerate; i++) {
       generatedDates.push(addDays(today, i));
     }
     setDates(generatedDates);
-  }, []);
+  }, [isMasterBooking]);
 
   // Determine available dates based on availability and exceptions
   const availableDates = useMemo(() => {
@@ -77,8 +79,8 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
     const today = startOfDay(new Date());
 
     dates.forEach(date => {
-      // 1. Check if it's a weekend
-      if (isWeekend(date)) return;
+      // Se for master booking, fins de semana são permitidos. Caso contrário, pula fins de semana.
+      if (!isMasterBooking && isWeekend(date)) return;
 
       // 2. Check for specific exceptions for this date
       const dateString = format(date, 'yyyy-MM-dd');
@@ -86,10 +88,10 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
 
       if (exception) {
         if (exception.is_available) {
-          // If there's an exception making it available, add it
+          // Se há uma exceção tornando-o disponível, adiciona
           bookableDates.push(date);
         }
-        return; // Exception overrides general availability
+        return; // Exceção sobrescreve a disponibilidade geral
       }
 
       // 3. Check general recurring availability
@@ -104,7 +106,7 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
     });
 
     return bookableDates;
-  }, [dates, availability, exceptions]);
+  }, [dates, availability, exceptions, isMasterBooking]);
 
   if (isLoadingAvailability || isLoadingExceptions) {
     return (
@@ -132,21 +134,26 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
         <ScrollArea className="h-60 w-full rounded-md border border-border p-4 bg-background">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {dates.map(date => {
-              const isAvailable = availableDates.some(d => isSameDay(d, date));
+              const isAvailableForMaster = availableDates.some(d => isSameDay(d, date));
               const isPastDate = isBefore(date, startOfDay(new Date()));
               const isSelected = selectedDate && isSameDay(selectedDate, date);
+
+              // A data é desabilitada se:
+              // 1. Não é master booking E não está disponível (considerando fins de semana e exceções)
+              // 2. Não é master booking E é uma data passada
+              const isDisabled = (!isAvailableForMaster && !isMasterBooking) || (isPastDate && !isMasterBooking);
 
               return (
                 <motion.button
                   key={format(date, 'yyyy-MM-dd')}
-                  whileHover={{ scale: isAvailable && !isPastDate ? 1.05 : 1 }}
-                  whileTap={{ scale: isAvailable && !isPastDate ? 0.95 : 1 }}
-                  onClick={() => isAvailable && !isPastDate && onDateSelect(date)}
-                  disabled={!isAvailable || isPastDate}
+                  whileHover={{ scale: !isDisabled ? 1.05 : 1 }}
+                  whileTap={{ scale: !isDisabled ? 0.95 : 1 }}
+                  onClick={() => !isDisabled && onDateSelect(date)}
+                  disabled={isDisabled}
                   className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200
                     ${isSelected
                       ? 'bg-primary text-primary-foreground border-primary shadow-md'
-                      : isAvailable && !isPastDate
+                      : !isDisabled
                         ? 'bg-muted/20 border-border text-foreground hover:bg-muted/40'
                         : 'bg-muted/10 border-border/50 text-muted-foreground cursor-not-allowed opacity-60'
                     }`}
@@ -161,12 +168,10 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
                     {format(date, 'MMM', { locale: ptBR })}
                   </span>
                   <div className="mt-2">
-                    {isPastDate ? (
+                    {isDisabled && !isMasterBooking ? ( // Mostra X apenas se desabilitado para cliente
                       <XCircle className="w-4 h-4 text-red-500" />
-                    ) : isAvailable ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-red-500" />
+                      <CheckCircle className="w-4 h-4 text-green-500" />
                     )}
                   </div>
                 </motion.button>
