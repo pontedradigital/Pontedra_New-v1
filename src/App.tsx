@@ -37,7 +37,8 @@ import InstagramPage from "./pages/dashboard/master/InstagramPage";
 import FacebookPage from "./pages/dashboard/master/FacebookPage";
 import BlogPage from "./pages/dashboard/master/BlogPage";
 import LeadsPage from "./pages/dashboard/master/LeadsPage";
-import ManageUsersPage from "./pages/dashboard/master/ManageUsersPage"; // NOVO: Importando ManageUsersPage
+import ManageUsersPage from "./pages/dashboard/master/ManageUsersPage";
+import ReportsPage from "./pages/dashboard/master/ReportsPage"; // NOVO: Importando ReportsPage
 // import AvailabilityPage from "./pages/dashboard/master/AvailabilityPage"; // Removido
 
 
