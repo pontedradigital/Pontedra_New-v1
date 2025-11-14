@@ -50,7 +50,9 @@ import {
   Users,
   Handshake,
   MoreHorizontal,
-  CreditCard, // Adicionado CreditCard aqui
+  CreditCard,
+  CalendarDays, // NOVO: Importar CalendarDays
+  Tag, // NOVO: Importar Tag para o ID
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -73,9 +75,11 @@ interface CostItem {
 
 interface VariableCostItem {
   id: string;
+  code: string | null; // NOVO: Adicionado campo code
   name: string;
   value: number;
   is_active: boolean;
+  date: string; // NOVO: Adicionado campo date
   created_at: string;
   updated_at: string;
   user_id: string;
@@ -135,7 +139,7 @@ export default function FinancialOverviewPage() {
       const { data, error } = await supabase
         .from('variable_costs')
         .select('*')
-        .order('name', { ascending: true });
+        .order('date', { ascending: false }); // Ordenar por data
       if (error) throw error;
       return data;
     },
@@ -179,6 +183,7 @@ export default function FinancialOverviewPage() {
         const { error } = await supabase.from('variable_costs').update(costToSave).eq('id', newCost.id);
         if (error) throw error;
       } else {
+        // Para novas inserções, o 'code' será gerado pelo trigger do banco de dados
         const { error } = await supabase.from('variable_costs').insert(costToSave);
         if (error) throw error;
       }
@@ -235,6 +240,7 @@ export default function FinancialOverviewPage() {
         name: '',
         value: 0,
         is_active: true,
+        date: format(new Date(), 'yyyy-MM-dd'), // Padrão para a data atual
       });
     }
     setIsVariableCostDialogOpen(true);
@@ -359,10 +365,11 @@ export default function FinancialOverviewPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20">
+                  <TableHead className="text-muted-foreground">ID</TableHead> {/* NOVO: Coluna ID */}
                   <TableHead className="text-muted-foreground">NOME</TableHead>
                   <TableHead className="text-muted-foreground">VALOR (BRL)</TableHead>
+                  <TableHead className="text-muted-foreground">DATA</TableHead> {/* NOVO: Coluna Data */}
                   <TableHead className="text-muted-foreground">STATUS</TableHead>
-                  <TableHead className="text-muted-foreground">ÚLTIMA ATUALIZAÇÃO</TableHead>
                   <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                 </TableRow>
               </TableHeader>
@@ -373,9 +380,15 @@ export default function FinancialOverviewPage() {
                     return (
                       <TableRow key={cost.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                         <TableCell className="font-medium text-foreground py-4 flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-muted-foreground" /> {cost.code || 'N/A'}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground py-4 flex items-center gap-2">
                           <Icon className="w-5 h-5 text-muted-foreground" /> {cost.name}
                         </TableCell>
                         <TableCell className="text-foreground py-4">R$ {cost.value.toFixed(2)}</TableCell>
+                        <TableCell className="text-muted-foreground py-4">
+                          {format(new Date(cost.date), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
                         <TableCell className="py-4">
                           <Switch
                             checked={cost.is_active}
@@ -385,9 +398,6 @@ export default function FinancialOverviewPage() {
                           <span className="ml-2 text-sm text-muted-foreground">
                             {cost.is_active ? 'Ativo' : 'Inativo'}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground py-4">
-                          {format(new Date(cost.updated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                         </TableCell>
                         <TableCell className="text-right py-4">
                           <Button variant="ghost" size="sm" onClick={() => handleOpenVariableCostDialog(cost)} className="text-primary hover:text-primary/80">
@@ -402,7 +412,7 @@ export default function FinancialOverviewPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       Nenhum custo variável encontrado.
                     </TableCell>
                   </TableRow>
@@ -452,6 +462,21 @@ export default function FinancialOverviewPage() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleVariableCostSubmit} className="space-y-4 py-4">
+              {/* NOVO: Campo de ID (somente leitura) */}
+              <div className="space-y-2">
+                <Label htmlFor="code" className="text-left">ID do Custo</Label>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="code"
+                    name="code"
+                    value={editingVariableCost?.code || 'Gerado Automaticamente'}
+                    readOnly
+                    className="w-full pl-10 bg-muted/50 border-border text-foreground"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-left">Nome do Custo *</Label>
                 <Select
@@ -483,6 +508,22 @@ export default function FinancialOverviewPage() {
                     type="number"
                     step="0.01"
                     value={variableCostFormData.value || 0}
+                    onChange={handleVariableCostFormChange}
+                    className="w-full pl-10 bg-background border-border text-foreground"
+                    required
+                  />
+                </div>
+              </div>
+              {/* NOVO: Campo de Data */}
+              <div className="space-y-2">
+                <Label htmlFor="date" className="text-left">Data do Custo *</Label>
+                <div className="relative">
+                  <CalendarDays className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={variableCostFormData.date || format(new Date(), 'yyyy-MM-dd')}
                     onChange={handleVariableCostFormChange}
                     className="w-full pl-10 bg-background border-border text-foreground"
                     required
