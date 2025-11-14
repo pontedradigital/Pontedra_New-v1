@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { Calendar } from 'lucide-react';
 
 export default function AppointmentsPage() {
   const { profile } = useAuth();
@@ -14,7 +15,9 @@ export default function AppointmentsPage() {
         transition={{ duration: 0.5 }}
         className="p-0"
       >
-        <h1 className="text-4xl font-bold text-[#57e389] mb-6">Meus Agendamentos</h1>
+        <h1 className="text-4xl font-bold text-[#57e389] mb-6 flex items-center gap-3">
+          <Calendar className="w-10 h-10" /> Meus Agendamentos
+        </h1>
         {profile && (
           <p className="text-lg text-[#9ba8b5]">
             Olá, <span className="font-semibold text-white">{profile.first_name}</span>! Gerencie seus agendamentos com a Pontedra aqui.
@@ -22,7 +25,7 @@ export default function AppointmentsPage() {
           </p>
         )}
         <p className="mt-4 text-[#9ba8b5]">
-          Nesta página, você poderá ver seus próximos agendamentos, reagendar ou cancelar, e visualizar seu histórico de reuniões.
+          Vamos criar essa sessão agora, do zero!
         </p>
       </motion.div>
     </DashboardLayout>

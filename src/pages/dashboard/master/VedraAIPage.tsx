@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Bot } from 'lucide-react'; // Ícone para a IA
+import { Bot } from 'lucide-react';
 
 export default function VedraAIPage() {
   const { profile } = useAuth();
@@ -25,7 +25,7 @@ export default function VedraAIPage() {
           </p>
         )}
         <p className="mt-4 text-[#9ba8b5]">
-          Nesta página, você poderá treinar a Vedra, configurar respostas automáticas, monitorar interações e otimizar o atendimento ao cliente.
+          Vamos criar essa sessão agora, do zero!
         </p>
       </motion.div>
     </DashboardLayout>

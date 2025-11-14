@@ -3,29 +3,29 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Home as HomeIcon,
-  User as UserIcon, // Usado para Meu Perfil
-  Settings as SettingsIcon, // Mantido para outras configurações, se necessário, ou removido se não for mais usado
+  User as UserIcon,
+  Settings as SettingsIcon,
   LogOut as LogOutIcon,
   Menu as MenuIcon,
   X as XIcon,
   Briefcase,
   Calendar,
   BookOpen,
-  Users, // Ícone para Clientes
+  Users,
   ClipboardList,
   BarChart,
   Package,
-  DollarSign, // Ícone para Financeiro
-  FileText, // Ícone para Orçamentos
-  CreditCard, // Ícone para Custos
+  DollarSign,
+  FileText,
+  CreditCard,
   Bot,
   HardHat,
   MessageCircle,
   Instagram,
   Facebook,
   ChevronDown,
-  Calculator, // Ícone para Calculadoras
-  LayoutDashboard, // NOVO: Ícone para Visão Geral
+  Calculator,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -57,8 +57,8 @@ const navItems: NavItem[] = [
     icon: DollarSign,
     roles: ['master'],
     children: [
-      { label: "Visão Geral", icon: LayoutDashboard, href: "/dashboard/financial/overview", roles: ['master'] }, // Rota específica
-      { label: "Calculadoras", icon: Calculator, href: "/dashboard/financial/calculators", roles: ['master'] }, // Rota específica
+      { label: "Visão Geral", icon: LayoutDashboard, href: "/dashboard/financial/overview", roles: ['master'] },
+      { label: "Calculadoras", icon: Calculator, href: "/dashboard/financial/calculators", roles: ['master'] },
     ],
   },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
@@ -67,12 +67,12 @@ const navItems: NavItem[] = [
     icon: MessageCircle,
     roles: ['master'],
     children: [
-      { label: "WhatsApp Business", icon: MessageCircle, href: "#", roles: ['master'] },
-      { label: "Instagram Direct", icon: Instagram, href: "#", roles: ['master'] },
-      { label: "Facebook Messenger", icon: Facebook, href: "#", roles: ['master'] },
+      { label: "WhatsApp Business", icon: MessageCircle, href: "/dashboard/whatsapp", roles: ['master'] },
+      { label: "Instagram Direct", icon: Instagram, href: "/dashboard/instagram", roles: ['master'] },
+      { label: "Facebook Messenger", icon: Facebook, href: "/dashboard/facebook", roles: ['master'] },
     ],
   },
-  { label: "Blog", icon: BookOpen, href: "/blog", roles: ['master'] },
+  { label: "Gerenciar Blog", icon: BookOpen, href: "/dashboard/blog-manager", roles: ['master'] }, // Rota para o blog do dashboard
 ];
 
 export default function DashboardSidebar() {
@@ -87,6 +87,12 @@ export default function DashboardSidebar() {
       setOpenCollapsibles(prev => ({ ...prev, "Financeiro": true }));
     } else {
       setOpenCollapsibles(prev => ({ ...prev, "Financeiro": false }));
+    }
+    // NOVO: Efeito para abrir o collapsible "Redes Sociais"
+    if (location.pathname.startsWith("/dashboard/whatsapp") || location.pathname.startsWith("/dashboard/instagram") || location.pathname.startsWith("/dashboard/facebook")) {
+      setOpenCollapsibles(prev => ({ ...prev, "Redes Sociais": true }));
+    } else {
+      setOpenCollapsibles(prev => ({ ...prev, "Redes Sociais": false }));
     }
   }, [location.pathname]);
 
@@ -131,7 +137,7 @@ export default function DashboardSidebar() {
                   <Button
                     variant="ghost"
                     className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition-colors duration-200 ${
-                      isActive || (item.label === "Financeiro" && location.pathname.startsWith("/dashboard/financial"))
+                      isActive || (item.label === "Financeiro" && location.pathname.startsWith("/dashboard/financial")) || (item.label === "Redes Sociais" && (location.pathname.startsWith("/dashboard/whatsapp") || location.pathname.startsWith("/dashboard/instagram") || location.pathname.startsWith("/dashboard/facebook")))
                         ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     }`}

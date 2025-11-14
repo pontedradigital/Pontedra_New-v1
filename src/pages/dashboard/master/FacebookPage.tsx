@@ -2,9 +2,9 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { BarChart } from 'lucide-react';
+import { Facebook } from 'lucide-react';
 
-export default function ReportsPage() {
+export default function FacebookPage() {
   const { profile } = useAuth();
 
   return (
@@ -16,11 +16,11 @@ export default function ReportsPage() {
         className="p-0"
       >
         <h1 className="text-4xl font-bold text-[#57e389] mb-6 flex items-center gap-3">
-          <BarChart className="w-10 h-10" /> Relatórios
+          <Facebook className="w-10 h-10" /> Facebook Messenger
         </h1>
         {profile && (
           <p className="text-lg text-[#9ba8b5]">
-            Olá, <span className="font-semibold text-white">{profile.first_name}</span>! Visualize os relatórios e métricas da plataforma aqui.
+            Olá, <span className="font-semibold text-white">{profile.first_name}</span>! Esta é a página de gerenciamento do Facebook Messenger.
             {profile.client_id && <span className="block text-sm text-muted-foreground mt-1">ID do Cliente: {profile.client_id}</span>}
           </p>
         )}
