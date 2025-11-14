@@ -79,6 +79,7 @@ interface ClientContract {
   payment_due_date: string | null;
   products: ServiceItem | null; // Serviço direto se contract_type for 'one-time'
   packages: PackageItem | null; // Pacote se contract_type for 'monthly'
+  budgets: Budget | null; // NOVO: Adicionado para vincular ao orçamento completo
 }
 
 export default function ProjectsPage() {
@@ -208,6 +209,12 @@ export default function ProjectsPage() {
                 final_price
               )
             )
+          ),
+          budgets (
+            id,
+            budget_items (
+              id, item_type, item_name, item_description, item_price, service_id, package_id
+            )
           )
         `)
         .eq('client_id', user.id)
@@ -227,7 +234,23 @@ export default function ProjectsPage() {
       let totalDeliveryDays = 0;
       const items: { name: string; type: 'service' | 'package' }[] = [];
 
-      if (contract.contract_type === 'one-time' && contract.products) {
+      // NOVO: Se o contrato tem um budget_id, use os itens do orçamento
+      if (contract.budget_id && contract.budgets?.budget_items) {
+        contract.budgets.budget_items.forEach(budgetItem => {
+          items.push({ name: budgetItem.item_name, type: budgetItem.item_type });
+          // Para calcular os dias de entrega, precisamos buscar os detalhes do serviço/pacote
+          if (budgetItem.item_type === 'service' && budgetItem.service_id) {
+            const serviceDetail = services?.find(s => s.id === budgetItem.service_id);
+            totalDeliveryDays += serviceDetail?.initial_delivery_days || 0;
+          } else if (budgetItem.item_type === 'package' && budgetItem.package_id) {
+            const packageDetail = packagesData?.find(p => p.id === budgetItem.package_id);
+            packageDetail?.package_services.forEach(ps => {
+              const serviceInPackage = services?.find(s => s.id === ps.products.id);
+              totalDeliveryDays += serviceInPackage?.initial_delivery_days || 0;
+            });
+          }
+        });
+      } else if (contract.contract_type === 'one-time' && contract.products) {
         totalDeliveryDays += contract.products.initial_delivery_days || 0;
         items.push({ name: contract.products.name, type: 'service' });
       } else if (contract.contract_type === 'monthly' && contract.packages) {
@@ -248,7 +271,7 @@ export default function ProjectsPage() {
         items,
       };
     });
-  }, [contracts]);
+  }, [contracts, services, packagesData]); // Adicionado services e packagesData às dependências
 
   // Add/Edit project mutation
   const upsertProjectMutation = useMutation<void, Error, Partial<ClientContract>>({
@@ -309,7 +332,7 @@ export default function ProjectsPage() {
     if (project) {
       setEditingProject(project);
       setFormData({
-        projectName: project.products?.name || project.packages?.name || '',
+        projectName: project.products?.name || project.packages?.name || project.budgets?.client_name || '', // Prioriza nome do orçamento
         contractType: project.contract_type || undefined,
         selectedItemId: project.service_id || project.package_id || undefined,
         priceAgreed: project.price_agreed,
@@ -405,7 +428,7 @@ export default function ProjectsPage() {
       contract_type: formData.contractType,
       start_date: formData.startDate,
       end_date: formData.estimatedCompletionDate || null, // Garante que seja null se não preenchido
-      price_agreed: formData.priceAgreed,
+      price_agreed: formData.priceAgred,
       is_paid: formData.is_paid,
       payment_due_date: formData.payment_due_date || null,
     };
@@ -503,7 +526,7 @@ export default function ProjectsPage() {
                       <Tag className="w-4 h-4 text-primary" /> {project.project_id}
                     </TableCell>
                     <TableCell className="font-medium text-foreground py-4">
-                      {project.products?.name || project.packages?.name || 'N/A'}
+                      {project.products?.name || project.packages?.name || project.budgets?.client_name || 'N/A'}
                     </TableCell>
                     <TableCell className="py-4">
                       <ul className="space-y-1">

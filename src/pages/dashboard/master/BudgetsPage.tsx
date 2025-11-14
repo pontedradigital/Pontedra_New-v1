@@ -47,6 +47,7 @@ interface ServiceItem {
   name: string;
   description: string | null;
   final_price: number;
+  initial_delivery_days: number | null; // Adicionado para cálculo de prazo
 }
 
 // Tipos de dados para Pacotes
@@ -152,7 +153,7 @@ export default function BudgetsPage() {
   const { data: services, isLoading: isLoadingServices } = useQuery<ServiceItem[], Error>({
     queryKey: ['allServices'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('id, sku, name, description, final_price').order('name', { ascending: true });
+      const { data, error } = await supabase.from('products').select('id, sku, name, description, final_price, initial_delivery_days').order('name', { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -919,23 +920,71 @@ export default function BudgetsPage() {
     setCurrentEditableBudget(null);
   };
 
-  // NOVO: Mutação para aprovar orçamento
+  // NOVO: Mutação para aprovar orçamento e criar projeto
   const approveBudgetMutation = useMutation<void, Error, string>({
     mutationFn: async (budgetId) => {
-      const { error } = await supabase
+      // 1. Buscar o orçamento completo
+      const { data: budgetToApproveData, error: fetchError } = await supabase
         .from('budgets')
-        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .select('*, budget_items(*)')
+        .eq('id', budgetId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!budgetToApproveData) throw new Error("Orçamento não encontrado.");
+
+      // 2. Atualizar o status do orçamento para 'converted' e registrar a data de aprovação
+      const approvedAt = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from('budgets')
+        .update({ status: 'converted', approved_at: approvedAt })
         .eq('id', budgetId);
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // 3. Criar um registro em 'client_contracts'
+      if (budgetToApproveData.budget_items.length > 0) {
+        const firstItem = budgetToApproveData.budget_items[0];
+        const contractType = firstItem.item_type === 'package' ? 'monthly' : 'one-time';
+        
+        // Calcular totalDeliveryDays para o estimatedCompletionDate
+        let totalDeliveryDays = 0;
+        if (contractType === 'one-time' && firstItem.service_id) {
+          const service = services?.find(s => s.id === firstItem.service_id);
+          totalDeliveryDays += service?.initial_delivery_days || 0;
+        } else if (contractType === 'monthly' && firstItem.package_id) {
+          const pkg = allPackages?.find(p => p.id === firstItem.package_id);
+          pkg?.services_in_package?.forEach(s => {
+            totalDeliveryDays += s.initial_delivery_days || 0;
+          });
+        }
+        const estimatedCompletionDate = addBusinessDays(new Date(approvedAt), totalDeliveryDays);
+
+        const { error: contractError } = await supabase
+          .from('client_contracts')
+          .insert({
+            client_id: budgetToApproveData.user_id,
+            budget_id: budgetToApproveData.id,
+            contract_type: contractType,
+            start_date: approvedAt,
+            end_date: format(estimatedCompletionDate, 'yyyy-MM-dd'), // Usar a data calculada
+            price_agreed: budgetToApproveData.total_amount,
+            is_paid: false, // Padrão para não pago
+            payment_due_date: null, // Pode ser definido posteriormente
+            service_id: firstItem.item_type === 'service' ? firstItem.service_id : null,
+            package_id: firstItem.item_type === 'package' ? firstItem.package_id : null,
+          });
+        if (contractError) throw contractError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      toast.success('Orçamento aprovado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] }); // Invalidar a query de projetos do cliente
+      toast.success('Orçamento aprovado e projeto criado com sucesso!');
       setIsApproveConfirmOpen(false); // Fechar o pop-up de confirmação
       setBudgetToApprove(null); // Limpar o orçamento em aprovação
     },
     onError: (err) => {
-      toast.error(`Erro ao aprovar orçamento: ${err.message}`);
+      toast.error(`Erro ao aprovar orçamento ou criar projeto: ${err.message}`);
     },
   });
 
@@ -1020,7 +1069,7 @@ export default function BudgetsPage() {
                          budget.status === 'rejected' ? 'Rejeitado' :
                          budget.status === 'converted' ? 'Convertido' : 'Desconhecido'}
                       </Badge>
-                      {budget.approved_at && budget.status === 'approved' && (
+                      {budget.approved_at && budget.status === 'converted' && ( // Exibir data de aprovação apenas se convertido
                         <p className="text-xs text-muted-foreground mt-1">
                           em {format(new Date(budget.approved_at), 'dd/MM/yyyy', { locale: ptBR })}
                         </p>
@@ -1365,7 +1414,7 @@ export default function BudgetsPage() {
               <DialogTitle className="text-2xl font-bold text-primary">Confirmar Aprovação</DialogTitle>
               <DialogDescription className="text-muted-foreground">
                 Tem certeza que deseja aprovar o orçamento <span className="font-semibold text-white">#{budgetToApprove?.proposal_number}</span>?
-                Esta ação não pode ser desfeita.
+                Esta ação irá criar um novo projeto e não poderá ser desfeita.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex justify-end gap-2">
@@ -1374,7 +1423,7 @@ export default function BudgetsPage() {
               </Button>
               <Button onClick={() => budgetToApprove && approveBudgetMutation.mutate(budgetToApprove.id)} disabled={approveBudgetMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
                 {approveBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                Aprovar
+                Aprovar e Criar Projeto
               </Button>
             </DialogFooter>
           </DialogContent>
