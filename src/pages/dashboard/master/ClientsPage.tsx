@@ -55,6 +55,7 @@ import {
   Lock, // Adicionado para campos de senha
   Eye, // Adicionado para visibilidade da senha
   EyeOff, // Adicionado para visibilidade da senha
+  RefreshCw, // NOVO: Ícone para o botão de atualizar
 } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -142,7 +143,7 @@ export default function ClientsPage() {
   const [showNewClientConfirmPassword, setShowNewClientConfirmPassword] = useState(false);
 
   // Fetch all user profiles
-  const { data: profilesData, isLoading, isError, error } = useQuery<Omit<UserProfile, 'email'>[], Error>({
+  const { data: profilesData, isLoading, isError, error, refetch } = useQuery<Omit<UserProfile, 'email'>[], Error>({ // Adicionado refetch
     queryKey: ['clients'],
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
@@ -436,6 +437,12 @@ export default function ClientsPage() {
     setIsDetailsPopupOpen(true);
   };
 
+  // NOVO: Função para atualizar os dados dos clientes
+  const handleRefreshClients = () => {
+    refetch(); // Força a re-execução da query 'clients'
+    toast.info("Atualizando lista de clientes...");
+  };
+
   if (isLoading || isLoadingEmails) {
     return (
       <DashboardLayout>
@@ -469,9 +476,14 @@ export default function ClientsPage() {
             <Users className="w-10 h-10 text-[#57e389]" />
             <h1 className="text-4xl font-bold text-foreground">Gerenciar Clientes</h1>
           </div>
-          <Button onClick={handleOpenCreateDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Cliente
-          </Button>
+          <div className="flex gap-2"> {/* Container para os botões */}
+            <Button onClick={handleRefreshClients} className="bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md">
+              <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
+            </Button>
+            <Button onClick={handleOpenCreateDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
+              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Cliente
+            </Button>
+          </div>
         </div>
         <p className="text-lg text-[#9ba8b5]">
           Visualize e gerencie todos os perfis de usuários cadastrados na plataforma.
