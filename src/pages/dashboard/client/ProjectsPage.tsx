@@ -21,7 +21,7 @@ interface PackageInContract {
   id: string;
   name: string;
   package_services: {
-    products: ServiceInContract; // Corrigido para 'products' na interface
+    products: ServiceInContract;
   }[];
 }
 
@@ -75,7 +75,7 @@ export default function ProjectsPage() {
             id,
             name,
             package_services (
-              products:service_id ( -- CORREÇÃO AQUI: Usando 'products:service_id' novamente
+              products:service_id (
                 id,
                 name,
                 initial_delivery_days
