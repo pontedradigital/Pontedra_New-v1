@@ -49,6 +49,14 @@ import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporá
 import jsPDF from 'jspdf'; // Importar jspdf
 import html2canvas from 'html2canvas'; // Importar html2canvas
 import { Input } from '@/components/ui/input'; // Importar Input
+import { // Adicionado importação dos componentes Dialog
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 // Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
