@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
-import { format, addDays, isWeekend, isSameDay, isBefore, startOfDay } from 'date-fns';
+import { format, addDays, isWeekend, isSameDay, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2, CalendarDays, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface MasterAvailability {
   day_of_week: number; // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
   start_time: string; // e.g., "10:00:00"
-  end_time: string;   // e.g., "16:00:00"
+  end_time:   string;   // e.g., "16:00:00"
 }
 
 interface MasterException {
@@ -21,14 +21,20 @@ interface MasterException {
   end_time: string | null;
 }
 
+interface Appointment {
+  id: string;
+  start_time: string; // Apenas o start_time é necessário para verificar a data
+}
+
 interface DateSelectionListProps {
   masterId: string;
   onDateSelect: (date: Date) => void;
   selectedDate: Date | undefined;
-  isMasterBooking?: boolean; // NOVA PROPRIEDADE
+  isMasterBooking?: boolean;
+  allAppointments: Appointment[]; // NOVA PROPRIEDADE: Todos os agendamentos
 }
 
-const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateSelect, selectedDate, isMasterBooking = false }) => {
+const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateSelect, selectedDate, isMasterBooking = false, allAppointments }) => {
   const [dates, setDates] = useState<Date[]>([]);
 
   // Fetch master's recurring availability
@@ -70,6 +76,15 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
     }
     setDates(generatedDates);
   }, [isMasterBooking]);
+
+  // Memoize dates with appointments for quick lookup
+  const datesWithAppointments = useMemo(() => {
+    const datesSet = new Set<string>();
+    allAppointments.forEach(app => {
+      datesSet.add(format(parseISO(app.start_time), 'yyyy-MM-dd'));
+    });
+    return datesSet;
+  }, [allAppointments]);
 
   // Determine available dates based on availability and exceptions
   const availableDates = useMemo(() => {
@@ -137,6 +152,7 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
               const isAvailableForMaster = availableDates.some(d => isSameDay(d, date));
               const isPastDate = isBefore(date, startOfDay(new Date()));
               const isSelected = selectedDate && isSameDay(selectedDate, date);
+              const hasAppointment = datesWithAppointments.has(format(date, 'yyyy-MM-dd')); // Check for appointments
 
               // A data é desabilitada se:
               // 1. Não é master booking E não está disponível (considerando fins de semana e exceções)
@@ -153,9 +169,11 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
                   className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200
                     ${isSelected
                       ? 'bg-primary text-primary-foreground border-primary shadow-md'
-                      : !isDisabled
-                        ? 'bg-muted/20 border-border text-foreground hover:bg-muted/40'
-                        : 'bg-muted/10 border-border/50 text-muted-foreground cursor-not-allowed opacity-60'
+                      : hasAppointment // Apply different style if there's an appointment
+                        ? 'bg-blue-500/20 border-blue-500 text-blue-300 hover:bg-blue-500/30'
+                        : !isDisabled
+                          ? 'bg-muted/20 border-border text-foreground hover:bg-muted/40'
+                          : 'bg-muted/10 border-border/50 text-muted-foreground cursor-not-allowed opacity-60'
                     }`}
                 >
                   <span className="text-sm font-medium mb-1">
