@@ -51,10 +51,15 @@ import {
   Clock,
   Save,
   XCircle,
+  PlusCircle, // Adicionado para o botão de adicionar
+  Lock, // Adicionado para campos de senha
+  Eye, // Adicionado para visibilidade da senha
+  EyeOff, // Adicionado para visibilidade da senha
 } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup'; // Importar o novo componente
+import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporárias
 
 // Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
@@ -78,16 +83,63 @@ interface UserProfile {
   email: string; // Adicionado para facilitar a exibição
 }
 
+// Função para gerar uma senha temporária
+const generateTemporaryPassword = () => {
+  return uuidv4().replace(/-/g, '').substring(0, 12); // 12 caracteres alfanuméricos
+};
+
 export default function ClientsPage() {
   const queryClient = useQueryClient();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // Renomeado para evitar conflito
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'prospect' | 'client' | 'master'>('all');
 
-  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
-  const [selectedClientForDetails, setSelectedClientForDetails] = useState<UserProfile | null>(null); // Cliente para exibir no pop-up
+  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false);
+  const [selectedClientForDetails, setSelectedClientForDetails] = useState<UserProfile | null>(null);
+
+  // NOVO: Estados para o diálogo de criação de cliente
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newClientFormData, setNewClientFormData] = useState<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    telefone: string;
+    company_organization: string;
+    address_street: string;
+    address_number: string;
+    address_complement: string;
+    address_neighborhood: string;
+    address_city: string;
+    address_state: string;
+    address_cep: string;
+    date_of_birth: string;
+    role: 'prospect' | 'client' | 'master';
+    status: 'ativo' | 'inativo';
+  }>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    telefone: '',
+    company_organization: '',
+    address_street: '',
+    address_number: '',
+    address_complement: '',
+    address_neighborhood: '',
+    address_city: '',
+    address_state: '',
+    address_cep: '',
+    date_of_birth: '',
+    role: 'prospect', // Default role
+    status: 'ativo', // Default status
+  });
+  const [showNewClientPassword, setShowNewClientPassword] = useState(false);
+  const [showNewClientConfirmPassword, setShowNewClientConfirmPassword] = useState(false);
 
   // Fetch all user profiles
   const { data: profilesData, isLoading, isError, error } = useQuery<Omit<UserProfile, 'email'>[], Error>({
@@ -181,6 +233,70 @@ export default function ClientsPage() {
     },
   });
 
+  // NOVO: Mutation to create a new client (user and profile)
+  const createClientMutation = useMutation<void, Error, typeof newClientFormData>({
+    mutationFn: async (clientData) => {
+      if (clientData.password !== clientData.confirmPassword) {
+        throw new Error("As senhas não coincidem.");
+      }
+
+      const tempPassword = clientData.password; // Usar a senha fornecida pelo master
+      const userMetadata = {
+        first_name: clientData.first_name,
+        last_name: clientData.last_name,
+        telefone: clientData.telefone || null,
+        company_organization: clientData.company_organization || null,
+        address_street: clientData.address_street || null,
+        address_number: clientData.address_number || null,
+        address_complement: clientData.address_complement || null,
+        address_neighborhood: clientData.address_neighborhood || null,
+        address_city: clientData.address_city || null,
+        address_state: clientData.address_state || null,
+        address_cep: clientData.address_cep || null,
+        date_of_birth: clientData.date_of_birth || null,
+        role: clientData.role, // Passa o papel para o trigger handle_new_user
+        status: clientData.status, // Passa o status para o trigger handle_new_user
+      };
+
+      // Chamar a Edge Function para criar o usuário sem verificação
+      const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('create-unverified-user', {
+        body: {
+          email: clientData.email,
+          password: tempPassword,
+          user_metadata: userMetadata,
+        },
+      });
+
+      if (edgeFunctionError) {
+        const specificErrorMessage = (edgeFunctionError as any)?.context?.data?.error || edgeFunctionError.message;
+        throw new Error(`Falha ao criar novo usuário: ${specificErrorMessage}`);
+      }
+      if (!edgeFunctionData || !edgeFunctionData.userId) {
+        throw new Error("Falha ao criar novo usuário: Edge Function não retornou ID do usuário.");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clientEmails'] });
+      toast.success('Cliente criado com sucesso!');
+      setIsCreateDialogOpen(false);
+      setNewClientFormData({
+        first_name: '', last_name: '', email: '', password: '', confirmPassword: '',
+        telefone: '', company_organization: '', address_street: '', address_number: '',
+        address_complement: '', address_neighborhood: '', address_city: '', address_state: '',
+        address_cep: '', date_of_birth: '', role: 'prospect', status: 'ativo',
+      });
+    },
+    onError: (err: any) => {
+      console.error("Erro completo da mutação de criação de cliente:", err);
+      let errorMessage = "Erro desconhecido ao criar cliente.";
+      if (err && err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(`Erro ao criar cliente: ${errorMessage}`);
+    },
+  });
+
   // Mutation to delete a client profile using the Edge Function
   const deleteClientMutation = useMutation<void, Error, string>({
     mutationFn: async (clientId) => {
@@ -237,6 +353,39 @@ export default function ClientsPage() {
       return;
     }
     updateClientMutation.mutate({ id: editingClient.id, ...formData });
+  };
+
+  // NOVO: Funções para o formulário de criação de cliente
+  const handleOpenCreateDialog = () => {
+    setNewClientFormData({
+      first_name: '', last_name: '', email: '', password: '', confirmPassword: '',
+      telefone: '', company_organization: '', address_street: '', address_number: '',
+      address_complement: '', address_neighborhood: '', address_city: '', address_state: '',
+      address_cep: '', date_of_birth: '', role: 'prospect', status: 'ativo',
+    });
+    setShowNewClientPassword(false);
+    setShowNewClientConfirmPassword(false);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleNewClientFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewClientFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleNewClientSelectChange = (name: string, value: string) => {
+    setNewClientFormData(prev => ({
+      ...prev,
+      [name]: value as any, // Cast para aceitar os tipos de role/status
+    }));
+  };
+
+  const handleCreateClientSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createClientMutation.mutate(newClientFormData);
   };
 
   const formatPhoneNumber = (value: string | null) => {
@@ -315,9 +464,14 @@ export default function ClientsPage() {
         transition={{ duration: 0.5 }}
         className="space-y-8"
       >
-        <div className="flex items-center gap-4 mb-6">
-          <Users className="w-10 h-10 text-[#57e389]" />
-          <h1 className="text-4xl font-bold text-foreground">Gerenciar Clientes</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Users className="w-10 h-10 text-[#57e389]" />
+            <h1 className="text-4xl font-bold text-foreground">Gerenciar Clientes</h1>
+          </div>
+          <Button onClick={handleOpenCreateDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Cliente
+          </Button>
         </div>
         <p className="text-lg text-[#9ba8b5]">
           Visualize e gerencie todos os perfis de usuários cadastrados na plataforma.
@@ -527,65 +681,80 @@ export default function ClientsPage() {
                   className="bg-background border-border text-foreground"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_number">Número</Label>
-                <Input
-                  id="address_number"
-                  name="address_number"
-                  value={formData.address_number || ''}
-                  onChange={handleFormChange}
-                  className="bg-background border-border text-foreground"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="address_number">Número</Label>
+                  <Input
+                    id="address_number"
+                    name="address_number"
+                    value={formData.address_number || ''}
+                    onChange={handleFormChange}
+                    placeholder="123"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_complement">Complemento</Label>
+                  <Input
+                    id="address_complement"
+                    name="address_complement"
+                    value={formData.address_complement || ''}
+                    onChange={handleFormChange}
+                    placeholder="Apto, Bloco, etc."
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_complement">Complemento</Label>
-                <Input
-                  id="address_complement"
-                  name="address_complement"
-                  value={formData.address_complement || ''}
-                  onChange={handleFormChange}
-                  className="bg-background border-border text-foreground"
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="address_neighborhood">Bairro</Label>
+                  <Input
+                    id="address_neighborhood"
+                    name="address_neighborhood"
+                    value={formData.address_neighborhood || ''}
+                    onChange={handleFormChange}
+                    placeholder="Seu bairro"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_city">Cidade</Label>
+                  <Input
+                    id="address_city"
+                    name="address_city"
+                    value={formData.address_city || ''}
+                    onChange={handleFormChange}
+                    placeholder="Sua cidade"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_neighborhood">Bairro</Label>
-                <Input
-                  id="address_neighborhood"
-                  name="address_neighborhood"
-                  value={formData.address_neighborhood || ''}
-                  onChange={handleFormChange}
-                  className="bg-background border-border text-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_city">Cidade</Label>
-                <Input
-                  id="address_city"
-                  name="address_city"
-                  value={formData.address_city || ''}
-                  onChange={handleFormChange}
-                  className="bg-background border-border text-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_state">Estado</Label>
-                <Input
-                  id="address_state"
-                  name="address_state"
-                  value={formData.address_state || ''}
-                  onChange={handleFormChange}
-                  className="bg-background border-border text-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address_cep">CEP</Label>
-                <Input
-                  id="address_cep"
-                  name="address_cep"
-                  value={formData.address_cep || ''}
-                  onChange={handleFormChange}
-                  className="bg-background border-border text-foreground"
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="address_state">Estado</Label>
+                  <Input
+                    id="address_state"
+                    name="address_state"
+                    value={formData.address_state || ''}
+                    onChange={handleFormChange}
+                    placeholder="Seu estado"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_cep">CEP</Label>
+                  <Input
+                    id="address_cep"
+                    name="address_cep"
+                    value={formData.address_cep || ''}
+                    onChange={handleFormChange}
+                    maxLength={9}
+                    placeholder="00000-000"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
               </div>
 
               {/* Campo de Papel (Role) */}
@@ -614,6 +783,269 @@ export default function ClientsPage() {
                 <Button type="submit" disabled={updateClientMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   {updateClientMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Salvar Alterações
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* NOVO: Dialog para Criar Cliente */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border text-foreground rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-primary">
+                Adicionar Novo Cliente
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Preencha os detalhes para criar uma nova conta de cliente. Uma senha temporária será gerada.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateClientSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-client-first_name">Nome *</Label>
+                <Input
+                  id="new-client-first_name"
+                  name="first_name"
+                  value={newClientFormData.first_name}
+                  onChange={handleNewClientFormChange}
+                  className="bg-background border-border text-foreground"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-client-last_name">Sobrenome *</Label>
+                <Input
+                  id="new-client-last_name"
+                  name="last_name"
+                  value={newClientFormData.last_name}
+                  onChange={handleNewClientFormChange}
+                  className="bg-background border-border text-foreground"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-client-email">E-mail *</Label>
+                <Input
+                  id="new-client-email"
+                  name="email"
+                  type="email"
+                  value={newClientFormData.email}
+                  onChange={handleNewClientFormChange}
+                  className="bg-background border-border text-foreground"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-client-telefone">Telefone</Label>
+                <Input
+                  id="new-client-telefone"
+                  name="telefone"
+                  type="tel"
+                  value={newClientFormData.telefone}
+                  onChange={handleNewClientFormChange}
+                  placeholder="(00) 00000-0000"
+                  className="bg-background border-border text-foreground"
+                />
+              </div>
+
+              {/* Senha e Confirmar Senha */}
+              <div className="space-y-2">
+                <Label htmlFor="new-client-password">Senha *</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="new-client-password"
+                    name="password"
+                    type={showNewClientPassword ? "text" : "password"}
+                    value={newClientFormData.password}
+                    onChange={handleNewClientFormChange}
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewClientPassword(!showNewClientPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary"
+                  >
+                    {showNewClientPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-client-confirmPassword">Confirmar Senha *</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="new-client-confirmPassword"
+                    name="confirmPassword"
+                    type={showNewClientConfirmPassword ? "text" : "password"}
+                    value={newClientFormData.confirmPassword}
+                    onChange={handleNewClientFormChange}
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewClientConfirmPassword(!showNewClientConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary"
+                  >
+                    {showNewClientConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Campos Opcionais */}
+              <div className="space-y-2">
+                <Label htmlFor="new-client-company_organization">Empresa/Organização</Label>
+                <Input
+                  id="new-client-company_organization"
+                  name="company_organization"
+                  value={newClientFormData.company_organization}
+                  onChange={handleNewClientFormChange}
+                  className="bg-background border-border text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-client-date_of_birth">Data de Nascimento</Label>
+                <Input
+                  id="new-client-date_of_birth"
+                  name="date_of_birth"
+                  type="date"
+                  value={newClientFormData.date_of_birth}
+                  onChange={handleNewClientFormChange}
+                  className="bg-background border-border text-foreground"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="new-client-address_street">Endereço</Label>
+                <Input
+                  id="new-client-address_street"
+                  name="address_street"
+                  value={newClientFormData.address_street}
+                  onChange={handleNewClientFormChange}
+                  className="bg-background border-border text-foreground"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-address_number">Número</Label>
+                  <Input
+                    id="new-client-address_number"
+                    name="address_number"
+                    value={newClientFormData.address_number}
+                    onChange={handleNewClientFormChange}
+                    placeholder="123"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-address_complement">Complemento</Label>
+                  <Input
+                    id="new-client-address_complement"
+                    name="address_complement"
+                    value={newClientFormData.address_complement}
+                    onChange={handleNewClientFormChange}
+                    placeholder="Apto, Bloco, etc."
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-address_neighborhood">Bairro</Label>
+                  <Input
+                    id="new-client-address_neighborhood"
+                    name="address_neighborhood"
+                    value={newClientFormData.address_neighborhood}
+                    onChange={handleNewClientFormChange}
+                    placeholder="Seu bairro"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-address_city">Cidade</Label>
+                  <Input
+                    id="new-client-address_city"
+                    name="address_city"
+                    value={newClientFormData.address_city}
+                    onChange={handleNewClientFormChange}
+                    placeholder="Sua cidade"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-address_state">Estado</Label>
+                  <Input
+                    id="new-client-address_state"
+                    name="address_state"
+                    value={newClientFormData.address_state}
+                    onChange={handleNewClientFormChange}
+                    placeholder="Seu estado"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-address_cep">CEP</Label>
+                  <Input
+                    id="new-client-address_cep"
+                    name="address_cep"
+                    value={newClientFormData.address_cep}
+                    onChange={handleNewClientFormChange}
+                    maxLength={9}
+                    placeholder="00000-000"
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Campo de Papel (Role) */}
+              <div className="space-y-2">
+                <Label htmlFor="new-client-role">Papel</Label>
+                <Select
+                  name="role"
+                  value={newClientFormData.role}
+                  onValueChange={(value) => handleNewClientSelectChange('role', value)}
+                >
+                  <SelectTrigger className="w-full bg-background border-border text-foreground">
+                    <SelectValue placeholder="Selecione o Papel" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border text-popover-foreground">
+                    <SelectItem value="prospect">Prospect</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                    <SelectItem value="master">Master</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Campo de Status */}
+              <div className="space-y-2">
+                <Label htmlFor="new-client-status">Status</Label>
+                <Select
+                  name="status"
+                  value={newClientFormData.status}
+                  onValueChange={(value) => handleNewClientSelectChange('status', value)}
+                >
+                  <SelectTrigger className="w-full bg-background border-border text-foreground">
+                    <SelectValue placeholder="Selecione o Status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border text-popover-foreground">
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter className="md:col-span-2 mt-6">
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+                  <XCircle className="mr-2 h-4 w-4" /> Cancelar
+                </Button>
+                <Button type="submit" disabled={createClientMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  {createClientMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                  Adicionar Cliente
                 </Button>
               </DialogFooter>
             </form>
