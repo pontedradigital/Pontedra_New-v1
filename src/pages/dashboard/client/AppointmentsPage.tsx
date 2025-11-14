@@ -37,8 +37,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
 import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog';
-import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog'; // NOVO: Importar AddAppointmentDialog
+import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog';
 import { toast } from 'sonner';
+import { Calendar } from '@/components/ui/calendar'; // Importar o componente Calendar
 
 // Interfaces para as tabelas
 interface Appointment {
@@ -81,8 +82,10 @@ export default function AppointmentsPage() {
   const [isTimeSlotDialogOpen, setIsTimeSlotDialogOpen] = useState(false);
   const [masterIdForBooking, setMasterIdForBooking] = useState<string | null>(null);
 
-  const [isAddAppointmentDialogOpen, setIsAddAppointmentDialogOpen] = useState(false); // NOVO: Estado para o diálogo de adição de agendamento
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null); // NOVO: Estado para edição
+  const [isAddAppointmentDialogOpen, setIsAddAppointmentDialogOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+
+  const isMaster = profile?.role === 'master';
 
   // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
   const handleViewDetails = useCallback((appointment: Appointment) => {
@@ -91,8 +94,9 @@ export default function AppointmentsPage() {
   }, []);
 
   // Fetch the master's ID (assuming there's only one master for now, or picking the first one)
-  const { data: masterProfile, isLoading: isLoadingMasterProfile } = useQuery<UserProfile | null, Error>({
-    queryKey: ['masterProfile'],
+  // This query is now only for clients to find THE master to book with.
+  const { data: singleMasterProfile, isLoading: isLoadingSingleMasterProfile } = useQuery<UserProfile | null, Error>({
+    queryKey: ['singleMasterProfile'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -103,13 +107,16 @@ export default function AppointmentsPage() {
       return data;
     },
     staleTime: Infinity,
+    enabled: !isMaster, // Only run this query if the logged-in user is NOT a master
   });
 
   useEffect(() => {
-    if (masterProfile) {
-      setMasterIdForBooking(masterProfile.id);
+    if (isMaster && user?.id) {
+      setMasterIdForBooking(user.id); // Master books for themselves or manages others for their own calendar
+    } else if (!isMaster && singleMasterProfile) {
+      setMasterIdForBooking(singleMasterProfile.id); // Client books with the single master
     }
-  }, [masterProfile]);
+  }, [isMaster, user?.id, singleMasterProfile]);
 
   // Fetch Appointments (filtered by client_id for clients, all for master)
   const { data: appointments, isLoading: isLoadingAppointments } = useQuery<Appointment[], Error>({
@@ -137,9 +144,9 @@ export default function AppointmentsPage() {
       if (profile?.role === 'client') {
         query = query.eq('client_id', user.id);
       } else if (profile?.role === 'master') {
-        // Master sees all appointments, but we might want to filter by master_id if there are multiple masters
-        // For now, assuming the logged-in master is THE master.
-        // query = query.eq('master_id', user.id); // Removido para master ver todos os agendamentos
+        // Master sees all appointments, no specific filter by master_id here
+        // If a master wants to see only their own appointments, an additional filter would be needed.
+        // For now, assuming master sees all.
       }
 
       const { data, error } = await query;
@@ -277,8 +284,6 @@ export default function AppointmentsPage() {
     },
   });
 
-  const isMaster = profile?.role === 'master';
-
   // Filtra agendamentos para "Agendamentos do Dia"
   const todayAppointments = useMemo(() => {
     if (!appointments || !selectedDate) return [];
@@ -346,7 +351,7 @@ export default function AppointmentsPage() {
     setIsAddAppointmentDialogOpen(true);
   };
 
-  if (authLoading || isLoadingAppointments || isLoadingMasterProfile) {
+  if (authLoading || isLoadingAppointments || (isMaster ? false : isLoadingSingleMasterProfile)) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -401,13 +406,33 @@ export default function AppointmentsPage() {
             : ' Acompanhe seus compromissos com a Pontedra.'}
         </p>
 
-        {/* NOVO: Componente de seleção de data em lista (apenas para clientes) */}
-        {!isMaster && masterIdForBooking && (
-          <DateSelectionList
-            masterId={masterIdForBooking}
-            onDateSelect={handleDateSelectedFromList}
-            selectedDate={selectedDate}
-          />
+        {/* Componente de seleção de data */}
+        {isMaster ? (
+          <Card className="bg-card border-border shadow-lg rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-primary" /> Selecione uma Data
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                initialFocus
+                locale={ptBR}
+                className="rounded-md border bg-background"
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          masterIdForBooking && (
+            <DateSelectionList
+              masterId={masterIdForBooking}
+              onDateSelect={handleDateSelectedFromList}
+              selectedDate={selectedDate}
+            />
+          )
         )}
 
         {/* Três caixas de resumo - em linhas */}
@@ -636,7 +661,7 @@ export default function AppointmentsPage() {
         </div>
       </motion.div>
 
-      {/* NOVO: Diálogo de Seleção de Horário (para clientes) */}
+      {/* Diálogo de Seleção de Horário (para clientes) */}
       {!isMaster && masterIdForBooking && (
         <TimeSlotSelectionDialog
           isOpen={isTimeSlotDialogOpen}
@@ -647,16 +672,16 @@ export default function AppointmentsPage() {
         />
       )}
 
-      {/* NOVO: Diálogo de Adição/Edição de Agendamento (para Masters) */}
+      {/* Diálogo de Adição/Edição de Agendamento (para Masters) */}
       {isMaster && (
         <AddAppointmentDialog
           isOpen={isAddAppointmentDialogOpen}
           onClose={() => setIsAddAppointmentDialogOpen(false)}
           onSave={async (data) => {
-            await upsertAppointmentMutation.mutate(data); // Passa o objeto de dados completo
+            await upsertAppointmentMutation.mutate(data);
           }}
           isSaving={upsertAppointmentMutation.isPending}
-          initialData={editingAppointment} // Passa o agendamento em edição
+          initialData={editingAppointment}
         />
       )}
     </DashboardLayout>

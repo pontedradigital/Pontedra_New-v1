@@ -39,9 +39,9 @@ import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
-import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // Importar DateSelectionList
-import { useAuth } from '@/context/AuthContext'; // Importar useAuth
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Importar RadioGroup
+import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
+import { useAuth } from '@/context/AuthContext';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface Appointment {
   id: string;
@@ -87,7 +87,7 @@ interface UserProfile {
 interface MasterAvailability {
   day_of_week: number; // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
   start_time: string; // e.g., "10:00:00"
-  end_time: string;   // e.g., "16:00:00"
+  end_time:   // e.g., "16:00:00"
 }
 
 interface MasterException {
@@ -98,7 +98,7 @@ interface MasterException {
 }
 
 const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onClose, onSave, isSaving, initialData }) => {
-  const { profile } = useAuth(); // Usar useAuth para obter o perfil do usuário logado
+  const { user, profile } = useAuth(); // Usar user e profile para obter o ID do master logado
   const [clientSelectionMode, setClientSelectionMode] = useState<'existing' | 'new'>('existing');
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   const [newClientName, setNewClientName] = useState('');
@@ -304,12 +304,15 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       setStatus(initialData.status);
       setNotes(initialData.notes || '');
     } else {
-      // Set default master if only one exists for new appointments
-      if (masterProfiles && masterProfiles.length === 1) {
+      // For new appointments, if logged-in user is master, pre-select them as master
+      if (isMaster && user?.id) {
+        setSelectedMasterId(user.id);
+      } else if (masterProfiles && masterProfiles.length === 1) {
+        // Fallback for non-master if only one master exists
         setSelectedMasterId(masterProfiles[0].id);
       }
     }
-  }, [isOpen, initialData, masterProfiles]);
+  }, [isOpen, initialData, masterProfiles, isMaster, user?.id]);
 
   const formatPhoneNumber = (value: string) => {
     const cleaned = value.replace(/\D/g, ''); // Remove tudo que não é dígito
