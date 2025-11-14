@@ -3,78 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Loader2,
-  Calendar as CalendarIcon,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  Info,
-  PlusCircle,
-  CheckCircle,
-  XCircle,
-  Edit,
-  Trash2,
-} from 'lucide-react';
-import {
-  format,
-  parseISO,
-  isSameDay,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  isWithinInterval,
-  setHours,
-  setMinutes,
-} from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
-import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog';
-import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog';
-import { toast } from 'sonner';
-// import { Calendar } from '@/components/ui/calendar'; // Removido o componente Calendar
-
-// Interfaces para as tabelas
-interface Appointment {
-  id: string;
-  client_id: string;
-  master_id: string;
-  start_time: string; // TIMESTAMP WITH TIME ZONE
-  end_time:   string;   // TIMESTAMP WITH TIME ZONE
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  notes: string | null;
-  created_at: string;
-  client_profile?: { // Alias para o perfil do cliente
-    first_name: string | null;
-    last_name: string | null;
-    telefone: string | null;
-  };
-  master_profile?: { // Alias para o perfil do master
-    first_name: string | null;
-    last_name: string | null;
-    telefone: string | null;
-  };
-  client_email?: string; // Adicionado para o email do cliente
-  master_email?: string; // Adicionado para o email do master
-}
-
-interface UserProfile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  telefone: string | null;
-  email: string;
-  role: 'prospect' | 'client' | 'master';
-}
-
-export default function AppointmentsPage() {
+import { useQuery, useMutation, useQueryClient } => {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
