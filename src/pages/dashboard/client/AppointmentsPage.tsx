@@ -39,7 +39,7 @@ import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
 import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog';
 import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog';
 import { toast } from 'sonner';
-import { Calendar } from '@/components/ui/calendar'; // Importar o componente Calendar
+// import { Calendar } from '@/components/ui/calendar'; // Removido o componente Calendar
 
 // Interfaces para as tabelas
 interface Appointment {
@@ -407,32 +407,13 @@ export default function AppointmentsPage() {
         </p>
 
         {/* Componente de seleção de data */}
-        {isMaster ? (
-          <Card className="bg-card border-border shadow-lg rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5 text-primary" /> Selecione uma Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                initialFocus
-                locale={ptBR}
-                className="rounded-md border bg-background"
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          masterIdForBooking && (
-            <DateSelectionList
-              masterId={masterIdForBooking}
-              onDateSelect={handleDateSelectedFromList}
-              selectedDate={selectedDate}
-            />
-          )
+        {masterIdForBooking && ( // Renderiza DateSelectionList para ambos os papéis
+          <DateSelectionList
+            masterId={masterIdForBooking}
+            onDateSelect={setSelectedDate}
+            selectedDate={selectedDate}
+            isMasterBooking={isMaster} // Passa a nova propriedade
+          />
         )}
 
         {/* Três caixas de resumo - em linhas */}
