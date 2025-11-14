@@ -387,8 +387,7 @@ export default function BudgetsPage() {
         }
         return [...prev, {
           id: itemToToggle.id,
-          type: itemToTo
-          gle.type,
+          type: itemToToggle.type, // Corrected typo here
           name: itemToToggle.name,
           description: itemToToggle.description,
           price: itemToToggle.price,
