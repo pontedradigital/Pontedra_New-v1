@@ -618,27 +618,50 @@ export default function AppointmentsPage() {
             </p>
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1">
-                <div className="react-calendar-container"> {/* Adicionado o contêiner para o calendário */}
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                    locale={ptBR}
-                    className="rounded-md border bg-background"
-                    disabled={(date) => isBefore(date, startOfDay(new Date()))} // Desabilita datas passadas
-                    modifiers={{
-                      available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
-                    }}
-                    modifiersStyles={{
-                      available: {
-                        backgroundColor: 'hsl(var(--primary) / 0.2)',
-                        color: 'hsl(var(--primary))',
-                        fontWeight: 'bold',
-                      },
-                    }}
-                  />
-                </div>
+                {/* Removido o contêiner 'react-calendar-container' */}
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  locale={ptBR}
+                  className="rounded-xl border border-border bg-card p-4 shadow-lg" // Enhanced container styling
+                  classNames={{
+                    months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                    month: "space-y-4",
+                    caption: "flex justify-center pt-1 relative items-center",
+                    caption_label: "text-lg font-semibold text-foreground", // Larger, bolder month/year
+                    nav: "space-x-1 flex items-center",
+                    nav_button: "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100 text-muted-foreground hover:bg-muted",
+                    nav_button_previous: "absolute left-1",
+                    nav_button_next: "absolute right-1",
+                    table: "w-full border-collapse space-y-1",
+                    head_row: "flex",
+                    head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] uppercase", // Uppercase, smaller weekdays
+                    row: "flex w-full mt-2",
+                    cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-foreground hover:bg-muted flex items-center justify-center", // Added flex, items-center, justify-center
+                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full", // Solid circle for selected day
+                    day_today: "bg-accent text-accent-foreground rounded-full", // Highlight today with a circle
+                    day_outside: "text-muted-foreground opacity-50",
+                    day_disabled: "text-muted-foreground opacity-30",
+                    day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                    hidden: "invisible",
+                  }}
+                  modifiers={{
+                    available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
+                  }}
+                  modifiersStyles={{
+                    available: {
+                      // This will be overridden by day_selected if it's also selected
+                      // But will apply to other available dates.
+                      backgroundColor: 'hsl(var(--primary) / 0.1)',
+                      color: 'hsl(var(--primary))',
+                      fontWeight: 'bold',
+                      borderRadius: '9999px', // Ensure available dates also have a circular background
+                    },
+                  }}
+                />
               </div>
               <div className="flex-1 space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">
@@ -903,7 +926,7 @@ export default function AppointmentsPage() {
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground flex items-center gap-2"><Phone className="w-4 h-4" /> Telefone do Cliente</p>
                       <p className="font-semibold text-foreground">{selectedAppointment.profiles.telefone || 'N/A'}</p>
-                    </div>
+                    </p>
                   </>
                 )}
                 {selectedAppointment.notes && (
@@ -1048,6 +1071,7 @@ export default function AppointmentsPage() {
                             backgroundColor: 'hsl(var(--primary) / 0.2)',
                             color: 'hsl(var(--primary))',
                             fontWeight: 'bold',
+                            borderRadius: '9999px',
                           },
                         }}
                       />
