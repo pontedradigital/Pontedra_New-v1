@@ -107,7 +107,7 @@ export default function ClientsPage() {
           address_cep,
           date_of_birth,
           created_at,
-          auth_users:id (email)
+          auth_users!id(email)
         `);
 
       if (profilesError) throw profilesError;

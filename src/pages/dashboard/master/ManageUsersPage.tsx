@@ -83,7 +83,7 @@ export default function ManageUsersPage() {
           telefone,
           role,
           status,
-          auth_users:id (email)
+          auth_users!id (email)
         `);
 
       if (profilesError) throw profilesError;

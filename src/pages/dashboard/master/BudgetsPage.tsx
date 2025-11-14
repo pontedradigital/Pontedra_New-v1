@@ -271,7 +271,7 @@ export default function BudgetsPage() {
           last_name,
           telefone,
           role,
-          auth_users:id (email)
+          auth_users!id (email)
         `)
         .eq('role', 'client'); // Apenas clientes
 
@@ -958,7 +958,7 @@ export default function BudgetsPage() {
                         <Download className="h-4 w-4 mr-2" /> PDF
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handlePdfAction(budget, 'view')} className="text-blue-500 hover:text-blue-600">
-                        <Eye className="h-4 w-4 mr-2" /> Visualizar
+                        <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
                       </Button>
                     </TableCell>
                   </TableRow>
