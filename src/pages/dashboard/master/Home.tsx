@@ -14,6 +14,12 @@ import SalesOverviewCard from '@/components/dashboard/master/SalesOverviewCard';
 import OpenInvoicesTable from '@/components/dashboard/master/OpenInvoicesTable';
 import { Users, Folder, DollarSign, Download, ArrowUpRight, ShoppingBag, ShoppingCart, TrendingUp } from 'lucide-react';
 
+// Importando os novos componentes
+import UpcomingAppointmentsCard from '@/components/dashboard/master/home/UpcomingAppointmentsCard';
+import FinancialSummaryCard from '@/components/dashboard/master/home/FinancialSummaryCard';
+import LatestUpdatesCard from '@/components/dashboard/master/home/LatestUpdatesCard';
+import PendingActionsCard from '@/components/dashboard/master/home/PendingActionsCard';
+
 export default function MasterHome() {
   const { profile } = useAuth();
 
@@ -23,7 +29,7 @@ export default function MasterHome() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-8" // Removido 'p-0' para que o padding do DashboardLayout seja aplicado
+        className="space-y-8"
       >
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -31,7 +37,7 @@ export default function MasterHome() {
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md w-full sm:w-auto">Importar</Button>
         </div>
 
-        {/* Top Stat Cards */}
+        {/* Top Stat Cards (mantidos) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatCard
             title="Usuários"
@@ -62,7 +68,15 @@ export default function MasterHome() {
           />
         </div>
 
-        {/* Downloads e Gráfico de Vendas (StatCard genérico) */}
+        {/* Novos Cards Funcionais */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <UpcomingAppointmentsCard />
+          <FinancialSummaryCard />
+          <LatestUpdatesCard />
+          <PendingActionsCard /> {/* Adicionado o card de ações pendentes */}
+        </div>
+
+        {/* Downloads e Gráfico de Vendas (StatCard genérico) - Mantidos */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <div className="space-y-4">
@@ -77,20 +91,19 @@ export default function MasterHome() {
             </div>
           </div>
           <div className="lg:col-span-2">
-            {/* Este é o StatCard genérico para "Gráfico de Vendas" como na imagem */}
             <StatCard
               title="Gráfico de Vendas"
               value=""
               change=""
               changeType="up"
               description="Audiência à qual os usuários pertenciam enquanto na data atual"
-              chartData={[100, 250, 180, 320, 200, 280, 150]} // Placeholder para o gráfico de linha
+              chartData={[100, 250, 180, 320, 200, 280, 150]}
               chartColor="#00b4ff"
             />
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons (mantidos) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <ActionButton icon={ArrowUpRight} title="Vendas Totais" value="$508" color="green" />
           <ActionButton icon={ShoppingBag} title="Compras Totais" value="$387" color="blue" />
@@ -98,20 +111,20 @@ export default function MasterHome() {
           <ActionButton icon={TrendingUp} title="Crescimento Total" value="$231" color="yellow" />
         </div>
 
-        {/* Tickets e Atualizações */}
+        {/* Tickets e Atualizações (mantidos) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TicketsTable />
           <UpdatesList />
         </div>
 
-        {/* Distribuição, Relatório de Vendas (SaleReportChart) e Visão Geral de Vendas */}
+        {/* Distribuição, Relatório de Vendas (SaleReportChart) e Visão Geral de Vendas (mantidos) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <DistributionChart />
-          <SaleReportChart /> {/* Este é o gráfico de barras "Relatório de Vendas" */}
+          <SaleReportChart />
           <SalesOverviewCard />
         </div>
 
-        {/* Tabela de Faturas Abertas */}
+        {/* Tabela de Faturas Abertas (mantida) */}
         <OpenInvoicesTable />
       </motion.div>
     </DashboardLayout>
