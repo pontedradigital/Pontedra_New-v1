@@ -39,6 +39,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card'; // Adicionado importação do Card e CardContent
 
 interface AddAppointmentDialogProps {
   isOpen: boolean;
