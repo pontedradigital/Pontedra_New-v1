@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Loader2,
   Calendar as CalendarIcon,
@@ -12,6 +12,7 @@ import {
   Mail,
   Phone,
   Info,
+  PlusCircle,
 } from 'lucide-react';
 import {
   format,
@@ -22,13 +23,22 @@ import {
   startOfMonth,
   endOfMonth,
   isWithinInterval,
+  isMonday,
+  isTuesday,
+  isWednesday,
+  isThursday,
+  isFriday,
+  setHours,
+  setMinutes,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar'; // Importar o componente Calendar
+import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // NOVO: Importar DateSelectionList
+import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog'; // NOVO: Importar TimeSlotSelectionDialog
+import { toast } from 'sonner';
 
 // Interfaces para as tabelas
 interface Appointment {
@@ -60,13 +70,36 @@ export default function AppointmentsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Data de referência para todos os filtros
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date()); // Data de referência para todos os filtros e para o DateSelectionList
+  const [isTimeSlotDialogOpen, setIsTimeSlotDialogOpen] = useState(false); // Estado para o diálogo de seleção de horário
+  const [masterIdForBooking, setMasterIdForBooking] = useState<string | null>(null); // ID do master para quem o agendamento será feito
 
   // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
   const handleViewDetails = useCallback((appointment: Appointment) => {
     console.log("Ver detalhes do agendamento:", appointment);
     // Implementar lógica para abrir um pop-up de detalhes aqui
   }, []);
+
+  // Fetch the master's ID (assuming there's only one master for now, or picking the first one)
+  const { data: masterProfile, isLoading: isLoadingMasterProfile } = useQuery<UserProfile | null, Error>({
+    queryKey: ['masterProfile'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, telefone')
+        .eq('role', 'master')
+        .single();
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 means no rows found
+      return data;
+    },
+    staleTime: Infinity, // Master profile doesn't change often
+  });
+
+  useEffect(() => {
+    if (masterProfile) {
+      setMasterIdForBooking(masterProfile.id);
+    }
+  }, [masterProfile]);
 
   // Fetch Appointments (filtered by client_id for clients, all for master)
   const { data: appointments, isLoading: isLoadingAppointments } = useQuery<Appointment[], Error>({
@@ -120,6 +153,32 @@ export default function AppointmentsPage() {
     enabled: !!user?.id && !authLoading,
   });
 
+  // Mutation to create a new appointment
+  const createAppointmentMutation = useMutation<void, Error, { startTime: Date; endTime: Date }>({
+    mutationFn: async ({ startTime, endTime }) => {
+      if (!user?.id || !masterIdForBooking) throw new Error("Usuário ou Master não identificados.");
+
+      const { error } = await supabase.from('appointments').insert({
+        client_id: user.id,
+        master_id: masterIdForBooking,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        status: 'pending', // New appointments start as pending
+        notes: `Agendamento com ${profile?.first_name || 'Cliente'}`,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] }); // Invalidate appointments list
+      toast.success('Agendamento criado com sucesso! Aguardando confirmação.');
+      setIsTimeSlotDialogOpen(false);
+      setSelectedDate(undefined); // Clear selected date after booking
+    },
+    onError: (err) => {
+      toast.error(`Erro ao criar agendamento: ${err.message}`);
+    },
+  });
+
   const isMaster = profile?.role === 'master';
 
   // Filtra agendamentos para "Agendamentos do Dia"
@@ -132,7 +191,7 @@ export default function AppointmentsPage() {
 
   // Filtra agendamentos para "Agendamentos da Semana"
   const weekAppointments = useMemo(() => {
-    if (!appointments) return [];
+    if (!appointments || !selectedDate) return [];
     const start = startOfWeek(selectedDate, { locale: ptBR });
     const end = endOfWeek(selectedDate, { locale: ptBR });
     return appointments.filter(app =>
@@ -142,7 +201,7 @@ export default function AppointmentsPage() {
 
   // Filtra agendamentos para "Agendamentos do Mês"
   const monthAppointments = useMemo(() => {
-    if (!appointments) return [];
+    if (!appointments || !selectedDate) return [];
     const start = startOfMonth(selectedDate);
     const end = endOfMonth(selectedDate);
     return appointments.filter(app =>
@@ -160,7 +219,16 @@ export default function AppointmentsPage() {
     }
   };
 
-  if (authLoading || isLoadingAppointments) {
+  const handleDateSelectedFromList = (date: Date) => {
+    setSelectedDate(date);
+    setIsTimeSlotDialogOpen(true); // Open time slot dialog when a date is selected
+  };
+
+  const handleAppointmentConfirm = (startTime: Date, endTime: Date) => {
+    createAppointmentMutation.mutate({ startTime, endTime });
+  };
+
+  if (authLoading || isLoadingAppointments || isLoadingMasterProfile) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -175,6 +243,16 @@ export default function AppointmentsPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-destructive">
           Você precisa estar logado para ver seus agendamentos.
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!masterIdForBooking && !isMaster) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full text-destructive">
+          Nenhum master encontrado para agendamentos. Por favor, contate o suporte.
         </div>
       </DashboardLayout>
     );
@@ -200,27 +278,14 @@ export default function AppointmentsPage() {
             : ' Acompanhe seus compromissos com a Pontedra.'}
         </p>
 
-        {/* Nova Caixa: Calendário */}
-        <Card className="bg-card border-border shadow-lg rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-primary" /> Selecione uma Data
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(day) => {
-                console.log("Selected day:", day); // Log de depuração
-                if (day) setSelectedDate(day);
-              }}
-              initialFocus
-              locale={ptBR}
-              className="rounded-md border bg-background text-foreground"
-            />
-          </CardContent>
-        </Card>
+        {/* NOVO: Componente de seleção de data em lista */}
+        {!isMaster && masterIdForBooking && ( // Apenas clientes podem agendar
+          <DateSelectionList
+            masterId={masterIdForBooking}
+            onDateSelect={handleDateSelectedFromList}
+            selectedDate={selectedDate}
+          />
+        )}
 
         {/* Três caixas de resumo - em linhas */}
         <div className="flex flex-col gap-6">
@@ -291,7 +356,7 @@ export default function AppointmentsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{weekAppointments.length}</span> agendamentos para a semana de {format(startOfWeek(selectedDate, { locale: ptBR }), 'dd/MM', { locale: ptBR })}.
+                Total: <span className="font-bold text-primary">{weekAppointments.length}</span> agendamentos para a semana de {selectedDate ? format(startOfWeek(selectedDate, { locale: ptBR }), 'dd/MM', { locale: ptBR }) : 'o dia selecionado'}.
               </p>
               <div className="overflow-x-auto max-h-60 custom-scrollbar">
                 <Table>
@@ -349,7 +414,7 @@ export default function AppointmentsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{monthAppointments.length}</span> agendamentos para {format(selectedDate, 'MMMM/yyyy', { locale: ptBR })}.
+                Total: <span className="font-bold text-primary">{monthAppointments.length}</span> agendamentos para {selectedDate ? format(selectedDate, 'MMMM/yyyy', { locale: ptBR }) : 'o dia selecionado'}.
               </p>
               <div className="overflow-x-auto max-h-60 custom-scrollbar">
                 <Table>
@@ -399,6 +464,17 @@ export default function AppointmentsPage() {
           </Card>
         </div>
       </motion.div>
+
+      {/* NOVO: Diálogo de Seleção de Horário */}
+      {!isMaster && masterIdForBooking && (
+        <TimeSlotSelectionDialog
+          isOpen={isTimeSlotDialogOpen}
+          onClose={() => setIsTimeSlotDialogOpen(false)}
+          selectedDate={selectedDate}
+          masterId={masterIdForBooking}
+          onAppointmentConfirm={handleAppointmentConfirm}
+        />
+      )}
     </DashboardLayout>
   );
 }
