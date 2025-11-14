@@ -47,7 +47,7 @@ interface Appointment {
   client_id: string;
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
-  end_time: string;   // TIMESTAMP WITH TIME ZONE
+  end_time:   string;   // TIMESTAMP WITH TIME ZONE
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes: string | null;
   created_at: string;
@@ -127,7 +127,14 @@ export default function AppointmentsPage() {
       let query = supabase
         .from('appointments')
         .select(`
-          *,
+          id,
+          client_id,
+          master_id,
+          start_time,
+          end_time,
+          status,
+          notes,
+          created_at,
           profiles!appointments_client_id_fkey (
             first_name,
             last_name,
