@@ -38,7 +38,9 @@ import {
   setMilliseconds,
   isBefore,
   isAfter,
-  subDays, // Adicionado subDays aqui
+  subDays,
+  startOfMonth, // NOVO: Importar startOfMonth
+  endOfMonth,   // NOVO: Importar endOfMonth
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar'; // Shadcn Calendar
@@ -73,7 +75,8 @@ interface MasterAvailability {
   master_id: string;
   day_of_week: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
   start_time: string; // HH:mm:ss
-  end_time: string;   // HH:mm:ss
+  end_time:   // HH:mm:ss
+  string;
 }
 
 interface MasterException {
@@ -91,7 +94,8 @@ interface Appointment {
   client_id: string;
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
-  end_time: string;   // TIMESTAMP WITH TIME ZONE
+  end_time:   // TIMESTAMP WITH TIME ZONE
+  string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes: string | null;
   created_at: string;
@@ -278,52 +282,41 @@ export default function AppointmentsPage() {
     }));
   }, [clientProfilesData, clientEmailsMap]);
 
-
-  // Generate available slots for the selected date
-  const availableSlots = useMemo(() => {
-    // Use selectedDate from newAppointmentFormData if in create dialog, otherwise use selectedDate from main state
-    const dateToUse = isCreateAppointmentDialogOpen ? newAppointmentFormData.selectedDate : selectedDate;
-
+  // Helper function to get available slots for a specific date
+  const getAvailableSlotsForDate = useCallback((dateToUse: Date): Date[] => {
     if (!dateToUse || !masterAvailability || !masterExceptions || !appointments || !user) return [];
 
     const slots: Date[] = [];
-    const today = new Date();
-    const currentMasterId = profile?.role === 'master' ? user.id : (masterAvailability?.[0]?.master_id || null); // Assuming first master or current master
+    const currentMasterId = profile?.role === 'master' ? user.id : (masterAvailability?.[0]?.master_id || null);
 
-    if (!currentMasterId) return []; // Cannot generate slots without a master
+    if (!currentMasterId) return [];
 
-    const dayOfWeek = dateToUse.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const dayOfWeek = dateToUse.getDay();
     const formattedSelectedDate = format(dateToUse, 'yyyy-MM-dd');
 
-    // 1. Check for full day exceptions (blocked or fully available)
     const dayException = masterExceptions.find(
       (ex) => ex.master_id === currentMasterId && ex.exception_date === formattedSelectedDate
     );
 
     if (dayException && !dayException.is_available) {
-      return []; // Entire day is blocked by an exception
+      return [];
     }
 
-    // 2. Get recurring availability for the day
     const recurringSlots = masterAvailability.filter(
       (avail) => avail.master_id === currentMasterId && avail.day_of_week === dayOfWeek
     );
 
-    // 3. Generate potential slots based on recurring availability or exception override
     let potentialIntervals: { start: Date; end: Date }[] = [];
 
     if (dayException && dayException.is_available && dayException.start_time && dayException.end_time) {
-      // Exception overrides with specific times
       const start = parseISO(`${formattedSelectedDate}T${dayException.start_time}`);
       const end = parseISO(`${formattedSelectedDate}T${dayException.end_time}`);
       potentialIntervals.push({ start, end });
     } else if (dayException && dayException.is_available && !dayException.start_time && !dayException.end_time) {
-      // Exception overrides as fully available (e.g., 00:00 to 23:59)
       const start = startOfDay(dateToUse);
       const end = endOfDay(dateToUse);
       potentialIntervals.push({ start, end });
     } else {
-      // Use recurring availability
       recurringSlots.forEach((avail) => {
         const start = parseISO(`${formattedSelectedDate}T${avail.start_time}`);
         const end = parseISO(`${formattedSelectedDate}T${avail.end_time}`);
@@ -336,27 +329,23 @@ export default function AppointmentsPage() {
       while (isBefore(currentTime, interval.end)) {
         const slotEnd = addMinutes(currentTime, APPOINTMENT_DURATION_MINUTES);
         if (isAfter(slotEnd, interval.end)) {
-          break; // Slot would extend past the end of the availability interval
+          break;
         }
 
-        // Filter out past slots (only for client booking, or for master if creating for today/past)
         if ((profile?.role === 'client' || isCreateAppointmentDialogOpen) && isPast(slotEnd)) {
           currentTime = slotEnd;
           continue;
         }
 
-        // Check against existing appointments
         const isBooked = appointments.some((app) => {
           const appStart = parseISO(app.start_time);
           const appEnd = parseISO(app.end_time);
-          // An appointment is booked if its interval overlaps with the current slot
-          // And it's not cancelled
           return (
             app.master_id === currentMasterId &&
             app.status !== 'cancelled' &&
-            (isWithinInterval(currentTime, { start: appStart, end: addMinutes(appEnd, -1) }) || // Slot start is within app
-            isWithinInterval(slotEnd, { start: addMinutes(appStart, 1), end: appEnd }) ||     // Slot end is within app
-            (isBefore(appStart, currentTime) && isAfter(appEnd, slotEnd)))                   // App fully contains slot
+            (isWithinInterval(currentTime, { start: appStart, end: addMinutes(appEnd, -1) }) ||
+            isWithinInterval(slotEnd, { start: addMinutes(appStart, 1), end: appEnd }) ||
+            (isBefore(appStart, currentTime) && isAfter(appEnd, slotEnd)))
           );
         });
 
@@ -368,7 +357,42 @@ export default function AppointmentsPage() {
     });
 
     return slots.sort((a, b) => a.getTime() - b.getTime());
-  }, [isCreateAppointmentDialogOpen, newAppointmentFormData.selectedDate, selectedDate, masterAvailability, masterExceptions, appointments, user, profile?.role]);
+  }, [masterAvailability, masterExceptions, appointments, user, profile?.role, isCreateAppointmentDialogOpen]);
+
+  // Generate available slots for the currently selected date (main calendar)
+  const currentSelectedDateSlots = useMemo(() => {
+    return getAvailableSlotsForDate(selectedDate || new Date());
+  }, [selectedDate, getAvailableSlotsForDate]);
+
+  // Generate available slots for the date selected in the Master's create appointment dialog
+  const masterCreateDialogSlots = useMemo(() => {
+    return getAvailableSlotsForDate(newAppointmentFormData.selectedDate || new Date());
+  }, [newAppointmentFormData.selectedDate, getAvailableSlotsForDate]);
+
+  // Determine which slots array to use based on which dialog is open
+  const slotsToDisplay = isCreateAppointmentDialogOpen ? masterCreateDialogSlots : currentSelectedDateSlots;
+
+  // NOVO: Memo para calcular quais datas têm slots disponíveis no mês atual do calendário
+  const datesWithAvailableSlots = useMemo(() => {
+    const dates = new Set<string>();
+    if (!selectedDate) return dates;
+
+    const start = startOfMonth(selectedDate);
+    const end = endOfMonth(selectedDate);
+    const daysInMonth = eachDayOfInterval({ start, end });
+
+    daysInMonth.forEach(day => {
+      // Only check future dates or today
+      if (isBefore(day, startOfDay(subDays(new Date(), 1)))) {
+        return;
+      }
+      const slots = getAvailableSlotsForDate(day);
+      if (slots.length > 0) {
+        dates.add(format(day, 'yyyy-MM-dd'));
+      }
+    });
+    return dates;
+  }, [selectedDate, getAvailableSlotsForDate]);
 
   // Mutation to create a new appointment (modified to accept clientId and status)
   const createAppointmentMutation = useMutation<void, Error, { clientId: string; masterId: string; startTime: Date; endTime: Date; notes: string; status: Appointment['status'] }>({
@@ -584,53 +608,62 @@ export default function AppointmentsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Coluna do Calendário e Slots Disponíveis (para clientes e Master ao criar) */}
-          {(isMaster || !isMaster) && ( // Always show calendar, but behavior changes
-            <div className="bg-card border border-border rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CalendarIcon className="w-6 h-6 text-blue-500" /> {isMaster ? 'Selecionar Data para Agendamento' : 'Agendar Reunião'}
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Selecione uma data e um horário disponível para sua reunião.
-              </p>
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-1">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                    locale={ptBR}
-                    className="rounded-md border bg-background"
-                    disabled={(date) => isBefore(date, subDays(new Date(), 1))} // Disable past dates
-                  />
-                </div>
-                <div className="flex-1 space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Horários Disponíveis em {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : '...'}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto custom-scrollbar">
-                    {availableSlots.length > 0 ? (
-                      availableSlots.map((slot, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          onClick={() => handleBookSlot(slot)}
-                          className="bg-background border-border text-foreground hover:bg-muted"
-                          disabled={createAppointmentMutation.isPending}
-                        >
-                          {format(slot, 'HH:mm', { locale: ptBR })}
-                        </Button>
-                      ))
-                    ) : (
-                      <p className="col-span-2 text-muted-foreground text-sm">
-                        Nenhum horário disponível para a data selecionada.
-                      </p>
-                    )}
-                  </div>
+          <div className="bg-card border border-border rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
+              <CalendarIcon className="w-6 h-6 text-blue-500" /> {isMaster ? 'Selecionar Data para Agendamento' : 'Agendar Reunião'}
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Selecione uma data e um horário disponível para sua reunião.
+            </p>
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  locale={ptBR}
+                  className="rounded-md border bg-background"
+                  disabled={(date) => isBefore(date, subDays(new Date(), 1))} // Disable past dates
+                  modifiers={{
+                    available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
+                  }}
+                  modifiersStyles={{
+                    available: {
+                      backgroundColor: 'hsl(var(--primary) / 0.2)',
+                      color: 'hsl(var(--primary))',
+                      fontWeight: 'bold',
+                    },
+                  }}
+                />
+              </div>
+              <div className="flex-1 space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Horários Disponíveis em {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : '...'}
+                </h3>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto custom-scrollbar">
+                  {slotsToDisplay.length > 0 ? (
+                    slotsToDisplay.map((slot, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        onClick={() => handleBookSlot(slot)}
+                        className="bg-background border-border text-foreground hover:bg-muted"
+                        disabled={createAppointmentMutation.isPending}
+                      >
+                        {format(slot, 'HH:mm', { locale: ptBR })}
+                      </Button>
+                    ))
+                  ) : (
+                    <p className="col-span-2 text-muted-foreground text-sm">
+                      Nenhum horário disponível para a data selecionada.
+                      {selectedDate && isBefore(selectedDate, startOfDay(new Date())) && " (Data no passado)"}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Coluna de Meus Agendamentos (para clientes) / Todos os Agendamentos (para Master) */}
           <div className="bg-card border border-border rounded-xl shadow-lg p-6 col-span-full lg:col-span-1">
@@ -931,6 +964,16 @@ export default function AppointmentsPage() {
                         initialFocus
                         locale={ptBR}
                         disabled={(date) => isBefore(date, subDays(new Date(), 1))} // Disable past dates
+                        modifiers={{
+                          available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
+                        }}
+                        modifiersStyles={{
+                          available: {
+                            backgroundColor: 'hsl(var(--primary) / 0.2)',
+                            color: 'hsl(var(--primary))',
+                            fontWeight: 'bold',
+                          },
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
@@ -950,8 +993,8 @@ export default function AppointmentsPage() {
                       <SelectValue placeholder="Selecione um horário" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border text-popover-foreground">
-                      {availableSlots.length > 0 ? (
-                        availableSlots.map((slot, index) => (
+                      {masterCreateDialogSlots.length > 0 ? (
+                        masterCreateDialogSlots.map((slot, index) => (
                           <SelectItem key={index} value={slot.toISOString()}>
                             {format(slot, 'HH:mm', { locale: ptBR })}
                           </SelectItem>
