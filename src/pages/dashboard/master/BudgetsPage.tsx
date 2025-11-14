@@ -31,13 +31,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User } from 'lucide-react'; // Added User icon
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle } from 'lucide-react'; // Added CheckCircle icon
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge'; // Importar Badge
 
 // Tipos de dados para Serviços (products)
 interface ServiceItem {
@@ -54,7 +55,7 @@ interface PackageItem {
   sku: string;
   name: string;
   description: string | null;
-  price: number; // Preço mensal final calculado
+  price: number; // Preço mensal final calculado (já com o desconto do pacote)
   services_in_package?: ServiceItem[]; // Serviços incluídos no pacote
 }
 
@@ -89,6 +90,8 @@ interface Budget {
   valid_until: string;
   total_amount: number;
   created_at: string;
+  status: 'pending' | 'approved' | 'rejected' | 'converted'; // Adicionado status
+  approved_at: string | null; // Adicionado data de aprovação
   budget_items: BudgetItem[];
 }
 
@@ -109,7 +112,7 @@ interface ClientProfile {
 }
 
 export default function BudgetsPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Budget>>({
@@ -130,6 +133,20 @@ export default function BudgetsPage() {
 
   const [currentEditableBudget, setCurrentEditableBudget] = useState<Budget | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null); // NOVO: Estado para o cliente selecionado
+
+  const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState(false); // Estado para o pop-up de confirmação de aprovação
+  const [budgetToApprove, setBudgetToApprove] = useState<Budget | null>(null); // Orçamento a ser aprovado
+
+  // Helper function for badge styling
+  const getBudgetStatusBadgeVariant = (status: Budget['status']) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
+      case 'approved': return 'bg-green-500 hover:bg-green-600 text-white';
+      case 'rejected': return 'bg-red-500 hover:bg-red-600 text-white';
+      case 'converted': return 'bg-blue-500 hover:bg-blue-600 text-white';
+      default: return 'bg-gray-500 hover:bg-gray-600 text-white';
+    }
+  };
 
   // Fetch all services
   const { data: services, isLoading: isLoadingServices } = useQuery<ServiceItem[], Error>({
@@ -186,6 +203,8 @@ export default function BudgetsPage() {
           valid_until,
           total_amount,
           created_at,
+          status,
+          approved_at,
           budget_items(*)
         `)
         .order('created_at', { ascending: false });
@@ -268,7 +287,7 @@ export default function BudgetsPage() {
         .from('profiles')
         .select(`
           id,
-          client_id, -- NOVO: Selecionar client_id
+          client_id,
           first_name,
           last_name,
           telefone,
@@ -606,6 +625,7 @@ export default function BudgetsPage() {
           client_cep: budgetData.client_cep,
           valid_until: validUntil,
           total_amount: total,
+          status: 'pending', // Novo orçamento sempre começa como pendente
         })
         .select('*')
         .single();
@@ -832,6 +852,8 @@ export default function BudgetsPage() {
         valid_until: calculateValidUntil(), // Use current calculation
         total_amount: totalAmount, // Use current calculated total
         created_at: new Date().toISOString(),
+        status: 'pending', // Preview is always pending
+        approved_at: null,
         budget_items: tempBudgetItems,
       };
     }
@@ -897,6 +919,26 @@ export default function BudgetsPage() {
     setCurrentEditableBudget(null);
   };
 
+  // NOVO: Mutação para aprovar orçamento
+  const approveBudgetMutation = useMutation<void, Error, string>({
+    mutationFn: async (budgetId) => {
+      const { error } = await supabase
+        .from('budgets')
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .eq('id', budgetId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast.success('Orçamento aprovado com sucesso!');
+      setIsApproveConfirmOpen(false); // Fechar o pop-up de confirmação
+      setBudgetToApprove(null); // Limpar o orçamento em aprovação
+    },
+    onError: (err) => {
+      toast.error(`Erro ao aprovar orçamento: ${err.message}`);
+    },
+  });
+
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
   const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0; // Updated condition
 
@@ -939,6 +981,7 @@ export default function BudgetsPage() {
                 <TableHead className="text-muted-foreground">VALIDADE</TableHead>
                 <TableHead className="text-muted-foreground">ITENS</TableHead>
                 <TableHead className="text-muted-foreground">VALOR TOTAL</TableHead>
+                <TableHead className="text-muted-foreground">STATUS</TableHead> {/* NOVA COLUNA */}
                 <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
               </TableRow>
             </TableHeader>
@@ -970,7 +1013,25 @@ export default function BudgetsPage() {
                     <TableCell className="font-bold text-foreground py-4">
                       R$ {budget.total_amount.toFixed(2)}
                     </TableCell>
+                    <TableCell className="py-4"> {/* NOVA CÉLULA DE STATUS */}
+                      <Badge className={getBudgetStatusBadgeVariant(budget.status)}>
+                        {budget.status === 'pending' ? 'Pendente' :
+                         budget.status === 'approved' ? 'Aprovado' :
+                         budget.status === 'rejected' ? 'Rejeitado' :
+                         budget.status === 'converted' ? 'Convertido' : 'Desconhecido'}
+                      </Badge>
+                      {budget.approved_at && budget.status === 'approved' && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          em {format(new Date(budget.approved_at), 'dd/MM/yyyy', { locale: ptBR })}
+                        </p>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right py-4">
+                      {profile?.role === 'master' && budget.status === 'pending' && (
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setBudgetToApprove(budget); setIsApproveConfirmOpen(true); }} className="text-green-500 hover:text-green-600">
+                          <CheckCircle className="h-4 w-4 mr-2" /> Aprovar
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(budget)} className="text-primary hover:text-primary/80">
                         <Copy className="h-4 w-4 mr-2" /> Duplicar
                       </Button>
@@ -985,7 +1046,7 @@ export default function BudgetsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     Nenhum orçamento encontrado.
                   </TableCell>
                 </TableRow>
@@ -1294,6 +1355,28 @@ export default function BudgetsPage() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Pop-up de Confirmação de Aprovação */}
+        <Dialog open={isApproveConfirmOpen} onOpenChange={setIsApproveConfirmOpen}>
+          <DialogContent className="sm:max-w-md bg-card border-border text-foreground rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-primary">Confirmar Aprovação</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Tem certeza que deseja aprovar o orçamento <span className="font-semibold text-white">#{budgetToApprove?.proposal_number}</span>?
+                Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsApproveConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+                Cancelar
+              </Button>
+              <Button onClick={() => budgetToApprove && approveBudgetMutation.mutate(budgetToApprove.id)} disabled={approveBudgetMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
+                {approveBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                Aprovar
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
