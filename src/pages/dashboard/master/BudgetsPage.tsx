@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X } from 'lucide-react'; // Added Eye icon
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle } from 'lucide-react'; // Added MessageCircle icon
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -231,6 +231,24 @@ export default function BudgetsPage() {
     },
     staleTime: Infinity,
   });
+
+  // NOVO: Fetch WhatsApp contact number from settings
+  const { data: whatsappNumberSetting, isLoading: isLoadingWhatsappNumber } = useQuery<{ key: string; value: string } | null, Error>({
+    queryKey: ['settings', 'whatsapp_contact_number'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'whatsapp_contact_number')
+        .single();
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity,
+  });
+  const whatsappContactNumber = whatsappNumberSetting?.value || '';
 
   // Combine packagesData with availableServices on the client side for full package details
   const allPackages = useMemo(() => {
@@ -532,7 +550,7 @@ export default function BudgetsPage() {
     saveBudgetMutation.mutate({ budgetData: formData, items: selectedItems });
   };
 
-  const generatePdfContent = async (budget: Budget, annualDiscountSetting: { key: string; value: number } | null | undefined) => {
+  const generatePdfContent = async (budget: Budget, annualDiscountSetting: { key: string; value: number } | null | undefined, whatsappNumber: string) => {
     const clientAddressFull = [
       budget.client_street,
       budget.client_number ? `, ${budget.client_number}` : '',
@@ -596,6 +614,19 @@ export default function BudgetsPage() {
       `;
     }
 
+    const cleanedWhatsappNumber = whatsappNumber.replace(/\D/g, ''); // Remove non-digits for the link
+    const whatsappCtaHtml = cleanedWhatsappNumber ? `
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="https://wa.me/55${cleanedWhatsappNumber}?text=Ol%C3%A1%2C%20gostaria%20de%20conversar%20sobre%20a%20proposta%20${budget.proposal_number}." 
+           target="_blank" 
+           rel="noopener noreferrer"
+           style="display: inline-block; background-color: #25D366; color: #ffffff; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 10px;">
+          Fale Conosco no WhatsApp
+        </a>
+      </div>
+    ` : '';
+
     return `
       <div style="font-family: 'Poppins', sans-serif; padding: 40px; color: #0D1B2A; background-color: #ffffff; box-sizing: border-box;">
         <div style="text-align: center; margin-bottom: 30px;">
@@ -647,7 +678,9 @@ export default function BudgetsPage() {
           <p style="font-size: 14px; color: #0D1B2A;"><strong>Validade da Proposta:</strong> ${format(new Date(budget.valid_until), 'dd/MM/yyyy', { locale: ptBR })}</p>
         </div>
 
-        <div style="text-align: center; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 20px;">
+        ${whatsappCtaHtml}
+
+        <div style="text-align: center; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
           <p style="margin-bottom: 5px;"><strong>Pontedra</strong></p>
           <p style="margin-bottom: 5px;">E-mail: contato@pontedra.com</p>
           <p>Telefone: +55 11 97877-7308</p>
@@ -656,11 +689,14 @@ export default function BudgetsPage() {
     `;
   };
 
-  const handlePdfAction = async (action: 'download' | 'view') => {
+  const handlePdfAction = async (budgetFromTable: Budget | null, action: 'download' | 'view') => {
     let budgetToUse: Budget | null = null;
 
-    if (currentEditableBudget) {
-      // If already saved, use the saved budget
+    if (budgetFromTable) {
+      // If generating PDF from a saved budget in the table
+      budgetToUse = budgetFromTable;
+    } else if (currentEditableBudget) {
+      // If generating PDF from a newly saved budget in the dialog
       budgetToUse = currentEditableBudget;
     } else {
       // If not saved, create a temporary budget from form data
@@ -707,8 +743,8 @@ export default function BudgetsPage() {
       return;
     }
 
-    // Now call generatePdfContent with budgetToUse and annualDiscountSetting
-    const htmlContent = await generatePdfContent(budgetToUse, annualDiscountSetting);
+    // Now call generatePdfContent with budgetToUse, annualDiscountSetting, and whatsappContactNumber
+    const htmlContent = await generatePdfContent(budgetToUse, annualDiscountSetting, whatsappContactNumber);
 
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -765,7 +801,7 @@ export default function BudgetsPage() {
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
   const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0; // Updated condition
 
-  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount) {
+  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -1106,7 +1142,7 @@ export default function BudgetsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handlePdfAction('download')}
+                  onClick={() => handlePdfAction(null, 'download')} // Pass null for budgetFromTable when generating from dialog
                   disabled={isPdfActionDisabled}
                   className="bg-green-500 hover:bg-green-600 text-white"
                 >
@@ -1114,7 +1150,7 @@ export default function BudgetsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handlePdfAction('view')}
+                  onClick={() => handlePdfAction(null, 'view')} // Pass null for budgetFromTable when generating from dialog
                   disabled={isPdfActionDisabled}
                   className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
