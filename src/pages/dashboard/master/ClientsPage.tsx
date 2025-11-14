@@ -48,6 +48,7 @@ import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup
 import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporárias
 import jsPDF from 'jspdf'; // Importar jspdf
 import html2canvas from 'html2canvas'; // Importar html2canvas
+import { Input } from '@/components/ui/input'; // Importar Input
 
 // Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
