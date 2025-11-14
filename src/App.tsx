@@ -18,7 +18,7 @@ import MasterHome from "./pages/dashboard/master/Home";
 import ClientHome from "./pages/dashboard/client/Home";
 import ProspectHome from "./pages/dashboard/prospect/Home";
 import ResourcesPage from "./pages/dashboard/common/ResourcesPage";
-// import AppointmentsPage from "./pages/dashboard/client/AppointmentsPage"; // Removido
+import AppointmentsPage from "./pages/dashboard/client/AppointmentsPage"; // Adicionado novamente
 import ManageUsersPage from "./pages/dashboard/master/ManageUsersPage";
 import ReportsPage from "./pages/dashboard/master/ReportsPage";
 
@@ -67,7 +67,7 @@ function App() {
         <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><SettingsPage /></ProtectedRoute>} />
         <Route path="/dashboard/resources" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ResourcesPage /></ProtectedRoute>} />
         
-        {/* <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} /> */} {/* Removido */}
+        <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} /> {/* Adicionado novamente */}
 
         {/* Novas Rotas para o Master */}
         <Route path="/dashboard/clients" element={<ProtectedRoute allowedRoles={['master']}><ClientsPage /></ProtectedRoute>} />

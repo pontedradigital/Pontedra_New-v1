@@ -9,7 +9,7 @@ import {
   Menu as MenuIcon,
   X as XIcon,
   Briefcase,
-  Calendar,
+  Calendar, // Adicionado novamente
   BookOpen,
   Users,
   ClipboardList,
@@ -26,7 +26,7 @@ import {
   ChevronDown,
   Calculator,
   LayoutDashboard,
-  Clock, // NOVO: Importar Clock para disponibilidade
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -46,7 +46,7 @@ const navItems: NavItem[] = [
   { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] },
   { label: "Clientes", icon: Users, href: "/dashboard/clients", roles: ['master'] },
   { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
-  // { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] }, // Removido
+  { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] }, // Adicionado novamente
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
