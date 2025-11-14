@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar'; // Importar o componente Calendar
 
 // Interfaces para as tabelas
 interface Appointment {
@@ -59,7 +60,8 @@ export default function AppointmentsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Data de referência para os filtros
+  const [calendarSelectedDay, setCalendarSelectedDay] = useState<Date | undefined>(new Date()); // Estado para o dia selecionado no calendário
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Data de referência para os filtros de semana e mês
 
   // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
   const handleViewDetails = useCallback((appointment: Appointment) => {
@@ -121,13 +123,13 @@ export default function AppointmentsPage() {
 
   const isMaster = profile?.role === 'master';
 
-  // Filtra agendamentos para "Agendamentos do Dia"
+  // Filtra agendamentos para "Agendamentos do Dia" (agora usa calendarSelectedDay)
   const todayAppointments = useMemo(() => {
-    if (!appointments) return [];
+    if (!appointments || !calendarSelectedDay) return [];
     return appointments.filter(app =>
-      isSameDay(parseISO(app.start_time), selectedDate)
+      isSameDay(parseISO(app.start_time), calendarSelectedDay)
     ).sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
-  }, [appointments, selectedDate]);
+  }, [appointments, calendarSelectedDay]);
 
   // Filtra agendamentos para "Agendamentos da Semana"
   const weekAppointments = useMemo(() => {
@@ -199,7 +201,26 @@ export default function AppointmentsPage() {
             : ' Acompanhe seus compromissos com a Pontedra.'}
         </p>
 
-        {/* Três caixas de resumo - agora em linhas */}
+        {/* Nova Caixa: Calendário */}
+        <Card className="bg-card border-border shadow-lg rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-primary" /> Selecione uma Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Calendar
+              mode="single"
+              selected={calendarSelectedDay}
+              onSelect={setCalendarSelectedDay}
+              initialFocus
+              locale={ptBR}
+              className="rounded-md border bg-background text-foreground"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Três caixas de resumo - em linhas */}
         <div className="flex flex-col gap-6">
           {/* Primeira Caixa: Agendamentos do Dia */}
           <Card className="bg-card border-border shadow-lg rounded-xl">
@@ -210,7 +231,7 @@ export default function AppointmentsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos para {format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })}.
+                Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos para {calendarSelectedDay ? format(calendarSelectedDay, 'dd/MM/yyyy', { locale: ptBR }) : 'o dia selecionado'}.
               </p>
               <div className="overflow-x-auto max-h-60 custom-scrollbar">
                 <Table>
