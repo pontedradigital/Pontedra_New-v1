@@ -53,17 +53,16 @@ interface Appointment {
   created_at: string;
   client_name: string | null; // NOVO: Adicionado client_name
   client_email: string | null; // NOVO: Adicionado client_email
-  client_profile?: { // Alias para o perfil do cliente (ainda útil para telefone, etc.)
-    first_name: string | null;
-    last_name: string | null;
-    telefone: string | null;
-  };
-  master_profile?: { // Alias para o perfil do master
-    first_name: string | null;
-    last_name: string | null;
-    telefone: string | null;
-  };
-  // client_email?: string; // Removido, agora está diretamente no Appointment
+  // client_profile?: { // Alias para o perfil do cliente (ainda útil para telefone, etc.)
+  //   first_name: string | null;
+  //   last_name: string | null;
+  //   telefone: string | null;
+  // };
+  // master_profile?: { // Alias para o perfil do master
+  //   first_name: string | null;
+  //   last_name: string | null;
+  //   telefone: string | null;
+  // };
   master_email?: string; // Adicionado para o email do master
 }
 
@@ -139,16 +138,6 @@ export default function AppointmentsPage() {
           created_at,
           client_name,
           client_email
-          // client_profile:profiles!client_id ( // Removido temporariamente
-          //   first_name,
-          //   last_name,
-          //   telefone
-          // ),
-          // master_profile:profiles!master_id ( // Removido temporariamente
-          //   first_name,
-          //   last_name,
-          //   telefone
-          // )
         `)
         .order('start_time', { ascending: true }); // Reativado a ordenação
 
@@ -442,11 +431,9 @@ export default function AppointmentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20">
+                    <TableHead className="text-muted-foreground">NOME</TableHead>
+                    <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-                    {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
-                    {/* Removido <TableHead className="text-muted-foreground">STATUS</TableHead> */}
-                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -454,43 +441,19 @@ export default function AppointmentsPage() {
                     todayAppointments.map((app) => (
                       <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                         <TableCell className="font-medium text-foreground py-3">
-                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
+                          {app.client_name}
                         </TableCell>
                         <TableCell className="text-muted-foreground py-3">
-                          {app.client_name}
-                          {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
+                          {app.client_email}
                         </TableCell>
-                        {isMaster && (
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.master_profile?.first_name} {app.master_profile?.last_name}
-                            {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
-                          </TableCell>
-                        )}
-                        {/* Removido <TableCell className="py-3">
-                          <Badge className={getStatusBadgeVariant(app.status)}>
-                            {app.status}
-                          </Badge>
-                        </TableCell> */}
-                        <TableCell className="text-right py-3">
-                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
-                            <Info className="h-4 w-4" />
-                          </Button>
-                          {isMaster && (
-                            <>
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                        <TableCell className="font-medium text-foreground py-3">
+                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={isMaster ? 4 : 3} className="text-center text-muted-foreground py-4">
+                      <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento.
                       </TableCell>
                     </TableRow>
