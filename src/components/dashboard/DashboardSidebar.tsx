@@ -15,7 +15,7 @@ import {
   ClipboardList,
   BarChart,
   Package,
-  DollarSign,
+  DollarSign, // NOVO: Importar DollarSign para Financeiro
   FileText, // Ícone para Orçamentos
   CreditCard, // Ícone para Custos
   Bot,
@@ -24,7 +24,7 @@ import {
   Instagram,
   Facebook,
   ChevronDown,
-  Calculator, // NOVO: Importar Calculator
+  Calculator,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -51,7 +51,8 @@ const navItems: NavItem[] = [
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
-  { label: "Calculadoras", icon: Calculator, href: "/dashboard/calculators", roles: ['master'] }, // NOVO: Item de menu para Calculadoras
+  { label: "Calculadoras", icon: Calculator, href: "/dashboard/calculators", roles: ['master'] },
+  { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] }, // NOVO: Adicionado item de menu para Financeiro
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   {
     label: "Redes Sociais",
