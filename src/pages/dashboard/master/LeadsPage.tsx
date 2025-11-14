@@ -55,7 +55,7 @@ export default function LeadsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_contato')
-        .select('*')
+        .select('*') // Seleciona todos os campos
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
