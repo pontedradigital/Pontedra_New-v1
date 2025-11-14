@@ -309,6 +309,21 @@ export default function AppointmentsPage() {
     return filtered.sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
   }, [appointments, selectedDate]);
 
+  // NOVO: Lista de agendamentos da semana
+  const weeklyAppointments = useMemo(() => {
+    if (!appointments || !selectedDate) return [];
+
+    const startOfCurrentWeek = startOfWeek(selectedDate, { locale: ptBR });
+    const endOfCurrentWeek = endOfWeek(selectedDate, { locale: ptBR });
+
+    return appointments
+      .filter(app => {
+        const appStartTime = parseISO(app.start_time);
+        return isWithinInterval(appStartTime, { start: startOfCurrentWeek, end: endOfCurrentWeek });
+      })
+      .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
+  }, [appointments, selectedDate]);
+
   // NOVO: Lista dos últimos agendamentos (todos, ordenados por data de criação)
   const latestAppointments = useMemo(() => {
     if (!appointments) return [];
@@ -464,7 +479,59 @@ export default function AppointmentsPage() {
           </CardContent>
         </Card>
 
-        {/* NOVO: Caixa de Últimos Agendamentos */}
+        {/* NOVO: Caixa de Agendamentos da Semana */}
+        <Card className="bg-card border-border shadow-lg rounded-xl mt-8">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-green-500" /> Agendamentos da Semana ({format(startOfWeek(selectedDate || new Date(), { locale: ptBR }), 'dd/MM', { locale: ptBR })} - {format(endOfWeek(selectedDate || new Date(), { locale: ptBR }), 'dd/MM', { locale: ptBR })})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Total: <span className="font-bold text-primary">{weeklyAppointments.length}</span> agendamentos.
+            </p>
+            <div className="overflow-x-auto max-h-60 custom-scrollbar">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20">
+                    <TableHead className="text-muted-foreground">NOME</TableHead>
+                    <TableHead className="text-muted-foreground">E-MAIL</TableHead>
+                    <TableHead className="text-muted-foreground">DATA</TableHead>
+                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {weeklyAppointments.length > 0 ? (
+                    weeklyAppointments.map((app) => (
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                        <TableCell className="font-medium text-foreground py-3">
+                          {app.client_name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {app.client_email}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {format(parseISO(app.start_time), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                        Nenhum agendamento para esta semana.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Caixa de Últimos Agendamentos */}
         <Card className="bg-card border-border shadow-lg rounded-xl mt-8">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
