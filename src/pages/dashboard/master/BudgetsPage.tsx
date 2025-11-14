@@ -659,7 +659,18 @@ export default function BudgetsPage() {
         });
 
         if (edgeFunctionError) {
-          throw new Error(`Falha ao criar novo usuário via Edge Function: ${edgeFunctionError.message}`);
+          let specificErrorMessage = "Erro desconhecido ao criar novo usuário.";
+          try {
+            // A edgeFunctionError.message frequentemente contém o corpo da resposta bruta como uma string
+            const parsedResponse = JSON.parse(edgeFunctionError.message);
+            if (parsedResponse && parsedResponse.error) {
+              specificErrorMessage = parsedResponse.error;
+            }
+          } catch (parseError) {
+            // Se não for uma string JSON, usa a mensagem original
+            specificErrorMessage = edgeFunctionError.message;
+          }
+          throw new Error(`Falha ao criar novo usuário: ${specificErrorMessage}`);
         }
         if (!edgeFunctionData || !edgeFunctionData.userId) {
           throw new Error("Falha ao criar novo usuário: Edge Function não retornou ID do usuário.");
@@ -717,11 +728,9 @@ export default function BudgetsPage() {
       let userCreationErrorMessage = "Erro desconhecido ao criar novo usuário.";
 
       // Tenta extrair a mensagem de erro da resposta da Edge Function
-      if (err && err.context && err.context.data && err.context.data.error) {
-        userCreationErrorMessage = `Erro ao criar usuário: ${err.context.data.error}`;
-      } else if (err && err.message) {
-        // Fallback para a mensagem genérica se a estrutura específica não for encontrada
-        userCreationErrorMessage = `Erro ao criar usuário: ${err.message}`;
+      // Agora, err.message já deve conter a mensagem mais específica da Edge Function
+      if (err && err.message) {
+        userCreationErrorMessage = err.message;
       } else {
         userCreationErrorMessage = `Erro ao criar usuário: ${String(err)}`;
       }
