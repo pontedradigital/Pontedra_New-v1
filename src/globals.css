@@ -85,9 +85,6 @@
     background: var(--muted-foreground);
   }
 
-  /* REMOVIDO: React-Calendar Custom Styles for Dark Theme */
-  /* O componente shadcn/ui Calendar já possui sua própria estilização via `classNames` */
-
   /* Custom Navbar Scroll Styles */
   section[id] {
     scroll-margin-top: calc(var(--nav-height) + 12px);
@@ -261,4 +258,22 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(87, 227, 137, 0.7);
+}
+
+/* Correção para o layout dos cabeçalhos dos dias da semana no calendário */
+.rdp-head_row {
+  @apply flex justify-between;
+}
+
+.rdp-head_cell {
+  /* Usar flex-1 para que cada célula ocupe espaço igual */
+  @apply flex-1 text-center font-medium text-sm;
+  /* Garantir que o texto não quebre e tenha um padding adequado */
+  white-space: nowrap;
+  padding: 0.5rem 0.25rem;
+}
+
+/* Garantir que a legenda do mês/ano esteja centralizada */
+.rdp-caption {
+  @apply justify-center;
 }
