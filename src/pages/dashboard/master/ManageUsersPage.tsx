@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -21,8 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, User, Mail, Phone, Briefcase, DollarSign, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ChevronDown, User, Mail, Phone, Briefcase, DollarSign, CheckCircle, XCircle, Loader2, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup'; // Importar o pop-up de detalhes
 
 // Tipos de dados
 interface UserProfile {
@@ -32,6 +33,16 @@ interface UserProfile {
   telefone: string | null;
   role: 'prospect' | 'client' | 'master';
   status: 'ativo' | 'inativo';
+  company_organization: string | null; // Adicionado para o pop-up
+  address_street: string | null;      // Adicionado para o pop-up
+  address_number: string | null;      // Adicionado para o pop-up
+  address_complement: string | null;  // Adicionado para o pop-up
+  address_neighborhood: string | null; // Adicionado para o pop-up
+  address_city: string | null;        // Adicionado para o pop-up
+  address_state: string | null;       // Adicionado para o pop-up
+  address_cep: string | null;         // Adicionado para o pop-up
+  date_of_birth: string | null;       // Adicionado para o pop-up
+  created_at: string;                 // Adicionado para o pop-up
   email: string; // Adicionado para facilitar a exibição
 }
 
@@ -67,8 +78,11 @@ interface UserWithContracts extends UserProfile {
 export default function ManageUsersPage() {
   const { profile: currentUserProfile } = useAuth();
   const queryClient = useQueryClient();
-  const [filterRole, setFilterRole] = useState<'all' | 'prospect' | 'client'>('all');
+  const [filterRole, setFilterRole] = useState<'all' | 'prospect' | 'client' | 'master'>('all'); // Adicionado 'master' ao filtro
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
+  const [selectedClientForDetails, setSelectedClientForDetails] = useState<UserProfile | null>(null); // Cliente para exibir no pop-up
 
   // Fetch profiles data without email initially
   const { data: profilesData, isLoading: isLoadingProfiles, isError, error } = useQuery<Omit<UserProfile, 'email'>[], Error>({
@@ -82,7 +96,17 @@ export default function ManageUsersPage() {
           last_name,
           telefone,
           role,
-          status
+          status,
+          company_organization,
+          address_street,
+          address_number,
+          address_complement,
+          address_neighborhood,
+          address_city,
+          address_state,
+          address_cep,
+          date_of_birth,
+          created_at
         `);
 
       if (profilesError) throw profilesError;
@@ -165,12 +189,18 @@ export default function ManageUsersPage() {
       user.last_name?.toLowerCase().includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower) ||
       user.telefone?.toLowerCase().includes(searchLower) ||
+      user.company_organization?.toLowerCase().includes(searchLower) || // Adicionado busca por empresa
       user.contracts.some(contract =>
         contract.services?.name.toLowerCase().includes(searchLower) ||
         contract.packages?.name.toLowerCase().includes(searchLower)
       );
     return matchesRole && matchesSearch;
   });
+
+  const handleRowClick = (client: UserProfile) => {
+    setSelectedClientForDetails(client);
+    setIsDetailsPopupOpen(true);
+  };
 
   if (isLoadingProfiles || isLoadingEmails || isLoadingContracts) {
     return (
@@ -208,7 +238,7 @@ export default function ManageUsersPage() {
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <Input
-            placeholder="Buscar por nome, e-mail, telefone ou serviço..."
+            placeholder="Buscar por nome, e-mail, telefone, empresa ou serviço..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -221,8 +251,9 @@ export default function ManageUsersPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-popover border-border text-popover-foreground">
               <DropdownMenuItem onClick={() => setFilterRole('all')}>Todos</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterRole('client')}>Cliente</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterRole('prospect')}>Prospect</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterRole('client')}>Cliente</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterRole('master')}>Master</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -243,7 +274,7 @@ export default function ManageUsersPage() {
             <TableBody>
               {filteredUsers && filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                  <TableRow key={user.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(user)}>
                     <TableCell className="font-medium text-foreground py-4">
                       <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-primary" />
@@ -323,7 +354,7 @@ export default function ManageUsersPage() {
                           <DropdownMenuContent className="bg-popover border-border text-popover-foreground">
                             {user.role === 'prospect' && (
                               <DropdownMenuItem
-                                onClick={() => changeUserRoleMutation.mutate({ userId: user.id, newRole: 'client' })}
+                                onClick={(e) => { e.stopPropagation(); changeUserRoleMutation.mutate({ userId: user.id, newRole: 'client' }); }}
                                 disabled={changeUserRoleMutation.isPending}
                               >
                                 {changeUserRoleMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -332,7 +363,7 @@ export default function ManageUsersPage() {
                             )}
                             {user.role === 'client' && (
                               <DropdownMenuItem
-                                onClick={() => changeUserRoleMutation.mutate({ userId: user.id, newRole: 'prospect' })}
+                                onClick={(e) => { e.stopPropagation(); changeUserRoleMutation.mutate({ userId: user.id, newRole: 'prospect' }); }}
                                 disabled={changeUserRoleMutation.isPending}
                               >
                                 {changeUserRoleMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -355,6 +386,13 @@ export default function ManageUsersPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pop-up de Detalhes do Cliente */}
+        <ClientDetailsPopup
+          isOpen={isDetailsPopupOpen}
+          onClose={() => setIsDetailsPopupOpen(false)}
+          client={selectedClientForDetails}
+        />
       </motion.div>
     </DashboardLayout>
   );
