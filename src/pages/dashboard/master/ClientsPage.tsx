@@ -13,23 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,11 +40,14 @@ import {
   Eye, // Adicionado para visibilidade da senha
   EyeOff, // Adicionado para visibilidade da senha
   RefreshCw, // NOVO: Ícone para o botão de atualizar
+  Download, // NOVO: Ícone para download
 } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup'; // Importar o novo componente
 import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporárias
+import jsPDF from 'jspdf'; // Importar jspdf
+import html2canvas from 'html2canvas'; // Importar html2canvas
 
 // Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
@@ -444,6 +431,101 @@ export default function ClientsPage() {
     toast.info("Atualizando lista de clientes...");
   };
 
+  // NOVO: Função para gerar o PDF
+  const generateClientsPdf = async () => {
+    if (!filteredClients || filteredClients.length === 0) {
+      toast.error("Nenhum cliente para gerar o PDF.");
+      return;
+    }
+
+    toast.loading("Gerando PDF dos clientes...");
+
+    const htmlContent = `
+      <div style="font-family: 'Poppins', sans-serif; padding: 20px; color: #0D1B2A; background-color: #ffffff; box-sizing: border-box;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <img src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp" alt="Pontedra Logo" style="max-height: 60px; width: auto;">
+        </div>
+        <h1 style="font-size: 24px; color: #00C896; text-align: center; margin-bottom: 20px;">Relatório de Clientes</h1>
+        <p style="font-size: 12px; text-align: center; color: #555; margin-bottom: 20px;">Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
+
+        <table width="100%" cellspacing="0" cellpadding="8" style="font-size: 10px; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #e0ffe0;">
+              <th style="text-align: left; border: 1px solid #ddd;">ID</th>
+              <th style="text-align: left; border: 1px solid #ddd;">Nome</th>
+              <th style="text-align: left; border: 1px solid #ddd;">E-mail</th>
+              <th style="text-align: left; border: 1px solid #ddd;">Telefone</th>
+              <th style="text-align: left; border: 1px solid #ddd;">Empresa/Endereço</th>
+              <th style="text-align: left; border: 1px solid #ddd;">Papel</th>
+              <th style="text-align: left; border: 1px solid #ddd;">Cadastro</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredClients.map(client => `
+              <tr>
+                <td style="border: 1px solid #ddd;">${client.client_id || 'N/A'}</td>
+                <td style="border: 1px solid #ddd;">${client.first_name} ${client.last_name}</td>
+                <td style="border: 1px solid #ddd;">${client.email}</td>
+                <td style="border: 1px solid #ddd;">${formatPhoneNumber(client.telefone)}</td>
+                <td style="border: 1px solid #ddd;">
+                  ${client.company_organization ? `<strong>Empresa:</strong> ${client.company_organization}<br>` : ''}
+                  ${client.address_city && client.address_state ? `<strong>Local:</strong> ${client.address_city} - ${client.address_state}` : 'N/A'}
+                </td>
+                <td style="border: 1px solid #ddd; text-transform: capitalize;">${client.role}</td>
+                <td style="border: 1px solid #ddd;">
+                  ${format(parseISO(client.created_at), 'dd/MM/yyyy', { locale: ptBR })}<br>
+                  (${calculateDaysSinceRegistration(client.created_at)} dias)
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div style="text-align: center; font-size: 10px; color: #777; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+          <p style="margin-bottom: 5px;"><strong>Pontedra</strong></p>
+          <p style="margin-bottom: 5px;">E-mail: contato@pontedra.com | Telefone: +55 11 97877-7308</p>
+        </div>
+      </div>
+    `;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.width = '800px'; // A4 width approx
+    tempDiv.innerHTML = htmlContent;
+    document.body.appendChild(tempDiv);
+
+    try {
+      const canvas = await html2canvas(tempDiv, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      let imgHeight = canvas.height * imgWidth / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const filename = `Relatorio_Clientes_Pontedra_${format(new Date(), 'yyyyMMdd')}.pdf`;
+      pdf.save(filename);
+      toast.success('PDF gerado e baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Falha ao gerar PDF. Tente novamente.');
+    } finally {
+      document.body.removeChild(tempDiv);
+    }
+  };
+
   if (isLoading || isLoadingEmails) {
     return (
       <DashboardLayout>
@@ -480,6 +562,9 @@ export default function ClientsPage() {
           <div className="flex gap-2"> {/* Container para os botões */}
             <Button onClick={handleRefreshClients} className="bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-md">
               <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
+            </Button>
+            <Button onClick={generateClientsPdf} className="bg-blue-500 hover:bg-blue-600 text-white rounded-md">
+              <Download className="mr-2 h-4 w-4" /> Baixar PDF
             </Button>
             <Button onClick={handleOpenCreateDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
               <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Cliente
