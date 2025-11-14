@@ -401,10 +401,8 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       status: 'confirmed', // Sempre 'confirmed'
       notes,
       client_id: finalClientId!, // Garante que client_id é passado
-      client_name: finalClientName,
-      client_email: finalClientEmail,
-      // newClientDetails is handled internally by onSave if clientSelectionMode is 'new'
-      // but the actual client_id, name, email are passed directly now.
+      client_name: finalClientName, // NOVO: Passa o nome do cliente
+      client_email: finalClientEmail, // NOVO: Passa o e-mail do cliente
       newClientDetails: clientSelectionMode === 'new' ? { name: newClientName, email: newClientEmail, phone: newClientPhone } : undefined,
     });
   };
