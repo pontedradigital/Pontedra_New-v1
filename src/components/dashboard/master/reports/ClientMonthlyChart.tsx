@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Users } from 'lucide-react';
 import LineChart from './LineChart';
+import BarChart from './BarChart'; // Importar BarChart
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -14,9 +15,10 @@ interface Profile {
 
 interface ClientMonthlyChartProps {
   selectedDate: Date;
+  chartType: 'line' | 'bar'; // Nova prop
 }
 
-export default function ClientMonthlyChart({ selectedDate }: ClientMonthlyChartProps) {
+export default function ClientMonthlyChart({ selectedDate, chartType }: ClientMonthlyChartProps) {
   const twelveMonthsAgo = subMonths(selectedDate, 11);
   const startOfTwelveMonthsAgo = startOfMonth(twelveMonthsAgo);
   const endOfSelectedMonth = endOfMonth(selectedDate);
@@ -67,19 +69,23 @@ export default function ClientMonthlyChart({ selectedDate }: ClientMonthlyChartP
     return { labels, clientsData, prospectsData };
   }, [historicalProfiles, selectedDate]);
 
+  const ChartComponent = chartType === 'line' ? LineChart : BarChart;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <LineChart
+      <ChartComponent
         title="Novos Clientes por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.clientsData[index] }))}
-        lineColor="#57e389"
+        lineColor="#57e389" // Usado para LineChart
+        barColor="#57e389"  // Usado para BarChart
         unit="clientes"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Novos Prospects por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.prospectsData[index] }))}
-        lineColor="#00b4ff"
+        lineColor="#00b4ff" // Usado para LineChart
+        barColor="#00b4ff"  // Usado para BarChart
         unit="prospects"
         isLoading={isLoading}
       />

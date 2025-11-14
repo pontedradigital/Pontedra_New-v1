@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Briefcase, CheckCircle, PlayCircle } from 'lucide-react';
 import LineChart from './LineChart';
+import BarChart from './BarChart'; // Importar BarChart
 import { format, subMonths, startOfMonth, endOfMonth, parseISO, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -16,9 +17,10 @@ interface ClientContract {
 
 interface ProjectsMonthlyChartProps {
   selectedDate: Date;
+  chartType: 'line' | 'bar'; // Nova prop
 }
 
-export default function ProjectsMonthlyChart({ selectedDate }: ProjectsMonthlyChartProps) {
+export default function ProjectsMonthlyChart({ selectedDate, chartType }: ProjectsMonthlyChartProps) {
   const twelveMonthsAgo = subMonths(selectedDate, 11);
   const startOfTwelveMonthsAgo = startOfMonth(twelveMonthsAgo);
   const endOfSelectedMonth = endOfMonth(selectedDate);
@@ -90,33 +92,39 @@ export default function ProjectsMonthlyChart({ selectedDate }: ProjectsMonthlyCh
     return { labels, totalData, newProjectsData, activeData, completedData };
   }, [historicalContracts, selectedDate]);
 
+  const ChartComponent = chartType === 'line' ? LineChart : BarChart;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <LineChart
+      <ChartComponent
         title="Total de Projetos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.totalData[index] }))}
         lineColor="#57e389"
+        barColor="#57e389"
         unit="projetos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Novos Projetos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.newProjectsData[index] }))}
         lineColor="#00b4ff"
+        barColor="#00b4ff"
         unit="projetos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Projetos Ativos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.activeData[index] }))}
         lineColor="#ffc107" // Yellow for active
+        barColor="#ffc107"
         unit="projetos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Projetos Concluídos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.completedData[index] }))}
         lineColor="#dc3545" // Red for completed
+        barColor="#dc3545"
         unit="projetos"
         isLoading={isLoading}
       />

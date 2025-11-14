@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { BarChart, CalendarDays, Loader2, Users, DollarSign, FileText, Briefcase } from 'lucide-react'; // Adicionado FileText e Briefcase
+import { BarChart as BarChartIcon, CalendarDays, Loader2, Users, DollarSign, FileText, Briefcase, LineChart as LineChartIcon } from 'lucide-react'; // Adicionado LineChartIcon
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { format, getMonth, getYear, setMonth, setYear, subMonths } from 'date-fns';
@@ -25,6 +25,7 @@ import MonthlyFinancialCharts from '@/components/dashboard/master/MonthlyFinanci
 export default function ReportsPage() {
   const { profile, loading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>('line'); // Novo estado para o tipo de gráfico
 
   // Generate month options
   const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => {
@@ -68,14 +69,14 @@ export default function ReportsPage() {
         className="space-y-8"
       >
         <div className="flex items-center gap-4 mb-8">
-          <BarChart className="w-10 h-10 text-[#57e389]" />
+          <BarChartIcon className="w-10 h-10 text-[#57e389]" />
           <h1 className="text-4xl font-bold text-foreground">Relatórios</h1>
         </div>
         <p className="text-lg text-[#9ba8b5]">
           Olá, <span className="font-semibold text-white">{profile?.first_name}</span>! Visualize os relatórios e métricas da plataforma aqui.
         </p>
 
-        {/* Seletores de Mês e Ano */}
+        {/* Seletores de Mês, Ano e Tipo de Gráfico */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1 space-y-2">
             <Label htmlFor="select-month">Mês</Label>
@@ -109,6 +110,29 @@ export default function ReportsPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="select-chart-type">Tipo de Gráfico</Label>
+            <Select
+              value={selectedChartType}
+              onValueChange={(value: 'line' | 'bar') => setSelectedChartType(value)}
+            >
+              <SelectTrigger id="select-chart-type" className="w-full bg-card border-border text-foreground">
+                <SelectValue placeholder="Selecione o Tipo" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border text-popover-foreground">
+                <SelectItem value="line">
+                  <div className="flex items-center gap-2">
+                    <LineChartIcon className="w-4 h-4" /> Linha
+                  </div>
+                </SelectItem>
+                <SelectItem value="bar">
+                  <div className="flex items-center gap-2">
+                    <BarChartIcon className="w-4 h-4" /> Barra
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Relatórios de Clientes */}
@@ -117,7 +141,7 @@ export default function ReportsPage() {
             <Users className="w-6 h-6 text-blue-500" /> Relatório de Clientes
           </h2>
           <ClientReportsCard selectedDate={selectedDate} />
-          <ClientMonthlyChart selectedDate={selectedDate} />
+          <ClientMonthlyChart selectedDate={selectedDate} chartType={selectedChartType} />
         </section>
 
         {/* Relatórios de Agendamentos */}
@@ -126,7 +150,7 @@ export default function ReportsPage() {
             <CalendarDays className="w-6 h-6 text-green-500" /> Relatório de Agendamentos
           </h2>
           <AppointmentsReportsCard selectedDate={selectedDate} />
-          <AppointmentsMonthlyChart selectedDate={selectedDate} />
+          <AppointmentsMonthlyChart selectedDate={selectedDate} chartType={selectedChartType} />
         </section>
 
         {/* Relatórios de Projetos */}
@@ -135,7 +159,7 @@ export default function ReportsPage() {
             <Briefcase className="w-6 h-6 text-purple-500" /> Relatório de Projetos
           </h2>
           <ProjectsReportsCard selectedDate={selectedDate} />
-          <ProjectsMonthlyChart selectedDate={selectedDate} />
+          <ProjectsMonthlyChart selectedDate={selectedDate} chartType={selectedChartType} />
         </section>
 
         {/* Relatórios de Orçamentos */}
@@ -144,7 +168,7 @@ export default function ReportsPage() {
             <FileText className="w-6 h-6 text-orange-500" /> Relatório de Orçamentos
           </h2>
           <BudgetsReportsCard selectedDate={selectedDate} />
-          <BudgetsMonthlyChart selectedDate={selectedDate} />
+          <BudgetsMonthlyChart selectedDate={selectedDate} chartType={selectedChartType} />
         </section>
 
         {/* Relatórios Financeiros */}

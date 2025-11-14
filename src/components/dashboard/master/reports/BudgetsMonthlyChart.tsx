@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Loader2, FileText, CheckCircle, XCircle, Hourglass, DollarSign } from 'lucide-react';
 import LineChart from './LineChart';
+import BarChart from './BarChart'; // Importar BarChart
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -14,9 +15,10 @@ interface Budget {
 
 interface BudgetsMonthlyChartProps {
   selectedDate: Date;
+  chartType: 'line' | 'bar'; // Nova prop
 }
 
-export default function BudgetsMonthlyChart({ selectedDate }: BudgetsMonthlyChartProps) {
+export default function BudgetsMonthlyChart({ selectedDate, chartType }: BudgetsMonthlyChartProps) {
   const twelveMonthsAgo = subMonths(selectedDate, 11);
   const startOfTwelveMonthsAgo = startOfMonth(twelveMonthsAgo);
   const endOfSelectedMonth = endOfMonth(selectedDate);
@@ -69,40 +71,47 @@ export default function BudgetsMonthlyChart({ selectedDate }: BudgetsMonthlyChar
     return { labels, totalData, pendingData, approvedData, rejectedData, convertedData };
   }, [historicalBudgets, selectedDate]);
 
+  const ChartComponent = chartType === 'line' ? LineChart : BarChart;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <LineChart
+      <ChartComponent
         title="Total de Orçamentos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.totalData[index] }))}
         lineColor="#57e389"
+        barColor="#57e389"
         unit="orçamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Orçamentos Pendentes por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.pendingData[index] }))}
         lineColor="#ffc107" // Yellow for pending
+        barColor="#ffc107"
         unit="orçamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Orçamentos Aprovados por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.approvedData[index] }))}
         lineColor="#00b4ff"
+        barColor="#00b4ff"
         unit="orçamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Orçamentos Convertidos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.convertedData[index] }))}
         lineColor="#6f42c1" // Purple for converted
+        barColor="#6f42c1"
         unit="orçamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Orçamentos Rejeitados por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.rejectedData[index] }))}
         lineColor="#dc3545" // Red for rejected
+        barColor="#dc3545"
         unit="orçamentos"
         isLoading={isLoading}
       />

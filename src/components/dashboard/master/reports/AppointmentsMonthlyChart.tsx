@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Loader2, CalendarCheck, CalendarX, CalendarClock } from 'lucide-react';
 import LineChart from './LineChart';
+import BarChart from './BarChart'; // Importar BarChart
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -14,9 +15,10 @@ interface Appointment {
 
 interface AppointmentsMonthlyChartProps {
   selectedDate: Date;
+  chartType: 'line' | 'bar'; // Nova prop
 }
 
-export default function AppointmentsMonthlyChart({ selectedDate }: AppointmentsMonthlyChartProps) {
+export default function AppointmentsMonthlyChart({ selectedDate, chartType }: AppointmentsMonthlyChartProps) {
   const twelveMonthsAgo = subMonths(selectedDate, 11);
   const startOfTwelveMonthsAgo = startOfMonth(twelveMonthsAgo);
   const endOfSelectedMonth = endOfMonth(selectedDate);
@@ -69,40 +71,47 @@ export default function AppointmentsMonthlyChart({ selectedDate }: AppointmentsM
     return { labels, totalData, confirmedData, cancelledData, completedData, pendingData };
   }, [historicalAppointments, selectedDate]);
 
+  const ChartComponent = chartType === 'line' ? LineChart : BarChart;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <LineChart
+      <ChartComponent
         title="Total de Agendamentos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.totalData[index] }))}
         lineColor="#57e389"
+        barColor="#57e389"
         unit="agendamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Agendamentos Confirmados por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.confirmedData[index] }))}
         lineColor="#00b4ff"
+        barColor="#00b4ff"
         unit="agendamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Agendamentos Pendentes por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.pendingData[index] }))}
         lineColor="#ffc107" // Yellow for pending
+        barColor="#ffc107"
         unit="agendamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Agendamentos Concluídos por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.completedData[index] }))}
         lineColor="#6f42c1" // Purple for completed
+        barColor="#6f42c1"
         unit="agendamentos"
         isLoading={isLoading}
       />
-      <LineChart
+      <ChartComponent
         title="Agendamentos Cancelados por Mês"
         data={chartData.labels.map((label, index) => ({ label, value: chartData.cancelledData[index] }))}
         lineColor="#dc3545" // Red for cancelled
+        barColor="#dc3545"
         unit="agendamentos"
         isLoading={isLoading}
       />
