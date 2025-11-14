@@ -25,6 +25,7 @@ import {
   Facebook,
   ChevronDown,
   Calculator, // Ícone para Calculadoras
+  LayoutDashboard, // NOVO: Ícone para Visão Geral
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -56,8 +57,8 @@ const navItems: NavItem[] = [
     icon: DollarSign,
     roles: ['master'],
     children: [
-      { label: "Visão Geral", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
-      { label: "Calculadoras", icon: Calculator, href: "/dashboard/financial", roles: ['master'] }, // Agora aponta para a mesma página FinancialPage
+      { label: "Visão Geral", icon: LayoutDashboard, href: "/dashboard/financial/overview", roles: ['master'] }, // Rota específica
+      { label: "Calculadoras", icon: Calculator, href: "/dashboard/financial/calculators", roles: ['master'] }, // Rota específica
     ],
   },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
@@ -80,7 +81,7 @@ export default function DashboardSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
 
-  // Efeito para abrir o collapsible "Financeiro" se a rota atual for "/dashboard/financial"
+  // Efeito para abrir o collapsible "Financeiro" se a rota atual for "/dashboard/financial" ou qualquer sub-rota
   useEffect(() => {
     if (location.pathname.startsWith("/dashboard/financial")) {
       setOpenCollapsibles(prev => ({ ...prev, "Financeiro": true }));
@@ -113,7 +114,8 @@ export default function DashboardSidebar() {
     <ul className={isSubMenu ? "ml-4 space-y-1" : "space-y-2"}>
       {items.map((item) => {
         const itemHref = item.label === "Início" ? getDashboardHomeLink() : item.href;
-        // Para submenus, a ativação deve ser baseada na rota pai ou na rota específica do submenu
+        // A lógica de ativação agora verifica se a rota atual *começa* com o itemHref
+        // Isso permite que sub-rotas como /dashboard/financial/overview ativem o item pai /dashboard/financial
         const isActive = itemHref ? location.pathname.startsWith(itemHref) : false;
         const Icon = item.icon;
 
