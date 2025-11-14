@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays } from 'lucide-react';
-import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard'; // NOVO: Importar o novo componente
+import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard';
 
 export default function SettingsPage() {
   const { user, profile, loading, updateProfile } = useAuth();
@@ -16,15 +16,15 @@ export default function SettingsPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [companyOrganization, setCompanyOrganization] = useState(''); // NOVO
-  const [addressStreet, setAddressStreet] = useState('');             // NOVO
-  const [addressNumber, setAddressNumber] = useState('');             // NOVO
-  const [addressComplement, setAddressComplement] = useState('');     // NOVO
-  const [addressNeighborhood, setAddressNeighborhood] = useState(''); // NOVO
-  const [addressCity, setAddressCity] = useState('');                 // NOVO
-  const [addressState, setAddressState] = useState('');               // NOVO
-  const [addressCep, setAddressCep] = useState('');                   // NOVO
-  const [dateOfBirth, setDateOfBirth] = useState('');                 // NOVO
+  const [companyOrganization, setCompanyOrganization] = useState('');
+  const [addressStreet, setAddressStreet] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
+  const [addressComplement, setAddressComplement] = useState('');
+  const [addressNeighborhood, setAddressNeighborhood] = useState('');
+  const [addressCity, setAddressCity] = useState('');
+  const [addressState, setAddressState] = useState('');
+  const [addressCep, setAddressCep] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -33,15 +33,15 @@ export default function SettingsPage() {
       setLastName(profile.last_name || '');
       setEmail(user.email || '');
       setPhone(profile.telefone || '');
-      setCompanyOrganization(profile.company_organization || ''); // NOVO
-      setAddressStreet(profile.address_street || '');             // NOVO
-      setAddressNumber(profile.address_number || '');             // NOVO
-      setAddressComplement(profile.address_complement || '');     // NOVO
-      setAddressNeighborhood(profile.address_neighborhood || ''); // NOVO
-      setAddressCity(profile.address_city || '');                 // NOVO
-      setAddressState(profile.address_state || '');               // NOVO
-      setAddressCep(profile.address_cep || '');                   // NOVO
-      setDateOfBirth(profile.date_of_birth || '');                // NOVO
+      setCompanyOrganization(profile.company_organization || '');
+      setAddressStreet(profile.address_street || '');
+      setAddressNumber(profile.address_number || '');
+      setAddressComplement(profile.address_complement || '');
+      setAddressNeighborhood(profile.address_neighborhood || '');
+      setAddressCity(profile.address_city || '');
+      setAddressState(profile.address_state || '');
+      setAddressCep(profile.address_cep || '');
+      setDateOfBirth(profile.date_of_birth || '');
     }
   }, [profile, user]);
 
@@ -71,15 +71,15 @@ export default function SettingsPage() {
       last_name: lastName,
       email: email,
       telefone: phone,
-      company_organization: companyOrganization, // NOVO
-      address_street: addressStreet,             // NOVO
-      address_number: addressNumber,             // NOVO
-      address_complement: addressComplement,     // NOVO
-      address_neighborhood: addressNeighborhood, // NOVO
-      address_city: addressCity,                 // NOVO
-      address_state: addressState,               // NOVO
-      address_cep: addressCep,                   // NOVO
-      date_of_birth: dateOfBirth,                // NOVO
+      company_organization: companyOrganization,
+      address_street: addressStreet,
+      address_number: addressNumber,
+      address_complement: addressComplement,
+      address_neighborhood: addressNeighborhood,
+      address_city: addressCity,
+      address_state: addressState,
+      address_cep: addressCep,
+      date_of_birth: dateOfBirth,
     });
     setIsSaving(false);
   };
@@ -309,32 +309,6 @@ export default function SettingsPage() {
         {profile.role === 'master' && (
           <WhatsAppNumberSettingCard />
         )}
-
-        {/* Outras Configurações (Placeholder) */}
-        <Card className="bg-card border-border shadow-lg rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-foreground">Outras Configurações</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Ajuste outras preferências da sua conta.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="notification-toggle" className="text-foreground">Receber Notificações por E-mail</Label>
-              {/* Exemplo de um switch de shadcn/ui */}
-              <Button variant="outline" size="sm" className="bg-background border-border text-foreground">Ativar/Desativar</Button>
-            </div>
-            <Separator className="bg-border" />
-            <div className="flex items-center justify-between">
-              <Label htmlFor="theme-select" className="text-foreground">Tema da Interface</Label>
-              {/* Exemplo de um select de shadcn/ui */}
-              <Button variant="outline" size="sm" className="bg-background border-border text-foreground">Escuro (Padrão)</Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              Mais opções de configuração serão adicionadas aqui em breve!
-            </p>
-          </CardContent>
-        </Card>
       </motion.div>
     </DashboardLayout>
   );
