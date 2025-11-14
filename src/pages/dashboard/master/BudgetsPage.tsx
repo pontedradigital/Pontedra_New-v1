@@ -1084,19 +1084,20 @@ export default function BudgetsPage() {
         }
       }
     },
-    onSuccess: (data, budgetId) => { // Adicionado budgetId para usar o user_id
-      queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      // Corrigido: Passar o user_id do cliente para refetchQueries
+    onSuccess: (data, budgetId) => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] }); // Invalidate budgets list
+      
       const approvedBudget = budgets?.find(b => b.id === budgetId);
       if (approvedBudget) {
-        queryClient.refetchQueries({ queryKey: ['clientProjects', approvedBudget.user_id] });
-      } else {
-        // Fallback caso o orçamento não seja encontrado no cache local
-        queryClient.refetchQueries({ queryKey: ['clientProjects'] });
+        // Invalidate client-specific projects cache
+        queryClient.invalidateQueries({ queryKey: ['clientProjects', approvedBudget.user_id] });
       }
+      // Also invalidate master's all projects cache
+      queryClient.invalidateQueries({ queryKey: ['masterProjects'] }); 
+
       toast.success('Orçamento aprovado e projeto criado com sucesso!');
-      setIsApproveConfirmOpen(false); // Fechar o pop-up de confirmação
-      setBudgetToApprove(null); // Limpar o orçamento em aprovação
+      setIsApproveConfirmOpen(false);
+      setBudgetToApprove(null);
     },
     onError: (err) => {
       toast.error(`Erro ao aprovar orçamento ou criar projeto: ${err.message}`);
@@ -1120,9 +1121,13 @@ export default function BudgetsPage() {
         .eq('id', budgetId);
       if (updateBudgetError) throw updateBudgetError;
     },
-    onSuccess: () => {
+    onSuccess: (data, budgetId) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.invalidateQueries({ queryKey: ['clientProjects'] }); // Invalidar a query de projetos do cliente
+      const revertedBudget = budgets?.find(b => b.id === budgetId);
+      if (revertedBudget) {
+        queryClient.invalidateQueries({ queryKey: ['clientProjects', revertedBudget.user_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['masterProjects'] });
       toast.success('Aprovação de orçamento revertida e projeto removido com sucesso!');
       setIsRevertConfirmOpen(false); // Fechar o pop-up de confirmação de reversão
       setBudgetToRevert(null); // Limpar o orçamento em reversão
@@ -1168,9 +1173,13 @@ export default function BudgetsPage() {
         .eq('id', budgetId);
       if (deleteBudgetError) throw deleteBudgetError;
     },
-    onSuccess: () => {
+    onSuccess: (data, budgetId) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.invalidateQueries({ queryKey: ['clientProjects'] }); // Invalidar a query de projetos do cliente
+      const deletedBudget = budgets?.find(b => b.id === budgetId);
+      if (deletedBudget) {
+        queryClient.invalidateQueries({ queryKey: ['clientProjects', deletedBudget.user_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['masterProjects'] });
       toast.success('Orçamento excluído com sucesso!');
       setIsDeleteConfirmOpen(false); // Fechar o pop-up de confirmação de exclusão
       setBudgetToDelete(null); // Limpar o orçamento a ser excluído

@@ -69,7 +69,7 @@ interface Budget {
 interface ClientContract {
   id: string;
   project_id: string;
-  client_id: string;
+  client_id: string | null; // Pode ser null se o cliente for deletado
   budget_id: string | null; // Novo campo
   contract_type: 'monthly' | 'one-time';
   start_date: string;
@@ -170,12 +170,21 @@ export default function ProjectsPage() {
     enabled: !!user?.id,
   });
 
-  // Fetch client contracts (projects) for the logged-in client
+  // Determine the query key based on user role
+  const projectsQueryKey = useMemo(() => {
+    if (profile?.role === 'master') {
+      return ['masterProjects'];
+    }
+    return ['clientProjects', user?.id];
+  }, [profile?.role, user?.id]);
+
+  // Fetch client contracts (projects)
   const { data: contracts, isLoading: isLoadingContracts, isError: isContractsError, error: contractsError } = useQuery<ClientContract[], Error>({
-    queryKey: ['clientProjects', user?.id],
+    queryKey: projectsQueryKey,
     queryFn: async () => {
-      if (!user?.id) throw new Error("User not authenticated.");
-      const { data, error } = await supabase
+      if (!user?.id || !profile) throw new Error("User not authenticated or profile not loaded.");
+
+      let query = supabase
         .from('client_contracts')
         .select(`
           id,
@@ -214,13 +223,19 @@ export default function ProjectsPage() {
             )
           )
         `)
-        .eq('client_id', user.id)
         .order('start_date', { ascending: false });
 
+      // If the user is a client, filter by their client_id
+      if (profile.role === 'client') {
+        query = query.eq('client_id', user.id);
+      }
+      // If the user is a master, no client_id filter is applied, fetching all contracts.
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!profile, // Ensure user and profile are loaded before fetching
   });
 
   // Process projects for display
@@ -291,7 +306,7 @@ export default function ProjectsPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
+      queryClient.invalidateQueries({ queryKey: projectsQueryKey }); // Invalidate based on the dynamic key
       toast.success(editingProject ? 'Projeto atualizado com sucesso!' : 'Projeto adicionado com sucesso!');
       setIsDialogOpen(false);
       setEditingProject(null);
@@ -317,7 +332,7 @@ export default function ProjectsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
+      queryClient.invalidateQueries({ queryKey: projectsQueryKey }); // Invalidate based on the dynamic key
       toast.success('Projeto excluído com sucesso!');
     },
     onError: (err) => {
