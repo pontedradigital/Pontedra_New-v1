@@ -176,18 +176,57 @@ export default function AppointmentsPage() {
   // Mutation to create a new appointment (used by both client and master dialog)
   const upsertAppointmentMutation = useMutation<void, Error, {
     id?: string; // Optional for update
-    client_id: string;
     master_id: string;
     start_time: Date;
     end_time: Date;
     status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
     notes: string;
+    existingClientId?: string;
+    newClientDetails?: { name: string; email: string; phone?: string };
   }>({
     mutationFn: async (appointmentData) => {
+      let clientIdToUse = appointmentData.existingClientId;
+
+      // If new client details are provided, create a new user first
+      if (appointmentData.newClientDetails) {
+        const { name, email, phone } = appointmentData.newClientDetails;
+        const tempPassword = Math.random().toString(36).slice(-12); // Generate a temporary password
+
+        const userMetadata = {
+          first_name: name,
+          last_name: '', // Deixar vazio ou inferir se possível
+          telefone: phone || null,
+          role: 'prospect', // Novos clientes de agendamento são prospect por padrão
+          status: 'ativo',
+        };
+
+        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('create-unverified-user', {
+          body: {
+            email: email,
+            password: tempPassword,
+            user_metadata: userMetadata,
+          },
+        });
+
+        if (edgeFunctionError) {
+          const specificErrorMessage = (edgeFunctionError as any)?.context?.data?.error || edgeFunctionError.message;
+          throw new Error(`Falha ao criar novo usuário para agendamento: ${specificErrorMessage}`);
+        }
+        if (!edgeFunctionData || !edgeFunctionData.userId) {
+          throw new Error("Falha ao criar novo usuário: Edge Function não retornou ID do usuário.");
+        }
+        clientIdToUse = edgeFunctionData.userId;
+        toast.info(`Novo usuário '${email}' criado com sucesso! O cliente precisará redefinir a senha através do link de confirmação de e-mail.`);
+      }
+
+      if (!clientIdToUse) {
+        throw new Error("ID do cliente não fornecido ou não pôde ser criado.");
+      }
+
       if (appointmentData.id) {
         // Update existing appointment
         const { error } = await supabase.from('appointments').update({
-          client_id: appointmentData.client_id,
+          client_id: clientIdToUse, // Use o ID do cliente (existente ou recém-criado)
           master_id: appointmentData.master_id,
           start_time: appointmentData.start_time.toISOString(),
           end_time: appointmentData.end_time.toISOString(),
@@ -198,7 +237,7 @@ export default function AppointmentsPage() {
       } else {
         // Insert new appointment
         const { error } = await supabase.from('appointments').insert({
-          client_id: appointmentData.client_id,
+          client_id: clientIdToUse, // Use o ID do cliente (existente ou recém-criado)
           master_id: appointmentData.master_id,
           start_time: appointmentData.start_time.toISOString(),
           end_time: appointmentData.end_time.toISOString(),
@@ -210,6 +249,7 @@ export default function AppointmentsPage() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['allClientProfiles'] }); // Invalida perfis para atualizar lista de clientes
       toast.success(variables.id ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
       setIsTimeSlotDialogOpen(false);
       setIsAddAppointmentDialogOpen(false);
@@ -217,6 +257,7 @@ export default function AppointmentsPage() {
       setSelectedDate(undefined);
     },
     onError: (err) => {
+      console.error("Erro ao salvar agendamento:", err);
       toast.error(`Erro ao salvar agendamento: ${err.message}`);
     },
   });
@@ -287,7 +328,7 @@ export default function AppointmentsPage() {
       return;
     }
     upsertAppointmentMutation.mutate({
-      client_id: user.id,
+      existingClientId: user.id, // Cliente logado
       master_id: masterIdForBooking,
       start_time: startTime,
       end_time: endTime,

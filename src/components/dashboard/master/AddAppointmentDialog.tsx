@@ -41,6 +41,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // Importar DateSelectionList
 import { useAuth } from '@/context/AuthContext'; // Importar useAuth
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Importar RadioGroup
 
 interface Appointment {
   id: string;
@@ -58,12 +59,17 @@ interface AddAppointmentDialogProps {
   onClose: () => void;
   onSave: (appointmentData: {
     id?: string; // Optional for update
-    client_id: string;
     master_id: string;
     start_time: Date;
     end_time: Date;
     status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
     notes: string;
+    existingClientId?: string; // ID do cliente existente
+    newClientDetails?: { // Detalhes do novo cliente
+      name: string;
+      email: string;
+      phone?: string;
+    };
   }) => Promise<void>;
   isSaving: boolean;
   initialData?: Appointment | null; // NOVA PROPRIEDADE
@@ -93,7 +99,12 @@ interface MasterException {
 
 const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onClose, onSave, isSaving, initialData }) => {
   const { profile } = useAuth(); // Usar useAuth para obter o perfil do usuário logado
+  const [clientSelectionMode, setClientSelectionMode] = useState<'existing' | 'new'>('existing');
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+
   const [selectedMasterId, setSelectedMasterId] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
@@ -273,13 +284,19 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
   // Reset form or populate with initialData when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
+      setClientSelectionMode('existing');
       setSelectedClientId(undefined);
+      setNewClientName('');
+      setNewClientEmail('');
+      setNewClientPhone('');
       setSelectedMasterId(undefined);
       setSelectedDate(undefined);
       setSelectedTimeSlot(null);
       setStatus('pending');
       setNotes('');
     } else if (initialData) {
+      // If editing, assume client is existing and pre-fill
+      setClientSelectionMode('existing');
       setSelectedClientId(initialData.client_id);
       setSelectedMasterId(initialData.master_id);
       setSelectedDate(parseISO(initialData.start_time));
@@ -294,11 +311,50 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
     }
   }, [isOpen, initialData, masterProfiles]);
 
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    let formatted = '';
+
+    if (cleaned.length <= 2) {
+      formatted = cleaned;
+    } else if (cleaned.length <= 6) { // (00) 0000
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    } else if (cleaned.length <= 10) { // (00) 0000-0000 (fixo)
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+    } else if (cleaned.length <= 11) { // (00) 00000-0000 (celular)
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+    } else {
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`; // Limita a 11 dígitos
+    }
+    return formatted;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedClientId || !selectedMasterId || !selectedDate || !selectedTimeSlot) {
-      toast.error('Por favor, preencha todos os campos obrigatórios (Cliente, Master, Data e Horário).');
+    if (!selectedMasterId || !selectedDate || !selectedTimeSlot) {
+      toast.error('Por favor, preencha todos os campos obrigatórios (Master, Data e Horário).');
       return;
+    }
+
+    if (clientSelectionMode === 'existing' && !selectedClientId) {
+      toast.error('Por favor, selecione um cliente existente.');
+      return;
+    }
+
+    if (clientSelectionMode === 'new') {
+      if (!newClientName.trim()) {
+        toast.error('O nome do novo cliente é obrigatório.');
+        return;
+      }
+      if (!newClientEmail.trim()) {
+        toast.error('O e-mail do novo cliente é obrigatório.');
+        return;
+      }
+      // Basic email format validation
+      if (!/\S+@\S+\.\S+/.test(newClientEmail)) {
+        toast.error('Por favor, insira um e-mail válido para o novo cliente.');
+        return;
+      }
     }
 
     const startTime = selectedTimeSlot;
@@ -306,7 +362,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
 
     // Check for overlapping appointments (double-check before saving)
     const isOverlapping = existingAppointments?.some(app => {
-      // Ignorar o próprio agendamento que está sendo editado na verificação de sobreposição
+      // Ignorar o próprio agendamento que está sendo editado da lista de "booked"
       if (initialData?.id && app.id === initialData.id) return false;
 
       const existingStart = parseISO(app.start_time);
@@ -324,12 +380,13 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
 
     await onSave({
       id: initialData?.id, // Passa o ID se for uma edição
-      client_id: selectedClientId,
       master_id: selectedMasterId,
       start_time: startTime,
       end_time: endTime,
       status,
       notes,
+      existingClientId: clientSelectionMode === 'existing' ? selectedClientId : undefined,
+      newClientDetails: clientSelectionMode === 'new' ? { name: newClientName, email: newClientEmail, phone: newClientPhone } : undefined,
     });
   };
 
@@ -348,34 +405,100 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
-          {/* Cliente */}
-          <div className="space-y-2">
-            <Label htmlFor="client-select">Cliente *</Label>
-            <Select value={selectedClientId} onValueChange={setSelectedClientId} disabled={isLoadingData}>
-              <SelectTrigger id="client-select" className="w-full bg-background border-border text-foreground">
-                <SelectValue placeholder="Selecione o Cliente" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border text-popover-foreground">
-                {isLoadingClientProfiles ? (
-                  <SelectItem value="loading" disabled>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" /> Carregando clientes...
-                  </SelectItem>
-                ) : (
-                  clientProfiles?.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        {client.first_name} {client.last_name} ({client.email})
-                      </div>
+          {/* Seleção do Cliente */}
+          <div className="space-y-2 md:col-span-2">
+            <Label>Cliente *</Label>
+            <RadioGroup
+              value={clientSelectionMode}
+              onValueChange={(value: 'existing' | 'new') => {
+                setClientSelectionMode(value);
+                // Limpa os campos ao trocar de modo
+                setSelectedClientId(undefined);
+                setNewClientName('');
+                setNewClientEmail('');
+                setNewClientPhone('');
+              }}
+              className="flex gap-4 mb-4"
+              disabled={!!initialData} // Desabilita a mudança de modo ao editar
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="existing" id="client-existing" />
+                <Label htmlFor="client-existing">Cliente Existente</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="new" id="client-new" />
+                <Label htmlFor="client-new">Novo Cliente</Label>
+              </div>
+            </RadioGroup>
+
+            {clientSelectionMode === 'existing' ? (
+              <Select value={selectedClientId} onValueChange={setSelectedClientId} disabled={isLoadingData || !!initialData}>
+                <SelectTrigger id="client-select" className="w-full bg-background border-border text-foreground">
+                  <SelectValue placeholder="Selecione o Cliente" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border text-popover-foreground">
+                  {isLoadingClientProfiles ? (
+                    <SelectItem value="loading" disabled>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" /> Carregando clientes...
                     </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+                  ) : (
+                    clientProfiles?.map(client => (
+                      <SelectItem key={client.id} value={client.id}>
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          {client.first_name} {client.last_name} ({client.email})
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <>
+                <div className="space-y-2 mb-4">
+                  <Label htmlFor="new-client-name">Nome *</Label>
+                  <Input
+                    id="new-client-name"
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    placeholder="Nome do cliente"
+                    className="w-full bg-background border-border text-foreground"
+                    required
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2 mb-4">
+                  <Label htmlFor="new-client-email">E-mail *</Label>
+                  <Input
+                    id="new-client-email"
+                    type="email"
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    placeholder="email@exemplo.com"
+                    className="w-full bg-background border-border text-foreground"
+                    required
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-client-phone">Telefone</Label>
+                  <Input
+                    id="new-client-phone"
+                    type="tel"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(formatPhoneNumber(e.target.value))}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="w-full bg-background border-border text-foreground"
+                    disabled={isSaving}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Master */}
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="master-select">Master *</Label>
             <Select value={selectedMasterId} onValueChange={setSelectedMasterId} disabled={isLoadingData}>
               <SelectTrigger id="master-select" className="w-full bg-background border-border text-foreground">
@@ -484,7 +607,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
             <Button variant="outline" onClick={onClose} disabled={isSaving} className="bg-background border-border text-foreground hover:bg-muted">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSaving || !selectedClientId || !selectedMasterId || !selectedDate || !selectedTimeSlot} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button type="submit" disabled={isSaving || !selectedMasterId || !selectedDate || !selectedTimeSlot || (clientSelectionMode === 'existing' && !selectedClientId) || (clientSelectionMode === 'new' && (!newClientName.trim() || !newClientEmail.trim()))} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (initialData ? <Save className="mr-2 h-4 w-4" /> : <PlusCircle className="mr-2 h-4 w-4" />)}
               {initialData ? 'Salvar Alterações' : 'Adicionar Agendamento'}
             </Button>
