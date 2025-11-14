@@ -56,7 +56,7 @@ import { format, differenceInDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup'; // Importar o novo componente
 
-// Tipos de dados para o perfil do usuário (atualizado)
+// Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
   id: string;
   client_id: string | null; // NOVO: Adicionado client_id
@@ -181,14 +181,20 @@ export default function ClientsPage() {
     },
   });
 
-  // Mutation to delete a client profile
+  // Mutation to delete a client profile using the Edge Function
   const deleteClientMutation = useMutation<void, Error, string>({
     mutationFn: async (clientId) => {
-      // Nota: Deletar o perfil em `public.profiles` com `ON DELETE CASCADE` no FK
-      // deve automaticamente deletar o usuário em `auth.users`.
-      // Se não, seria necessário usar `supabase.auth.admin.deleteUser(clientId)`.
-      const { error } = await supabase.from('profiles').delete().eq('id', clientId);
-      if (error) throw error;
+      // Chamar a Edge Function para deletar o usuário
+      const { data, error } = await supabase.functions.invoke('delete-user-and-profile', {
+        body: { userId: clientId },
+      });
+
+      if (error) {
+        throw error;
+      }
+      if (data && !data.success) {
+        throw new Error(data.error || "Falha ao deletar usuário via Edge Function.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -400,7 +406,7 @@ export default function ClientsPage() {
                       <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenEditDialog(client); }} className="text-primary hover:text-primary/80">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deleteClientMutation.mutate(client.id); }} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deleteClientMutation.mutate(client.id); }} className="text-destructive hover:text-destructive/80" disabled={client.role === 'master'}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
