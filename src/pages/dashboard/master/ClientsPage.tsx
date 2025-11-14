@@ -494,8 +494,8 @@ export default function ClientsPage() {
             <DropdownMenuContent className="bg-popover border-border text-popover-foreground">
               <DropdownMenuItem onClick={() => setFilterRole('all')}>Todos</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterRole('prospect')}>Prospect</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterRole('client')}>Cliente</SelectItem>
-              <DropdownMenuItem onClick={() => setFilterRole('master')}>Master</SelectItem>
+              <DropdownMenuItem onClick={() => setFilterRole('client')}>Cliente</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterRole('master')}>Master</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
