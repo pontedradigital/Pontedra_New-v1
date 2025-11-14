@@ -2,10 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { BarChart as BarChartIcon, CalendarDays, Loader2, Users, DollarSign, FileText, Briefcase, LineChart as LineChartIcon, Download as DownloadIcon } from 'lucide-react'; // Adicionado DownloadIcon
+import { BarChart as BarChartIcon, CalendarDays, Loader2, Users, DollarSign, FileText, Briefcase, LineChart as LineChartIcon } from 'lucide-react'; // Adicionado LineChartIcon
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button'; // Importar Button
 import { format, getMonth, getYear, setMonth, setYear, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -23,14 +22,10 @@ import ProjectsMonthlyChart from '@/components/dashboard/master/reports/Projects
 import BudgetsMonthlyChart from '@/components/dashboard/master/reports/BudgetsMonthlyChart';
 import MonthlyFinancialCharts from '@/components/dashboard/master/MonthlyFinancialCharts'; // Reutilizando o componente existente
 
-// Import the new DownloadReportsDialog
-import DownloadReportsDialog from '@/components/dashboard/master/reports/DownloadReportsDialog';
-
 export default function ReportsPage() {
   const { profile, loading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>('line');
-  const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false); // State for the download dialog
+  const [selectedChartType, setSelectedChartType] = useState<'line' | 'bar'>('line'); // Novo estado para o tipo de gráfico
 
   // Generate month options
   const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => {
@@ -73,14 +68,9 @@ export default function ReportsPage() {
         transition={{ duration: 0.5 }}
         className="space-y-8"
       >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <BarChartIcon className="w-10 h-10 text-[#57e389]" />
-            <h1 className="text-4xl font-bold text-foreground">Relatórios</h1>
-          </div>
-          <Button onClick={() => setIsDownloadDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
-            <DownloadIcon className="mr-2 h-4 w-4" /> Baixar Dados
-          </Button>
+        <div className="flex items-center gap-4 mb-8">
+          <BarChartIcon className="w-10 h-10 text-[#57e389]" />
+          <h1 className="text-4xl font-bold text-foreground">Relatórios</h1>
         </div>
         <p className="text-lg text-[#9ba8b5]">
           Olá, <span className="font-semibold text-white">{profile?.first_name}</span>! Visualize os relatórios e métricas da plataforma aqui.
@@ -191,12 +181,6 @@ export default function ReportsPage() {
           <MonthlyFinancialCharts data={[]} isLoading={false} /> {/* Será preenchido pela query interna */}
         </section>
       </motion.div>
-
-      <DownloadReportsDialog
-        isOpen={isDownloadDialogOpen}
-        onClose={() => setIsDownloadDialogOpen(false)}
-        selectedDate={selectedDate}
-      />
     </DashboardLayout>
   );
 }
