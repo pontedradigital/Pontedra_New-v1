@@ -145,8 +145,8 @@ export default function AppointmentsPage() {
             last_name,
             telefone
           )
-        `)
-        .order('start_time', { ascending: true });
+        `);
+        // .order('start_time', { ascending: true }); // REMOVIDO TEMPORARIAMENTE
 
       if (profile?.role === 'client') {
         query = query.eq('client_id', user.id);
@@ -196,7 +196,11 @@ export default function AppointmentsPage() {
     status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Status é opcional aqui, será 'confirmed'
     notes: string;
     existingClientId?: string;
-    newClientDetails?: { name: string; email: string; phone?: string };
+    newClientDetails?: { // Detalhes do novo cliente
+      name: string;
+      email: string;
+      phone?: string;
+    };
   }>({
     mutationFn: async (appointmentData) => {
       let clientIdToUse = appointmentData.existingClientId;
@@ -307,6 +311,14 @@ export default function AppointmentsPage() {
     console.log("todayAppointments: Filtered results:", filtered);
     return filtered.sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
   }, [appointments, selectedDate]);
+
+  // NOVO: Lista dos últimos agendamentos (todos, ordenados por data de criação)
+  const latestAppointments = useMemo(() => {
+    if (!appointments) return [];
+    return [...appointments]
+      .sort((a, b) => parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime())
+      .slice(0, 5); // Apenas os 5 mais recentes
+  }, [appointments]);
 
   // Removido getStatusBadgeVariant pois o status não será mais exibido
 
@@ -478,31 +490,83 @@ export default function AppointmentsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* NOVO: Caixa de Últimos Agendamentos */}
+        <Card className="bg-card border-border shadow-lg rounded-xl mt-8">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Clock className="w-5 h-5 text-purple-500" /> Últimos Agendamentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Os 5 agendamentos mais recentes na plataforma.
+            </p>
+            <div className="overflow-x-auto max-h-60 custom-scrollbar">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20">
+                    <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                    <TableHead className="text-muted-foreground">E-MAIL</TableHead>
+                    <TableHead className="text-muted-foreground">DATA</TableHead>
+                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {latestAppointments.length > 0 ? (
+                    latestAppointments.map((app) => (
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                        <TableCell className="font-medium text-foreground py-3">
+                          {app.client_profile?.first_name} {app.client_profile?.last_name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {app.client_email}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {format(parseISO(app.start_time), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                        Nenhum agendamento recente.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Diálogo de Seleção de Horário (para clientes) */}
+        {!isMaster && masterIdForBooking && (
+          <TimeSlotSelectionDialog
+            isOpen={isTimeSlotDialogOpen}
+            onClose={() => setIsTimeSlotDialogOpen(false)}
+            selectedDate={selectedDate}
+            masterId={masterIdForBooking}
+            onAppointmentConfirm={handleAppointmentConfirm}
+          />
+        )}
+
+        {/* Diálogo de Adição/Edição de Agendamento (para Masters) */}
+        {isMaster && (
+          <AddAppointmentDialog
+            isOpen={isAddAppointmentDialogOpen}
+            onClose={() => setIsAddAppointmentDialogOpen(false)}
+            onSave={async (data) => {
+              await upsertAppointmentMutation.mutate(data);
+            }}
+            isSaving={upsertAppointmentMutation.isPending}
+            initialData={editingAppointment}
+          />
+        )}
       </motion.div>
-
-      {/* Diálogo de Seleção de Horário (para clientes) */}
-      {!isMaster && masterIdForBooking && (
-        <TimeSlotSelectionDialog
-          isOpen={isTimeSlotDialogOpen}
-          onClose={() => setIsTimeSlotDialogOpen(false)}
-          selectedDate={selectedDate}
-          masterId={masterIdForBooking}
-          onAppointmentConfirm={handleAppointmentConfirm}
-        />
-      )}
-
-      {/* Diálogo de Adição/Edição de Agendamento (para Masters) */}
-      {isMaster && (
-        <AddAppointmentDialog
-          isOpen={isAddAppointmentDialogOpen}
-          onClose={() => setIsAddAppointmentDialogOpen(false)}
-          onSave={async (data) => {
-            await upsertAppointmentMutation.mutate(data);
-          }}
-          isSaving={upsertAppointmentMutation.isPending}
-          initialData={editingAppointment}
-        />
-      )}
     </DashboardLayout>
   );
 }
