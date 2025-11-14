@@ -2,7 +2,11 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { DollarSign } from 'lucide-react'; // Ícone para a página
+import { DollarSign, Calculator } from 'lucide-react'; // Ícones para a página
+import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard';
+import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard';
+import AnnualPackageDiscountSettingCard from '@/components/dashboard/master/AnnualPackageDiscountSettingCard';
+import CurrencyConversionSettingsCard from '@/components/dashboard/master/CurrencyConversionSettingsCard';
 
 export default function FinancialPage() {
   const { profile } = useAuth();
@@ -29,9 +33,26 @@ export default function FinancialPage() {
           Nesta página, você terá acesso a um resumo financeiro, fluxo de caixa, contas a pagar e a receber, e outras ferramentas de gestão financeira.
         </p>
 
-        {/* Futuros componentes financeiros serão adicionados aqui */}
+        {/* Seção de Calculadoras (conteúdo movido da antiga CalculatorsPage) */}
+        <div className="flex items-center gap-3 mt-12 mb-6">
+          <Calculator className="w-8 h-8 text-primary" />
+          <h2 className="text-3xl font-bold text-foreground">Configurações de Calculadoras</h2>
+        </div>
+        <p className="text-lg text-muted-foreground mb-8">
+          Ajuste as configurações que impactam os cálculos de preços, impostos e conversões de moeda.
+        </p>
+
+        <DefaultTaxSettingCard />
+
+        <InstallmentRatesSettingCard />
+
+        <AnnualPackageDiscountSettingCard />
+
+        <CurrencyConversionSettingsCard />
+
+        {/* Outras seções financeiras podem ser adicionadas aqui */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">Visão Geral</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-4">Visão Geral Financeira</h2>
           <p className="text-muted-foreground">
             Em breve, gráficos e tabelas com o fluxo de caixa, receitas e despesas.
           </p>

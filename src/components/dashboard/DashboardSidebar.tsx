@@ -15,7 +15,7 @@ import {
   ClipboardList,
   BarChart,
   Package,
-  DollarSign, // NOVO: Importar DollarSign para Financeiro
+  DollarSign, // Ícone para Financeiro
   FileText, // Ícone para Orçamentos
   CreditCard, // Ícone para Custos
   Bot,
@@ -24,7 +24,7 @@ import {
   Instagram,
   Facebook,
   ChevronDown,
-  Calculator,
+  Calculator, // Ícone para Calculadoras
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -51,8 +51,15 @@ const navItems: NavItem[] = [
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
-  { label: "Calculadoras", icon: Calculator, href: "/dashboard/calculators", roles: ['master'] },
-  { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] }, // NOVO: Adicionado item de menu para Financeiro
+  {
+    label: "Financeiro",
+    icon: DollarSign,
+    roles: ['master'],
+    children: [
+      { label: "Visão Geral", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
+      { label: "Calculadoras", icon: Calculator, href: "/dashboard/financial", roles: ['master'] }, // Agora aponta para a mesma página FinancialPage
+    ],
+  },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   {
     label: "Redes Sociais",
@@ -72,6 +79,15 @@ export default function DashboardSidebar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
+
+  // Efeito para abrir o collapsible "Financeiro" se a rota atual for "/dashboard/financial"
+  useEffect(() => {
+    if (location.pathname.startsWith("/dashboard/financial")) {
+      setOpenCollapsibles(prev => ({ ...prev, "Financeiro": true }));
+    } else {
+      setOpenCollapsibles(prev => ({ ...prev, "Financeiro": false }));
+    }
+  }, [location.pathname]);
 
   const toggleCollapsible = (label: string) => {
     setOpenCollapsibles(prev => ({ ...prev, [label]: !prev[label] }));
@@ -97,6 +113,7 @@ export default function DashboardSidebar() {
     <ul className={isSubMenu ? "ml-4 space-y-1" : "space-y-2"}>
       {items.map((item) => {
         const itemHref = item.label === "Início" ? getDashboardHomeLink() : item.href;
+        // Para submenus, a ativação deve ser baseada na rota pai ou na rota específica do submenu
         const isActive = itemHref ? location.pathname.startsWith(itemHref) : false;
         const Icon = item.icon;
 
@@ -112,7 +129,7 @@ export default function DashboardSidebar() {
                   <Button
                     variant="ghost"
                     className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition-colors duration-200 ${
-                      isActive
+                      isActive || (item.label === "Financeiro" && location.pathname.startsWith("/dashboard/financial"))
                         ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                         : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     }`}
