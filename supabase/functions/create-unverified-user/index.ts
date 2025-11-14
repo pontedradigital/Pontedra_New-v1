@@ -50,9 +50,10 @@ serve(async (req) => {
 
     if (error) {
       console.error("❌ Error creating user via admin API:", error);
+      // Retorna a mensagem de erro do Supabase diretamente
       return new Response(JSON.stringify({ success: false, error: error.message }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 400, // Bad Request, pois é um erro de validação ou conflito
       });
     }
 

@@ -730,7 +730,17 @@ export default function BudgetsPage() {
       // Tenta extrair a mensagem de erro da resposta da Edge Function
       // Agora, err.message já deve conter a mensagem mais específica da Edge Function
       if (err && err.message) {
-        userCreationErrorMessage = err.message;
+        // Verifica se a mensagem de erro é uma string JSON e tenta parsear
+        try {
+          const parsedError = JSON.parse(err.message);
+          if (parsedError && parsedError.error) {
+            userCreationErrorMessage = parsedError.error;
+          } else {
+            userCreationErrorMessage = err.message;
+          }
+        } catch (parseError) {
+          userCreationErrorMessage = err.message;
+        }
       } else {
         userCreationErrorMessage = `Erro ao criar usuário: ${String(err)}`;
       }
