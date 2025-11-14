@@ -87,7 +87,7 @@ interface UserProfile {
 interface MasterAvailability {
   day_of_week: number; // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
   start_time: string; // e.g., "10:00:00"
-  end_time:   // e.g., "16:00:00"
+  end_time: string;   // e.g., "16:00:00"
 }
 
 interface MasterException {
