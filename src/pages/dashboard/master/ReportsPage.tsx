@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { BarChart, CalendarDays, Loader2 } from 'lucide-react';
+import { BarChart, CalendarDays, Loader2, Users, DollarSign } from 'lucide-react'; // Adicionado Users e DollarSign
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { format, getMonth, getYear, setMonth, setYear, subMonths } from 'date-fns';
