@@ -199,8 +199,8 @@ export default function AppointmentsPage() {
             : ' Acompanhe seus compromissos com a Pontedra.'}
         </p>
 
-        {/* Três caixas de resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Três caixas de resumo - agora em linhas */}
+        <div className="flex flex-col gap-6">
           {/* Primeira Caixa: Agendamentos do Dia */}
           <Card className="bg-card border-border shadow-lg rounded-xl">
             <CardHeader>
