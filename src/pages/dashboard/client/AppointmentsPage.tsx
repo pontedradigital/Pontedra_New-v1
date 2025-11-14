@@ -51,12 +51,12 @@ interface Appointment {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes: string | null;
   created_at: string;
-  profiles?: { // Perfil do cliente
+  client_profile?: { // Alias para o perfil do cliente
     first_name: string | null;
     last_name: string | null;
     telefone: string | null;
   };
-  master_profiles?: { // Perfil do master
+  master_profile?: { // Alias para o perfil do master
     first_name: string | null;
     last_name: string | null;
     telefone: string | null;
@@ -135,12 +135,12 @@ export default function AppointmentsPage() {
           status,
           notes,
           created_at,
-          profiles!appointments_client_id_fkey (
+          client_profile:profiles!client_id ( // Alias para o perfil do cliente
             first_name,
             last_name,
             telefone
           ),
-          master_profiles:profiles!appointments_master_id_fkey (
+          master_profile:profiles!master_id ( // Alias para o perfil do master
             first_name,
             last_name,
             telefone
@@ -455,12 +455,12 @@ export default function AppointmentsPage() {
                             {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                           </TableCell>
                           <TableCell className="text-muted-foreground py-3">
-                            {app.profiles?.first_name} {app.profiles?.last_name}
+                            {app.client_profile?.first_name} {app.client_profile?.last_name}
                             {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
                           </TableCell>
                           {isMaster && (
                             <TableCell className="text-muted-foreground py-3">
-                              {app.master_profiles?.first_name} {app.master_profiles?.last_name}
+                              {app.master_profile?.first_name} {app.master_profile?.last_name}
                               {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                             </TableCell>
                           )}
@@ -529,12 +529,12 @@ export default function AppointmentsPage() {
                             {format(parseISO(app.start_time), 'dd/MM HH:mm', { locale: ptBR })}
                           </TableCell>
                           <TableCell className="text-muted-foreground py-3">
-                            {app.profiles?.first_name} {app.profiles?.last_name}
+                            {app.client_profile?.first_name} {app.client_profile?.last_name}
                             {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
                           </TableCell>
                           {isMaster && (
                             <TableCell className="text-muted-foreground py-3">
-                              {app.master_profiles?.first_name} {app.master_profiles?.last_name}
+                              {app.master_profile?.first_name} {app.master_profile?.last_name}
                               {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                             </TableCell>
                           )}
@@ -603,12 +603,12 @@ export default function AppointmentsPage() {
                             {format(parseISO(app.start_time), 'dd/MM HH:mm', { locale: ptBR })}
                           </TableCell>
                           <TableCell className="text-muted-foreground py-3">
-                            {app.profiles?.first_name} {app.profiles?.last_name}
+                            {app.client_profile?.first_name} {app.client_profile?.last_name}
                             {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
                           </TableCell>
                           {isMaster && (
                             <TableCell className="text-muted-foreground py-3">
-                              {app.master_profiles?.first_name} {app.master_profiles?.last_name}
+                              {app.master_profile?.first_name} {app.master_profile?.last_name}
                               {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                             </TableCell>
                           )}
