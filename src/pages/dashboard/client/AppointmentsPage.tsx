@@ -16,7 +16,7 @@ import {
   CheckCircle,
   XCircle,
   Edit,
-  Trash2, // Adicionado Trash2 para o botão de cancelar
+  Trash2,
 } from 'lucide-react';
 import {
   format,
@@ -309,12 +309,13 @@ export default function AppointmentsPage() {
     return filtered.sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
   }, [appointments, selectedDate]);
 
-  // NOVO: Lista de agendamentos da semana
+  // NOVO: Lista de agendamentos da semana (sempre da semana atual, de segunda a domingo)
   const weeklyAppointments = useMemo(() => {
-    if (!appointments || !selectedDate) return [];
+    if (!appointments) return [];
 
-    const startOfCurrentWeek = startOfWeek(selectedDate, { locale: ptBR });
-    const endOfCurrentWeek = endOfWeek(selectedDate, { locale: ptBR });
+    const now = new Date();
+    const startOfCurrentWeek = startOfWeek(now, { locale: ptBR, weekStartsOn: 1 }); // weekStartsOn: 1 para segunda-feira
+    const endOfCurrentWeek = endOfWeek(now, { locale: ptBR, weekStartsOn: 1 }); // weekStartsOn: 1 para segunda-feira
 
     return appointments
       .filter(app => {
@@ -322,7 +323,7 @@ export default function AppointmentsPage() {
         return isWithinInterval(appStartTime, { start: startOfCurrentWeek, end: endOfCurrentWeek });
       })
       .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
-  }, [appointments, selectedDate]);
+  }, [appointments]);
 
   // NOVO: Lista de agendamentos do mês
   const monthlyAppointments = useMemo(() => {
@@ -413,6 +414,10 @@ export default function AppointmentsPage() {
       </DashboardLayout>
     );
   }
+
+  const now = new Date();
+  const startOfCurrentWeek = startOfWeek(now, { locale: ptBR, weekStartsOn: 1 });
+  const endOfCurrentWeek = endOfWeek(now, { locale: ptBR, weekStartsOn: 1 });
 
   return (
     <DashboardLayout>
@@ -578,7 +583,7 @@ export default function AppointmentsPage() {
         <Card className="bg-card border-border shadow-lg rounded-xl mt-8">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-green-500" /> Agendamentos da Semana ({format(startOfWeek(selectedDate || new Date(), { locale: ptBR }), 'dd/MM', { locale: ptBR })} - {format(endOfWeek(selectedDate || new Date(), { locale: ptBR }), 'dd/MM', { locale: ptBR })})
+              <CalendarIcon className="w-5 h-5 text-green-500" /> Agendamentos da Semana ({format(startOfCurrentWeek, 'dd/MM', { locale: ptBR })} - {format(endOfCurrentWeek, 'dd/MM', { locale: ptBR })})
             </CardTitle>
           </CardHeader>
           <CardContent>
