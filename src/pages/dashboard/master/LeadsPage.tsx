@@ -27,6 +27,7 @@ import {
   RefreshCw,
   CheckCircle, // Adicionado para o ícone de lido
   CircleDot, // Adicionado para o ícone de não lido
+  MailOpen, // NOVO: Ícone para marcar como não lida
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -81,7 +82,7 @@ export default function LeadsPage() {
     },
   });
 
-  // NOVO: Mutation to mark a lead as read
+  // Mutation to mark a lead as read
   const markLeadAsReadMutation = useMutation<void, Error, string>({
     mutationFn: async (leadId) => {
       const { error } = await supabase
@@ -96,6 +97,25 @@ export default function LeadsPage() {
     onError: (err) => {
       console.error("Erro ao marcar lead como lido:", err);
       // Não exibe toast de erro para o usuário, pois é uma ação de fundo
+    },
+  });
+
+  // NOVO: Mutation to mark a lead as unread
+  const markLeadAsUnreadMutation = useMutation<void, Error, string>({
+    mutationFn: async (leadId) => {
+      const { error } = await supabase
+        .from('site_contato')
+        .update({ is_read: false })
+        .eq('id', leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] }); // Invalida para atualizar a lista
+      toast.success('Lead marcado como não lido!');
+    },
+    onError: (err) => {
+      console.error("Erro ao marcar lead como não lido:", err);
+      toast.error(`Erro ao marcar lead como não lido: ${err.message}`);
     },
   });
 
@@ -179,7 +199,7 @@ export default function LeadsPage() {
         <TableBody>
           {leadsToRender.length > 0 ? (
             leadsToRender.map((lead) => (
-              <TableRow key={lead.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(lead)}>
+              <TableRow key={lead.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                 <TableCell className="font-medium text-foreground py-4">
                   {lead.nome || 'N/A'}
                 </TableCell>
@@ -208,6 +228,17 @@ export default function LeadsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right py-4">
+                  {lead.is_read && ( // Botão "Marcar como Não Lida" visível apenas se o lead estiver lido
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); markLeadAsUnreadMutation.mutate(lead.id); }}
+                      className="text-yellow-500 hover:text-yellow-600"
+                      disabled={markLeadAsUnreadMutation.isPending}
+                    >
+                      <MailOpen className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRowClick(lead); }} className="text-blue-500 hover:text-blue-600">
                     <Eye className="h-4 w-4" />
                   </Button>
