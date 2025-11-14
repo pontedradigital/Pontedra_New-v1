@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, CalendarDays, Clock, User, Mail, Phone, CheckCircle, XCircle, PlusCircle } from 'lucide-react';
 import {
@@ -39,7 +38,8 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Card, CardContent } from '@/components/ui/card'; // Adicionado importação do Card e CardContent
+import { Card, CardContent } from '@/components/ui/card';
+import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // Importar DateSelectionList
 
 interface AddAppointmentDialogProps {
   isOpen: boolean;
@@ -367,22 +367,14 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
             </Select>
           </div>
 
-          {/* Calendário */}
+          {/* Lista de Seleção de Data */}
           <div className="space-y-2 md:col-span-2">
             <Label>Data *</Label>
-            <Card className="bg-background border-border shadow-none">
-              <CardContent className="p-0 flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  locale={ptBR}
-                  className="rounded-md border bg-background text-foreground"
-                  disabled={(date) => isWeekend(date) || isBefore(date, startOfDay(new Date()))}
-                />
-              </CardContent>
-            </Card>
+            <DateSelectionList
+              masterId={selectedMasterId || ''} // Passa o masterId selecionado
+              onDateSelect={setSelectedDate}
+              selectedDate={selectedDate}
+            />
           </div>
 
           {/* Horários Disponíveis */}
