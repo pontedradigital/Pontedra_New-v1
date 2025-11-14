@@ -60,8 +60,7 @@ export default function AppointmentsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const [calendarSelectedDay, setCalendarSelectedDay] = useState<Date | undefined>(new Date()); // Estado para o dia selecionado no calendário
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Data de referência para os filtros de semana e mês
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Data de referência para todos os filtros
 
   // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
   const handleViewDetails = useCallback((appointment: Appointment) => {
@@ -123,13 +122,13 @@ export default function AppointmentsPage() {
 
   const isMaster = profile?.role === 'master';
 
-  // Filtra agendamentos para "Agendamentos do Dia" (agora usa calendarSelectedDay)
+  // Filtra agendamentos para "Agendamentos do Dia"
   const todayAppointments = useMemo(() => {
-    if (!appointments || !calendarSelectedDay) return [];
+    if (!appointments || !selectedDate) return [];
     return appointments.filter(app =>
-      isSameDay(parseISO(app.start_time), calendarSelectedDay)
+      isSameDay(parseISO(app.start_time), selectedDate)
     ).sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
-  }, [appointments, calendarSelectedDay]);
+  }, [appointments, selectedDate]);
 
   // Filtra agendamentos para "Agendamentos da Semana"
   const weekAppointments = useMemo(() => {
@@ -211,8 +210,11 @@ export default function AppointmentsPage() {
           <CardContent className="flex justify-center">
             <Calendar
               mode="single"
-              selected={calendarSelectedDay}
-              onSelect={setCalendarSelectedDay}
+              selected={selectedDate}
+              onSelect={(day) => {
+                console.log("Selected day:", day); // Log de depuração
+                if (day) setSelectedDate(day);
+              }}
               initialFocus
               locale={ptBR}
               className="rounded-md border bg-background text-foreground"
@@ -231,7 +233,7 @@ export default function AppointmentsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos para {calendarSelectedDay ? format(calendarSelectedDay, 'dd/MM/yyyy', { locale: ptBR }) : 'o dia selecionado'}.
+                Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos para {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : 'o dia selecionado'}.
               </p>
               <div className="overflow-x-auto max-h-60 custom-scrollbar">
                 <Table>
