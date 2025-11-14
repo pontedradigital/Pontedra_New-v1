@@ -639,35 +639,30 @@ export default function BudgetsPage() {
           throw new Error("E-mail e nome do cliente são obrigatórios para criar um novo usuário.");
         }
 
-        console.log("Attempting to create new user for email:", budgetData.client_email);
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: budgetData.client_email,
-          password: generateTemporaryPassword(), // Senha temporária
-          options: {
-            data: {
-              first_name: budgetData.client_first_name,
-              last_name: budgetData.client_last_name || null, // Sobrenome pode ser nulo
-              telefone: budgetData.client_phone || null,
-              // company_organization não está em budgetData, então não é passado aqui
-            },
+        const tempPassword = generateTemporaryPassword();
+        const userMetadata = {
+          first_name: budgetData.client_first_name,
+          last_name: budgetData.client_last_name || null,
+          telefone: budgetData.client_phone || null,
+        };
+
+        // Chamar a Edge Function para criar o usuário sem verificação
+        const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('create-unverified-user', {
+          body: {
+            email: budgetData.client_email,
+            password: tempPassword,
+            user_metadata: userMetadata,
           },
         });
 
-        if (signUpError) {
-          console.error("Supabase signUp error:", signUpError); // ADDED LOG
-          if (signUpError.message.includes("already registered")) {
-            throw new Error(`O e-mail '${budgetData.client_email}' já está registrado. Por favor, selecione o cliente existente ou use um e-mail diferente.`);
-          }
-          throw new Error(`Falha ao criar novo usuário: ${signUpError.message}`);
+        if (edgeFunctionError) {
+          throw new Error(`Falha ao criar novo usuário via Edge Function: ${edgeFunctionError.message}`);
+        }
+        if (!edgeFunctionData || !edgeFunctionData.userId) {
+          throw new Error("Falha ao criar novo usuário: Edge Function não retornou ID do usuário.");
         }
 
-        if (!signUpData.user) {
-          console.error("Supabase signUp returned no user data:", signUpData); // ADDED LOG
-          throw new Error("Falha ao criar novo usuário: Nenhum usuário retornado após o cadastro.");
-        }
-        console.log("Supabase signUp successful, new user ID:", signUpData.user.id); // ADDED LOG
-
-        finalUserId = signUpData.user.id;
+        finalUserId = edgeFunctionData.userId;
         toast.info(`Novo usuário '${budgetData.client_email}' criado com sucesso! O cliente precisará redefinir a senha através do link de confirmação de e-mail.`);
       }
 
@@ -679,15 +674,15 @@ export default function BudgetsPage() {
         .insert({
           user_id: finalUserId, // Usa o ID do cliente recém-criado ou selecionado
           client_name: fullClientName, // Usa o nome completo construído
-          client_phone: budgetData.client_phone,
-          client_email: budgetData.client_email,
-          client_street: budgetData.client_street,
-          client_number: budgetData.client_number,
-          client_complement: budgetData.client_complement,
-          client_neighborhood: budgetData.client_neighborhood,
-          client_city: budgetData.client_city,
-          client_state: budgetData.client_state,
-          client_cep: budgetData.client_cep,
+          client_phone: formData.client_phone,
+          client_email: formData.client_email,
+          client_street: formData.client_street,
+          client_number: formData.client_number,
+          client_complement: formData.client_complement,
+          client_neighborhood: formData.client_neighborhood,
+          client_city: formData.client_city,
+          client_state: formData.client_state,
+          client_cep: formData.client_cep,
           valid_until: validUntil,
           total_amount: total,
           status: 'pending', // Novo orçamento sempre começa como pendente
