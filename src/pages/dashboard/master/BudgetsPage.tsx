@@ -659,17 +659,9 @@ export default function BudgetsPage() {
         });
 
         if (edgeFunctionError) {
-          let specificErrorMessage = "Erro desconhecido ao criar novo usuário.";
-          try {
-            // A edgeFunctionError.message frequentemente contém o corpo da resposta bruta como uma string
-            const parsedResponse = JSON.parse(edgeFunctionError.message);
-            if (parsedResponse && parsedResponse.error) {
-              specificErrorMessage = parsedResponse.error;
-            }
-          } catch (parseError) {
-            // Se não for uma string JSON, usa a mensagem original
-            specificErrorMessage = edgeFunctionError.message;
-          }
+          // A Edge Function já retorna um JSON com { success: false, error: "mensagem de erro" }
+          // O objeto edgeFunctionError de supabase.functions.invoke terá essa informação em context.data
+          const specificErrorMessage = (edgeFunctionError as any)?.context?.data?.error || edgeFunctionError.message;
           throw new Error(`Falha ao criar novo usuário: ${specificErrorMessage}`);
         }
         if (!edgeFunctionData || !edgeFunctionData.userId) {
@@ -725,24 +717,13 @@ export default function BudgetsPage() {
     onError: (err: any) => { // Usar 'any' para inspecionar a estrutura do erro
       console.error("Erro completo da mutação:", err);
 
-      let userCreationErrorMessage = "Erro desconhecido ao criar novo usuário.";
+      let userCreationErrorMessage = "Erro desconhecido ao salvar orçamento.";
 
       // Tenta extrair a mensagem de erro da resposta da Edge Function
-      // Agora, err.message já deve conter a mensagem mais específica da Edge Function
-      if (err && err.message) {
-        // Verifica se a mensagem de erro é uma string JSON e tenta parsear
-        try {
-          const parsedError = JSON.parse(err.message);
-          if (parsedError && parsedError.error) {
-            userCreationErrorMessage = parsedError.error;
-          } else {
-            userCreationErrorMessage = err.message;
-          }
-        } catch (parseError) {
-          userCreationErrorMessage = err.message;
-        }
-      } else {
-        userCreationErrorMessage = `Erro ao criar usuário: ${String(err)}`;
+      if (err && err.context && err.context.data && err.context.data.error) {
+        userCreationErrorMessage = err.context.data.error;
+      } else if (err && err.message) {
+        userCreationErrorMessage = err.message;
       }
 
       toast.error(`Erro ao salvar orçamento: ${userCreationErrorMessage}`);
@@ -1648,7 +1629,7 @@ export default function BudgetsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
