@@ -357,6 +357,24 @@ export default function BudgetsPage() {
     return cleaned;
   };
 
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    let formatted = '';
+
+    if (cleaned.length <= 2) {
+      formatted = cleaned;
+    } else if (cleaned.length <= 6) { // (00) 0000
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    } else if (cleaned.length <= 10) { // (00) 0000-0000 (fixo)
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+    } else if (cleaned.length <= 11) { // (00) 00000-0000 (celular)
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+    } else {
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`; // Limita a 11 dígitos
+    }
+    return formatted;
+  };
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'client_cep') {
@@ -364,7 +382,13 @@ export default function BudgetsPage() {
         ...prev,
         [name]: formatCep(value),
       }));
-    } else {
+    } else if (name === 'client_phone') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: formatPhoneNumber(value),
+      }));
+    }
+    else {
       setFormData(prev => ({
         ...prev,
         [name]: value,
@@ -387,7 +411,7 @@ export default function BudgetsPage() {
         }
         return [...prev, {
           id: itemToToggle.id,
-          type: itemToToggle.type, // Corrected typo here
+          type: itemToToggle.type,
           name: itemToToggle.name,
           description: itemToToggle.description,
           price: itemToToggle.price,
@@ -867,8 +891,10 @@ export default function BudgetsPage() {
                     <Input
                       id="client_phone"
                       name="client_phone"
+                      type="tel"
                       value={formData.client_phone || ''}
                       onChange={handleFormChange}
+                      placeholder="(00) 00000-0000"
                       className="bg-background border-border text-foreground"
                     />
                   </div>
