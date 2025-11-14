@@ -233,7 +233,7 @@ export const AuthProvider = ({ children }: { ReactNode }) => {
     } else {
       console.log("AuthContext: Logout successful, waiting for onAuthStateChange.");
       toast.success("Logout realizado com sucesso!");
-      navigate('/login');
+      // Removido navigate('/login') daqui, o useEffect já lida com isso.
     }
   };
 
