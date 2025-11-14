@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, CalendarDays, Clock, User, Mail, Phone, CheckCircle, XCircle, PlusCircle } from 'lucide-react';
+import { Loader2, CalendarDays, Clock, User, Mail, Phone, CheckCircle, XCircle, PlusCircle, Save } from 'lucide-react';
 import {
   format,
   parseISO,
@@ -42,10 +42,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // Importar DateSelectionList
 import { useAuth } from '@/context/AuthContext'; // Importar useAuth
 
+interface Appointment {
+  id: string;
+  client_id: string;
+  master_id: string;
+  start_time: string; // TIMESTAMP WITH TIME ZONE
+  end_time: string;   // TIMESTAMP WITH TIME ZONE
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  notes: string | null;
+  created_at: string;
+}
+
 interface AddAppointmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (appointmentData: {
+    id?: string; // Optional for update
     client_id: string;
     master_id: string;
     start_time: Date;
@@ -54,6 +66,7 @@ interface AddAppointmentDialogProps {
     notes: string;
   }) => Promise<void>;
   isSaving: boolean;
+  initialData?: Appointment | null; // NOVA PROPRIEDADE
 }
 
 interface UserProfile {
@@ -63,12 +76,6 @@ interface UserProfile {
   telefone: string | null;
   email: string;
   role: 'prospect' | 'client' | 'master';
-}
-
-interface Appointment {
-  id: string;
-  start_time: string;
-  end_time: string;
 }
 
 interface MasterAvailability {
@@ -84,7 +91,7 @@ interface MasterException {
   end_time: string | null;
 }
 
-const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onClose, onSave, isSaving }) => {
+const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onClose, onSave, isSaving, initialData }) => {
   const { profile } = useAuth(); // Usar useAuth para obter o perfil do usuário logado
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   const [selectedMasterId, setSelectedMasterId] = useState<string | undefined>(undefined);
@@ -247,6 +254,9 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
     // Filter out already booked slots
     const booked = new Set<string>();
     existingAppointments?.forEach(app => {
+      // Excluir o próprio agendamento que está sendo editado da lista de "booked"
+      if (initialData?.id && app.id === initialData.id) return;
+
       const appStartTime = parseISO(app.start_time);
       booked.add(format(appStartTime, 'HH:mm'));
     });
@@ -258,9 +268,9 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       // Se for master booking, slots passados são permitidos. Caso contrário, filtra.
       return !isBooked && (isMaster || !isPastSlot);
     });
-  }, [selectedDate, selectedMasterId, masterAvailability, masterExceptions, existingAppointments, isLoadingMasterAvailability, isLoadingMasterExceptions, isLoadingExistingAppointments, isMaster]);
+  }, [selectedDate, selectedMasterId, masterAvailability, masterExceptions, existingAppointments, isLoadingMasterAvailability, isLoadingMasterExceptions, isLoadingExistingAppointments, isMaster, initialData]);
 
-  // Reset form when dialog opens/closes
+  // Reset form or populate with initialData when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
       setSelectedClientId(undefined);
@@ -269,13 +279,20 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       setSelectedTimeSlot(null);
       setStatus('pending');
       setNotes('');
+    } else if (initialData) {
+      setSelectedClientId(initialData.client_id);
+      setSelectedMasterId(initialData.master_id);
+      setSelectedDate(parseISO(initialData.start_time));
+      setSelectedTimeSlot(parseISO(initialData.start_time));
+      setStatus(initialData.status);
+      setNotes(initialData.notes || '');
     } else {
-      // Set default master if only one exists
+      // Set default master if only one exists for new appointments
       if (masterProfiles && masterProfiles.length === 1) {
         setSelectedMasterId(masterProfiles[0].id);
       }
     }
-  }, [isOpen, masterProfiles]);
+  }, [isOpen, initialData, masterProfiles]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,6 +306,9 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
 
     // Check for overlapping appointments (double-check before saving)
     const isOverlapping = existingAppointments?.some(app => {
+      // Ignorar o próprio agendamento que está sendo editado na verificação de sobreposição
+      if (initialData?.id && app.id === initialData.id) return false;
+
       const existingStart = parseISO(app.start_time);
       const existingEnd = parseISO(app.end_time);
       return (
@@ -303,6 +323,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
     }
 
     await onSave({
+      id: initialData?.id, // Passa o ID se for uma edição
       client_id: selectedClientId,
       master_id: selectedMasterId,
       start_time: startTime,
@@ -319,10 +340,11 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border text-foreground rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-            <PlusCircle className="w-6 h-6" /> Adicionar Agendamento
+            {initialData ? <Save className="w-6 h-6" /> : <PlusCircle className="w-6 h-6" />}
+            {initialData ? 'Editar Agendamento' : 'Adicionar Agendamento'}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Preencha os detalhes para criar um novo agendamento.
+            Preencha os detalhes para {initialData ? 'editar' : 'criar'} o agendamento.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
@@ -463,8 +485,8 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
               Cancelar
             </Button>
             <Button type="submit" disabled={isSaving || !selectedClientId || !selectedMasterId || !selectedDate || !selectedTimeSlot} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-              Adicionar Agendamento
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (initialData ? <Save className="mr-2 h-4 w-4" /> : <PlusCircle className="mr-2 h-4 w-4" />)}
+              {initialData ? 'Salvar Alterações' : 'Adicionar Agendamento'}
             </Button>
           </DialogFooter>
         </form>

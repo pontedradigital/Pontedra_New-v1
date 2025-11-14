@@ -82,7 +82,7 @@ export default function AppointmentsPage() {
   const [masterIdForBooking, setMasterIdForBooking] = useState<string | null>(null);
 
   const [isAddAppointmentDialogOpen, setIsAddAppointmentDialogOpen] = useState(false); // NOVO: Estado para o diálogo de adição de agendamento
-  const [isEditingAppointment, setIsEditingAppointment] = useState<Appointment | null>(null); // NOVO: Estado para edição
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null); // NOVO: Estado para edição
 
   // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
   const handleViewDetails = useCallback((appointment: Appointment) => {
@@ -213,7 +213,7 @@ export default function AppointmentsPage() {
       toast.success(variables.id ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
       setIsTimeSlotDialogOpen(false);
       setIsAddAppointmentDialogOpen(false);
-      setIsEditingAppointment(null);
+      setEditingAppointment(null); // Limpa o agendamento em edição
       setSelectedDate(undefined);
     },
     onError: (err) => {
@@ -298,9 +298,9 @@ export default function AppointmentsPage() {
 
   const handleOpenAddAppointmentDialog = (appointment?: Appointment) => {
     if (appointment) {
-      setIsEditingAppointment(appointment);
+      setEditingAppointment(appointment);
     } else {
-      setIsEditingAppointment(null);
+      setEditingAppointment(null);
     }
     setIsAddAppointmentDialogOpen(true);
   };
@@ -612,9 +612,10 @@ export default function AppointmentsPage() {
           isOpen={isAddAppointmentDialogOpen}
           onClose={() => setIsAddAppointmentDialogOpen(false)}
           onSave={async (data) => {
-            await upsertAppointmentMutation.mutate({ ...data, id: isEditingAppointment?.id });
+            await upsertAppointmentMutation.mutate(data); // Passa o objeto de dados completo
           }}
           isSaving={upsertAppointmentMutation.isPending}
+          initialData={editingAppointment} // Passa o agendamento em edição
         />
       )}
     </DashboardLayout>
