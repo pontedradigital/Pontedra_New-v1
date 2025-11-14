@@ -54,14 +54,16 @@ import {
   CalendarDays, // NOVO: Importar CalendarDays
   Tag, // NOVO: Importar Tag para o ID
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, getYear, getMonth, setMonth, setYear, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import MonthlyFinancialCharts from '@/components/dashboard/master/MonthlyFinancialCharts'; // Importar o novo componente
 
 // Tipos de dados
 interface Budget {
   id: string;
   total_amount: number;
   status: 'pending' | 'approved' | 'rejected' | 'converted'; // Adicionado status
+  created_at: string; // Adicionado para filtrar por data
 }
 
 interface CostItem {
@@ -85,6 +87,16 @@ interface VariableCostItem {
   user_id: string;
 }
 
+// New interface for chart data point
+interface MonthlyDataPoint {
+  monthYear: string; // e.g., "Jan 2023"
+  revenue: number;
+  fixedCosts: number;
+  variableCosts: number;
+  totalCosts: number;
+  profit: number;
+}
+
 const variableCostCategories = [
   { value: 'Aluguel', label: 'Aluguel', icon: Building },
   { value: 'Agua', label: 'Água', icon: Zap },
@@ -104,22 +116,43 @@ export default function FinancialOverviewPage() {
   const [editingVariableCost, setEditingVariableCost] = useState<VariableCostItem | null>(null);
   const [variableCostFormData, setVariableCostFormData] = useState<Partial<VariableCostItem>>({});
 
+  const [selectedDate, setSelectedDate] = useState(new Date()); // State for selected month/year
+
+  // Generate month options
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const date = setMonth(new Date(), i);
+    return { value: i, label: format(date, 'MMMM', { locale: ptBR }) };
+  });
+
+  // Generate year options (current year and past 2 years)
+  const currentYear = getYear(new Date());
+  const yearOptions = Array.from({ length: 3 }, (_, i) => {
+    const year = currentYear - i;
+    return { value: year, label: String(year) };
+  });
+
+  // Derived state for query filters for the current month view
+  const startOfSelectedMonth = startOfMonth(selectedDate);
+  const endOfSelectedMonth = endOfMonth(selectedDate);
+
   // --- Queries ---
 
-  // Fetch converted budgets (closed projects)
+  // Fetch converted budgets for the selected month
   const { data: convertedBudgets, isLoading: isLoadingBudgets } = useQuery<Budget[], Error>({
-    queryKey: ['convertedBudgets'],
+    queryKey: ['convertedBudgets', startOfSelectedMonth.toISOString(), endOfSelectedMonth.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('budgets')
-        .select('id, total_amount, status')
-        .eq('status', 'converted'); // Filtrar por status 'converted'
+        .select('id, total_amount, status, created_at')
+        .eq('status', 'converted')
+        .gte('created_at', startOfSelectedMonth.toISOString())
+        .lte('created_at', endOfSelectedMonth.toISOString());
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch active fixed costs
+  // Fetch active fixed costs (these apply to every month)
   const { data: fixedCosts, isLoading: isLoadingFixedCosts } = useQuery<CostItem[], Error>({
     queryKey: ['fixedCosts'],
     queryFn: async () => {
@@ -132,13 +165,15 @@ export default function FinancialOverviewPage() {
     },
   });
 
-  // Fetch variable costs
+  // Fetch variable costs for the selected month
   const { data: variableCosts, isLoading: isLoadingVariableCosts } = useQuery<VariableCostItem[], Error>({
-    queryKey: ['variableCosts'],
+    queryKey: ['variableCosts', startOfSelectedMonth.toISOString(), endOfSelectedMonth.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('variable_costs')
         .select('*')
+        .gte('date', startOfSelectedMonth.toISOString())
+        .lte('date', endOfSelectedMonth.toISOString())
         .order('date', { ascending: false }); // Ordenar por data
       if (error) throw error;
       return data;
@@ -146,7 +181,41 @@ export default function FinancialOverviewPage() {
     enabled: profile?.role === 'master', // Apenas master pode gerenciar custos variáveis
   });
 
-  // --- Calculations ---
+  // Fetch historical data for charts (last 12 months)
+  const twelveMonthsAgo = subMonths(new Date(), 11);
+  const startOfTwelveMonthsAgo = startOfMonth(twelveMonthsAgo);
+  const endOfCurrentMonth = endOfMonth(new Date());
+
+  const { data: historicalConvertedBudgets, isLoading: isLoadingHistoricalBudgets } = useQuery<Budget[], Error>({
+    queryKey: ['historicalConvertedBudgets', startOfTwelveMonthsAgo.toISOString(), endOfCurrentMonth.toISOString()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('id, total_amount, status, created_at')
+        .eq('status', 'converted')
+        .gte('created_at', startOfTwelveMonthsAgo.toISOString())
+        .lte('created_at', endOfCurrentMonth.toISOString());
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: historicalVariableCosts, isLoading: isLoadingHistoricalVariableCosts } = useQuery<VariableCostItem[], Error>({
+    queryKey: ['historicalVariableCosts', startOfTwelveMonthsAgo.toISOString(), endOfCurrentMonth.toISOString()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('variable_costs')
+        .select('*')
+        .gte('date', startOfTwelveMonthsAgo.toISOString())
+        .lte('date', endOfCurrentMonth.toISOString())
+        .eq('is_active', true); // Only active variable costs for historical view
+      if (error) throw error;
+      return data;
+    },
+    enabled: profile?.role === 'master',
+  });
+
+  // --- Calculations for current month view ---
 
   const totalConvertedProjects = useMemo(() => {
     return convertedBudgets?.length || 0;
@@ -167,6 +236,49 @@ export default function FinancialOverviewPage() {
   const totalMonthlyCosts = useMemo(() => {
     return totalActiveFixedCosts + totalActiveVariableCosts;
   }, [totalActiveFixedCosts, totalActiveVariableCosts]);
+
+  // --- Calculations for charts (last 12 months) ---
+  const monthlyFinancialData = useMemo(() => {
+    const dataMap = new Map<string, MonthlyDataPoint>();
+    const today = new Date();
+
+    // Initialize map for last 12 months
+    for (let i = 0; i < 12; i++) {
+      const monthDate = subMonths(today, 11 - i);
+      const monthYearKey = format(monthDate, 'MMM yyyy', { locale: ptBR });
+      dataMap.set(monthYearKey, {
+        monthYear: monthYearKey,
+        revenue: 0,
+        fixedCosts: totalActiveFixedCosts, // Fixed costs are constant per month
+        variableCosts: 0,
+        totalCosts: totalActiveFixedCosts,
+        profit: -totalActiveFixedCosts,
+      });
+    }
+
+    // Aggregate historical converted budgets
+    historicalConvertedBudgets?.forEach(budget => {
+      const monthYearKey = format(new Date(budget.created_at), 'MMM yyyy', { locale: ptBR });
+      if (dataMap.has(monthYearKey)) {
+        const current = dataMap.get(monthYearKey)!;
+        current.revenue += budget.total_amount;
+        current.profit += budget.total_amount;
+      }
+    });
+
+    // Aggregate historical variable costs
+    historicalVariableCosts?.forEach(cost => {
+      const monthYearKey = format(new Date(cost.date), 'MMM yyyy', { locale: ptBR });
+      if (dataMap.has(monthYearKey)) {
+        const current = dataMap.get(monthYearKey)!;
+        current.variableCosts += cost.value;
+        current.totalCosts += cost.value;
+        current.profit -= cost.value;
+      }
+    });
+
+    return Array.from(dataMap.values());
+  }, [historicalConvertedBudgets, historicalVariableCosts, totalActiveFixedCosts]); // Depend on fixed costs for initialization
 
   // --- Mutations for Variable Costs ---
 
@@ -190,6 +302,7 @@ export default function FinancialOverviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variableCosts'] });
+      queryClient.invalidateQueries({ queryKey: ['historicalVariableCosts'] }); // Invalidate historical data too
       toast.success(editingVariableCost ? 'Custo variável atualizado!' : 'Custo variável adicionado!');
       setIsVariableCostDialogOpen(false);
       setEditingVariableCost(null);
@@ -207,6 +320,7 @@ export default function FinancialOverviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variableCosts'] });
+      queryClient.invalidateQueries({ queryKey: ['historicalVariableCosts'] }); // Invalidate historical data too
       toast.success('Custo variável excluído com sucesso!');
     },
     onError: (err) => {
@@ -221,6 +335,7 @@ export default function FinancialOverviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['variableCosts'] });
+      queryClient.invalidateQueries({ queryKey: ['historicalVariableCosts'] }); // Invalidate historical data too
       toast.success('Status do custo variável atualizado!');
     },
     onError: (err) => {
@@ -268,7 +383,9 @@ export default function FinancialOverviewPage() {
 
   // --- Loading State ---
 
-  if (isLoadingBudgets || isLoadingFixedCosts || isLoadingVariableCosts) {
+  const isLoadingCharts = isLoadingHistoricalBudgets || isLoadingHistoricalVariableCosts || isLoadingFixedCosts;
+
+  if (isLoadingBudgets || isLoadingFixedCosts || isLoadingVariableCosts || isLoadingCharts) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -305,14 +422,50 @@ export default function FinancialOverviewPage() {
           {profile?.client_id && <span className="block text-sm text-muted-foreground mt-1">ID do Cliente: {profile.client_id}</span>}
         </p>
 
+        {/* Seletores de Mês e Ano */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="select-month">Mês</Label>
+            <Select
+              value={getMonth(selectedDate).toString()}
+              onValueChange={(value) => setSelectedDate(prev => setMonth(prev, parseInt(value)))}
+            >
+              <SelectTrigger id="select-month" className="w-full bg-card border-border text-foreground">
+                <SelectValue placeholder="Selecione o Mês" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border text-popover-foreground">
+                {monthOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value.toString()}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="select-year">Ano</Label>
+            <Select
+              value={getYear(selectedDate).toString()}
+              onValueChange={(value) => setSelectedDate(prev => setYear(prev, parseInt(value)))}
+            >
+              <SelectTrigger id="select-year" className="w-full bg-card border-border text-foreground">
+                <SelectValue placeholder="Selecione o Ano" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border text-popover-foreground">
+                {yearOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value.toString()}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Seção de Projetos Fechados */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <div className="bg-card border-border shadow-lg rounded-xl p-6">
             <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-green-500" /> Projetos Fechados
+              <CheckCircle className="w-6 h-6 text-green-500" /> Projetos Fechados ({format(selectedDate, 'MMMM/yyyy', { locale: ptBR })})
             </h2>
             <p className="text-muted-foreground mb-4">
-              Contagem e valor total dos orçamentos convertidos em projetos.
+              Contagem e valor total dos orçamentos convertidos em projetos no mês selecionado.
             </p>
             <div className="flex justify-between items-center">
               <div>
@@ -332,7 +485,7 @@ export default function FinancialOverviewPage() {
               <CreditCard className="w-6 h-6 text-blue-500" /> Custos Fixos Ativos
             </h2>
             <p className="text-muted-foreground mb-4">
-              Soma de todos os custos marcados como ativos na página de "Custos".
+              Soma de todos os custos fixos marcados como ativos (aplicável a todos os meses).
             </p>
             <div className="flex justify-between items-center">
               <div>
@@ -351,14 +504,14 @@ export default function FinancialOverviewPage() {
         <div className="bg-card border-border shadow-lg rounded-xl p-6 mt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-yellow-500" /> Custos Variáveis Mensais
+              <DollarSign className="w-6 h-6 text-yellow-500" /> Custos Variáveis Mensais ({format(selectedDate, 'MMMM/yyyy', { locale: ptBR })})
             </h2>
             <Button onClick={() => handleOpenVariableCostDialog()} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
               <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Custo Variável
             </Button>
           </div>
           <p className="text-muted-foreground mb-4">
-            Gerencie e contabilize seus custos variáveis mês a mês. Apenas custos ativos são somados.
+            Gerencie e contabilize seus custos variáveis para o mês selecionado. Apenas custos ativos são somados.
           </p>
 
           <div className="overflow-x-auto">
@@ -413,7 +566,7 @@ export default function FinancialOverviewPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      Nenhum custo variável encontrado.
+                      Nenhum custo variável encontrado para {format(selectedDate, 'MMMM/yyyy', { locale: ptBR })}.
                     </TableCell>
                   </TableRow>
                 )}
@@ -429,10 +582,10 @@ export default function FinancialOverviewPage() {
         {/* Total de Custos Mensais */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6 mt-8">
           <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <DollarSign className="w-6 h-6 text-red-500" /> Total de Custos Mensais
+            <DollarSign className="w-6 h-6 text-red-500" /> Total de Custos Mensais ({format(selectedDate, 'MMMM/yyyy', { locale: ptBR })})
           </h2>
           <p className="text-muted-foreground mb-4">
-            Soma de todos os custos fixos e variáveis ativos.
+            Soma de todos os custos fixos e variáveis ativos para o mês selecionado.
           </p>
           <div className="flex justify-between items-center">
             <div>
@@ -449,6 +602,9 @@ export default function FinancialOverviewPage() {
             </div>
           </div>
         </div>
+
+        {/* Seção de Evolução Financeira Mensal (Gráficos) */}
+        <MonthlyFinancialCharts data={monthlyFinancialData} isLoading={isLoadingCharts} />
 
         {/* Dialog para Adicionar/Editar Custo Variável */}
         <Dialog open={isVariableCostDialogOpen} onOpenChange={setIsVariableCostDialogOpen}>
