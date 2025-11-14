@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts"; // Versão atualizada
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0?bundle"; // Versão atualizada e com ?bundle
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0?bundle";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,8 +56,17 @@ serve(async (req) => {
       });
     }
 
-    console.log("✅ User created successfully via admin API:", data.user?.id);
-    return new Response(JSON.stringify({ success: true, userId: data.user?.id }), {
+    // Adiciona verificação explícita para data.user
+    if (!data.user) {
+      console.error("❌ User creation failed, no user data returned from Supabase admin API.");
+      return new Response(JSON.stringify({ success: false, error: "User creation failed, no user data returned." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500, // Internal server error as it's an unexpected state
+      });
+    }
+
+    console.log("✅ User created successfully via admin API:", data.user.id);
+    return new Response(JSON.stringify({ success: true, userId: data.user.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
