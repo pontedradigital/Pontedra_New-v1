@@ -25,7 +25,7 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
 
   // Fetch all contracts for overall status calculation
   const { data: allContracts, isLoading: isLoadingAllContracts } = useQuery<ClientContract[], Error>({
-    queryKey: ['projectsReports', 'allContracts'],
+    queryKey: ['allContractsForReports'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('client_contracts')
@@ -36,8 +36,8 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
   });
 
   // Fetch contracts created in the current month for 'new' counts
-  const { data: currentMonthNewContracts, isLoading: isLoadingNewCurrentMonthContracts } = useQuery<ClientContract[], Error>({
-    queryKey: ['projectsReports', 'currentMonthNew', currentMonthStart.toISOString()],
+  const { data: newCurrentMonthContracts, isLoading: isLoadingNewCurrentMonthContracts } = useQuery<ClientContract[], Error>({
+    queryKey: ['newContractsReports', 'currentMonth', currentMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('client_contracts')
@@ -50,8 +50,8 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
   });
 
   // Fetch contracts created in the previous month for 'new' counts comparison
-  const { data: previousMonthNewContracts, isLoading: isLoadingNewPreviousMonthContracts } = useQuery<ClientContract[], Error>({
-    queryKey: ['projectsReports', 'previousMonthNew', previousMonthStart.toISOString()],
+  const { data: newPreviousMonthContracts, isLoading: isLoadingNewPreviousMonthContracts } = useQuery<ClientContract[], Error>({
+    queryKey: ['newContractsReports', 'previousMonth', previousMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('client_contracts')
@@ -71,12 +71,11 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
     let total = contracts.length;
     let active = 0;
     let completed = 0;
-    const now = new Date();
+    // const now = new Date(); // Not used directly in this loop, but for isPast check
 
     contracts.forEach(contract => {
       if (contract.contract_type === 'monthly') {
-        // Monthly contracts are considered active unless explicitly cancelled (not tracked here)
-        active++;
+        active++; // Monthly contracts are considered active
       } else { // 'one-time'
         if (contract.end_date && isPast(parseISO(contract.end_date))) {
           completed++;
@@ -89,10 +88,16 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
   }, []);
 
   const currentMonthOverallData = useMemo(() => processContracts(allContracts), [allContracts, processContracts]);
-  const previousMonthOverallData = useMemo(() => processContracts(allContracts), [allContracts, processContracts]); // Overall data doesn't change by month selection
+  const previousMonthOverallData = useMemo(() => processContracts(allContracts), [allContracts, processContracts]);
 
-  const currentMonthNewData = useMemo(() => newCurrentMonthContracts?.length || 0, [newCurrentMonthContracts]);
-  const previousMonthNewData = useMemo(() => previousMonthNewContracts?.length || 0, [newPreviousMonthContracts]);
+  // Explicitly handle undefined for newCurrentMonthContracts and newPreviousMonthContracts
+  const currentMonthNewData = useMemo(() => {
+    return newCurrentMonthContracts ? newCurrentMonthContracts.length : 0;
+  }, [newCurrentMonthContracts]);
+
+  const previousMonthNewData = useMemo(() => {
+    return newPreviousMonthContracts ? newPreviousMonthContracts.length : 0;
+  }, [newPreviousMonthContracts]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -123,7 +128,7 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
       <ReportCard
         title="Projetos Concluídos"
         value={currentMonthOverallData.completed}
-        previousMonthValue={previousMonthOverallData.completed}
+        previousMonthValue={currentMonthOverallData.completed}
         unit="projetos"
         icon={XCircle}
         isLoading={isLoading}
