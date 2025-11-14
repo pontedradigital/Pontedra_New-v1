@@ -435,6 +435,58 @@ export default function AppointmentsPage() {
             : ' Acompanhe seus compromissos com a Pontedra.'}
         </p>
 
+        {/* Caixa de Últimos Agendamentos - MOVIDA PARA O TOPO */}
+        <Card className="bg-card border-border shadow-lg rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Clock className="w-5 h-5 text-purple-500" /> Últimos Agendamentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Os 5 agendamentos mais recentes na plataforma.
+            </p>
+            <div className="overflow-x-auto max-h-60 custom-scrollbar">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20">
+                    <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                    <TableHead className="text-muted-foreground">E-MAIL</TableHead>
+                    <TableHead className="text-muted-foreground">DATA</TableHead>
+                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {latestAppointments.length > 0 ? (
+                    latestAppointments.map((app) => (
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                        <TableCell className="font-medium text-foreground py-3">
+                          {app.client_name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {app.client_email}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {format(parseISO(app.start_time), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                        Nenhum agendamento recente.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Componente de seleção de data */}
         {masterIdForBooking && ( // Renderiza DateSelectionList para ambos os papéis
           <DateSelectionList
@@ -589,58 +641,6 @@ export default function AppointmentsPage() {
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento para este mês.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Caixa de Últimos Agendamentos */}
-        <Card className="bg-card border-border shadow-lg rounded-xl mt-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <Clock className="w-5 h-5 text-purple-500" /> Últimos Agendamentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Os 5 agendamentos mais recentes na plataforma.
-            </p>
-            <div className="overflow-x-auto max-h-60 custom-scrollbar">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/20">
-                    <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-                    <TableHead className className="text-muted-foreground">E-MAIL</TableHead>
-                    <TableHead className="text-muted-foreground">DATA</TableHead>
-                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {latestAppointments.length > 0 ? (
-                    latestAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                        <TableCell className="font-medium text-foreground py-3">
-                          {app.client_name}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground py-3">
-                          {app.client_email}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground py-3">
-                          {format(parseISO(app.start_time), 'dd/MM/yyyy', { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground py-3">
-                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
-                        Nenhum agendamento recente.
                       </TableCell>
                     </TableRow>
                   )}
