@@ -24,6 +24,7 @@ import {
   Instagram,
   Facebook,
   ChevronDown,
+  Calculator, // NOVO: Importar Calculator
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -40,7 +41,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Início", icon: HomeIcon, href: "/dashboard/home", roles: ['prospect', 'client', 'master'] },
-  { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] }, // Alterado de "Configurações" para "Meu Perfil" e ícone para UserIcon
+  { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] },
   { label: "Clientes", icon: Users, href: "/dashboard/clients", roles: ['master'] },
   { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
@@ -49,8 +50,8 @@ const navItems: NavItem[] = [
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
-  { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] }, // NOVO: Adicionado item de menu para Custos
-  { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
+  { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
+  { label: "Calculadoras", icon: Calculator, href: "/dashboard/calculators", roles: ['master'] }, // NOVO: Item de menu para Calculadoras
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   {
     label: "Redes Sociais",

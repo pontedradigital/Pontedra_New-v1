@@ -30,8 +30,8 @@ import SettingsPage from "./pages/dashboard/common/SettingsPage";
 import ServicesPage from "./pages/dashboard/master/ServicesPage";
 import PackagesPage from "./pages/dashboard/master/PackagesPage";
 import BudgetsPage from "./pages/dashboard/master/BudgetsPage";
-import CostsPage from "./pages/dashboard/master/CostsPage"; // NOVO: Importar CostsPage
-import FinancialPage from "./pages/dashboard/master/FinancialPage";
+import CostsPage from "./pages/dashboard/master/CostsPage";
+import CalculatorsPage from "./pages/dashboard/master/CalculatorsPage"; // NOVO: Importar CalculatorsPage
 import VedraAIPage from "./pages/dashboard/master/VedraAIPage";
 import ClientsPage from "./pages/dashboard/master/ClientsPage";
 
@@ -69,8 +69,8 @@ function App() {
         <Route path="/dashboard/services" element={<ProtectedRoute allowedRoles={['master']}><ServicesPage /></ProtectedRoute>} />
         <Route path="/dashboard/packages" element={<ProtectedRoute allowedRoles={['master']}><PackagesPage /></ProtectedRoute>} />
         <Route path="/dashboard/budgets" element={<ProtectedRoute allowedRoles={['master']}><BudgetsPage /></ProtectedRoute>} />
-        <Route path="/dashboard/costs" element={<ProtectedRoute allowedRoles={['master']}><CostsPage /></ProtectedRoute>} /> {/* NOVO: Rota para CostsPage */}
-        <Route path="/dashboard/financial" element={<ProtectedRoute allowedRoles={['master']}><FinancialPage /></ProtectedRoute>} />
+        <Route path="/dashboard/costs" element={<ProtectedRoute allowedRoles={['master']}><CostsPage /></ProtectedRoute>} />
+        <Route path="/dashboard/calculators" element={<ProtectedRoute allowedRoles={['master']}><CalculatorsPage /></ProtectedRoute>} /> {/* NOVO: Rota para CalculatorsPage */}
         <Route path="/dashboard/vedra-ai" element={<ProtectedRoute allowedRoles={['master']}><VedraAIPage /></ProtectedRoute>} />
 
         <Route path="/dashboard/manage-users" element={<ProtectedRoute allowedRoles={['master']}><ManageUsersPage /></ProtectedRoute>} />

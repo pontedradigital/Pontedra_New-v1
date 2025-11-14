@@ -5,10 +5,10 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard';
 import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard';
 import AnnualPackageDiscountSettingCard from '@/components/dashboard/master/AnnualPackageDiscountSettingCard';
-import CurrencyConversionSettingsCard from '@/components/dashboard/master/CurrencyConversionSettingsCard'; // NOVO: Importar
-import { DollarSign } from 'lucide-react'; // Ícone para a página
+import CurrencyConversionSettingsCard from '@/components/dashboard/master/CurrencyConversionSettingsCard';
+import { Calculator } from 'lucide-react'; // NOVO: Ícone para a página
 
-export default function FinancialPage() {
+export default function CalculatorsPage() {
   const { profile } = useAuth();
 
   return (
@@ -20,17 +20,17 @@ export default function FinancialPage() {
         className="space-y-8 max-w-3xl mx-auto"
       >
         <div className="flex items-center gap-4 mb-8">
-          <DollarSign className="w-10 h-10 text-[#57e389]" />
-          <h1 className="text-4xl font-bold text-foreground">Financeiro</h1>
+          <Calculator className="w-10 h-10 text-[#57e389]" /> {/* NOVO: Usando o ícone Calculator */}
+          <h1 className="text-4xl font-bold text-foreground">Calculadoras</h1> {/* NOVO: Título da página */}
         </div>
         {profile && (
           <p className="text-lg text-[#9ba8b5]">
-            Olá, <span className="font-semibold text-white">{profile.first_name}</span>! Esta é a sua central financeira.
+            Olá, <span className="font-semibold text-white">{profile.first_name}</span>! Esta é a sua central de calculadoras e configurações financeiras.
             {profile.client_id && <span className="block text-sm text-muted-foreground mt-1">ID do Cliente: {profile.client_id}</span>}
           </p>
         )}
         <p className="mt-4 text-[#9ba8b5]">
-          Nesta página, você terá acesso a um resumo financeiro, fluxo de caixa, contas a pagar e a receber, e outras ferramentas de gestão financeira.
+          Nesta página, você pode ajustar as configurações que impactam os cálculos de preços, impostos e conversões de moeda.
         </p>
 
         <DefaultTaxSettingCard />
@@ -39,7 +39,7 @@ export default function FinancialPage() {
 
         <AnnualPackageDiscountSettingCard />
 
-        <CurrencyConversionSettingsCard /> {/* NOVO: Adicionar o componente aqui */}
+        <CurrencyConversionSettingsCard />
 
         {/* Outras seções financeiras podem ser adicionadas aqui */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6">
