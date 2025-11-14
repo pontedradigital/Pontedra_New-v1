@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
-import { format, addDays, isWeekend, isSameDay, isBefore, startOfDay, parseISO } from 'date-fns';
+import { format, addDays, isWeekend, isSameDay, isBefore, startOfDay, parseISO, addMonths, startOfMonth, endOfMonth } from 'date-fns'; // Added addMonths, startOfMonth, endOfMonth
 import { ptBR } from 'date-fns/locale';
 import { Loader2, CalendarDays, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,17 +66,6 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
     enabled: !!masterId,
   });
 
-  // Generate next 30 days (or more if master booking)
-  useEffect(() => {
-    const today = startOfDay(new Date());
-    const generatedDates: Date[] = [];
-    const daysToGenerate = isMasterBooking ? 90 : 30; // Master pode ver mais dias
-    for (let i = 0; i < daysToGenerate; i++) {
-      generatedDates.push(addDays(today, i));
-    }
-    setDates(generatedDates);
-  }, [isMasterBooking]);
-
   // Memoize dates with appointments for quick lookup
   const datesWithAppointments = useMemo(() => {
     const datesSet = new Set<string>();
@@ -85,6 +74,43 @@ const DateSelectionList: React.FC<DateSelectionListProps> = ({ masterId, onDateS
     });
     return datesSet;
   }, [allAppointments]);
+
+  // Generate dates dynamically based on current month, next few months, and appointments
+  useEffect(() => {
+    const today = startOfDay(new Date());
+    const generatedDatesSet = new Set<string>();
+    const generatedDatesArray: Date[] = [];
+
+    // Add dates for the current month + next 3 months
+    for (let i = 0; i < 4; i++) { // Current month + 3 future months
+      let monthStart = startOfMonth(addMonths(today, i));
+      let monthEnd = endOfMonth(monthStart);
+      let currentDate = monthStart;
+      while (isBefore(currentDate, addDays(monthEnd, 1))) {
+        const dateString = format(currentDate, 'yyyy-MM-dd');
+        if (!generatedDatesSet.has(dateString)) {
+          generatedDatesSet.add(dateString);
+          generatedDatesArray.push(currentDate);
+        }
+        currentDate = addDays(currentDate, 1);
+      }
+    }
+
+    // Add dates from allAppointments that are not already in the generated set
+    allAppointments.forEach(app => {
+      const appDate = startOfDay(parseISO(app.start_time));
+      const dateString = format(appDate, 'yyyy-MM-dd');
+      if (!generatedDatesSet.has(dateString) && !isBefore(appDate, today)) { // Only add future appointments
+        generatedDatesSet.add(dateString);
+        generatedDatesArray.push(appDate);
+      }
+    });
+
+    // Sort all dates chronologically
+    generatedDatesArray.sort((a, b) => a.getTime() - b.getTime());
+
+    setDates(generatedDatesArray);
+  }, [allAppointments]); // Re-run when allAppointments changes
 
   // Determine available dates based on availability and exceptions
   const availableDates = useMemo(() => {
