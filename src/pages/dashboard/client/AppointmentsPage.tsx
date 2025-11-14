@@ -617,25 +617,27 @@ export default function AppointmentsPage() {
             </p>
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  initialFocus
-                  locale={ptBR}
-                  className="rounded-md border bg-background"
-                  disabled={(date) => isBefore(date, startOfDay(new Date()))} // Desabilita datas passadas
-                  modifiers={{
-                    available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
-                  }}
-                  modifiersStyles={{
-                    available: {
-                      backgroundColor: 'hsl(var(--primary) / 0.2)',
-                      color: 'hsl(var(--primary))',
-                      fontWeight: 'bold',
-                    },
-                  }}
-                />
+                <div className="react-calendar-container"> {/* Adicionado o contêiner para o calendário */}
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                    locale={ptBR}
+                    className="rounded-md border bg-background"
+                    disabled={(date) => isBefore(date, startOfDay(new Date()))} // Desabilita datas passadas
+                    modifiers={{
+                      available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
+                    }}
+                    modifiersStyles={{
+                      available: {
+                        backgroundColor: 'hsl(var(--primary) / 0.2)',
+                        color: 'hsl(var(--primary))',
+                        fontWeight: 'bold',
+                      },
+                    }}
+                  />
+                </div>
               </div>
               <div className="flex-1 space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">
