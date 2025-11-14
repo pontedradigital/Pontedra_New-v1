@@ -1540,8 +1540,8 @@ export default function BudgetsPage() {
               <Button variant="outline" onClick={() => setIsRevertConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                 Cancelar
               </Button>
-              <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertRevertMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+              <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
