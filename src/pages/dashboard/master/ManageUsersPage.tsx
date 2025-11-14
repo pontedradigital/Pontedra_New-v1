@@ -93,7 +93,7 @@ export default function ManageUsersPage() {
         .from('profiles')
         .select(`
           id,
-          client_id, -- NOVO: Selecionar client_id
+          client_id,
           first_name,
           last_name,
           telefone,
