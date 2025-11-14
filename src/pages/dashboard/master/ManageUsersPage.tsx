@@ -23,6 +23,7 @@ import {
 import { ChevronDown, User, Mail, Phone, Briefcase, DollarSign, CheckCircle, XCircle, Loader2, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup'; // Importar o pop-up de detalhes
+import { useAuth } from '@/context/AuthContext'; // Adicionando a importação do useAuth
 
 // Tipos de dados
 interface UserProfile {
