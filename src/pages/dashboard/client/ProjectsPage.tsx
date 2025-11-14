@@ -94,20 +94,17 @@ export default function ProjectsPage() {
     selectedItemId: string | undefined;
     priceAgreed: number;
     startDate: string;
-    estimatedCompletionDate: string | undefined; // Alterado para opcional
+    estimatedCompletionDate: string | undefined;
     budget_id: string | undefined;
-    is_paid: boolean;
-    payment_due_date: string;
+    // is_paid e payment_due_date removidos do estado do formulário, serão fixos
   }>({
     projectName: '',
     contractType: undefined,
     selectedItemId: undefined,
     priceAgreed: 0,
     startDate: format(new Date(), 'yyyy-MM-dd'),
-    estimatedCompletionDate: undefined, // Alterado para undefined
+    estimatedCompletionDate: undefined,
     budget_id: undefined,
-    is_paid: false,
-    payment_due_date: '',
   });
 
   // Fetch all available services (products)
@@ -281,6 +278,8 @@ export default function ProjectsPage() {
       const dataToSave = {
         ...projectData,
         client_id: user.id, // Always link to the logged-in client
+        is_paid: true, // Sempre true para novos projetos
+        payment_due_date: null, // Sempre null se já está pago
       };
 
       if (projectData.id) {
@@ -302,10 +301,8 @@ export default function ProjectsPage() {
         selectedItemId: undefined,
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
-        estimatedCompletionDate: undefined, // Alterado para undefined
+        estimatedCompletionDate: undefined,
         budget_id: undefined,
-        is_paid: false,
-        payment_due_date: '',
       });
     },
     onError: (err) => {
@@ -339,8 +336,7 @@ export default function ProjectsPage() {
         startDate: project.start_date,
         estimatedCompletionDate: project.end_date || undefined, // Garante undefined se for null
         budget_id: project.budget_id || undefined,
-        is_paid: project.is_paid,
-        payment_due_date: project.payment_due_date || '',
+        // is_paid e payment_due_date não são carregados no formData, pois são fixos
       });
     } else {
       setEditingProject(null);
@@ -350,20 +346,18 @@ export default function ProjectsPage() {
         selectedItemId: undefined,
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
-        estimatedCompletionDate: undefined, // Alterado para undefined
+        estimatedCompletionDate: undefined,
         budget_id: undefined,
-        is_paid: false,
-        payment_due_date: '',
       });
     }
     setIsDialogOpen(true);
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -415,7 +409,6 @@ export default function ProjectsPage() {
       toast.error("Usuário não autenticado.");
       return;
     }
-    // Removido formData.estimatedCompletionDate da validação de campos obrigatórios
     if (!formData.projectName || !formData.contractType || !formData.selectedItemId || !formData.priceAgreed || !formData.startDate) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
@@ -428,9 +421,9 @@ export default function ProjectsPage() {
       contract_type: formData.contractType,
       start_date: formData.startDate,
       end_date: formData.estimatedCompletionDate || null, // Garante que seja null se não preenchido
-      price_agreed: formData.priceAgred,
-      is_paid: formData.is_paid,
-      payment_due_date: formData.payment_due_date || null,
+      price_agreed: formData.priceAgreed,
+      is_paid: true, // Sempre true
+      payment_due_date: null, // Sempre null
     };
 
     if (formData.contractType === 'one-time') {
@@ -590,7 +583,7 @@ export default function ProjectsPage() {
                 {editingProject ? `Editar Projeto #${editingProject.project_id}` : 'Adicionar Novo Projeto'}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
-                Preencha os detalhes do seu projeto.
+                Preencha os detalhes do seu projeto. O status de pagamento será definido como 'Pago' automaticamente.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
@@ -724,43 +717,22 @@ export default function ProjectsPage() {
 
               {/* Data Estimada de Conclusão */}
               <div className="space-y-2">
-                <Label htmlFor="estimatedCompletionDate">Data Estimada de Conclusão</Label> {/* Removido o '*' */}
+                <Label htmlFor="estimatedCompletionDate">Data Estimada de Conclusão</Label>
                 <Input
                   id="estimatedCompletionDate"
                   name="estimatedCompletionDate"
                   type="date"
-                  value={formData.estimatedCompletionDate || ''} // Garante que o valor seja uma string vazia se undefined
+                  value={formData.estimatedCompletionDate || ''}
                   onChange={handleFormChange}
                   className="w-full bg-background border-border text-foreground"
-                  // Removido o atributo 'required'
                 />
               </div>
 
-              {/* Status de Pagamento */}
-              <div className="space-y-2 flex items-center justify-between md:col-span-2">
-                <Label htmlFor="is_paid">Pago</Label>
-                <Switch
-                  id="is_paid"
-                  name="is_paid"
-                  checked={formData.is_paid}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_paid: checked }))}
-                />
+              {/* Mensagem de Status de Pagamento Fixo */}
+              <div className="md:col-span-2 text-sm text-muted-foreground flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                O status de pagamento será definido como <span className="font-semibold text-green-500">Pago</span> automaticamente.
               </div>
-
-              {/* Data de Vencimento do Pagamento (se não pago) */}
-              {!formData.is_paid && (
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="payment_due_date">Data de Vencimento do Pagamento</Label>
-                  <Input
-                    id="payment_due_date"
-                    name="payment_due_date"
-                    type="date"
-                    value={formData.payment_due_date}
-                    onChange={handleFormChange}
-                    className="w-full bg-background border-border text-foreground"
-                  />
-                </div>
-              )}
 
               <DialogFooter className="md:col-span-2 mt-6">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
