@@ -36,7 +36,7 @@ import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } = '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporárias
@@ -526,7 +526,7 @@ export default function BudgetsPage() {
         }
         return [...prev, {
           id: itemToToggle.id,
-          type: itemToTo`gle.type,
+          type: itemToToggle.type, // Corrigido: removido o backtick extra
           name: itemToToggle.name,
           description: itemToToggle.description,
           price: itemToToggle.price,
