@@ -25,10 +25,13 @@ import {
   Tag,
   Search,
   RefreshCw,
+  CheckCircle, // Adicionado para o ícone de lido
+  CircleDot, // Adicionado para o ícone de não lido
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import LeadDetailsPopup from '@/components/dashboard/master/LeadDetailsPopup'; // Importar o pop-up de detalhes
+import LeadDetailsPopup from '@/components/dashboard/master/LeadDetailsPopup';
+import { Badge } from '@/components/ui/badge'; // Importar Badge
 
 interface LeadItem {
   id: string;
@@ -41,6 +44,7 @@ interface LeadItem {
   url_captura: string | null;
   ip_address: string | null;
   created_at: string;
+  is_read: boolean; // NOVO: Adicionado status de leitura
 }
 
 export default function LeadsPage() {
@@ -55,7 +59,7 @@ export default function LeadsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_contato')
-        .select('*') // Seleciona todos os campos
+        .select('*') // Seleciona todos os campos, incluindo is_read
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
@@ -77,9 +81,31 @@ export default function LeadsPage() {
     },
   });
 
+  // NOVO: Mutation to mark a lead as read
+  const markLeadAsReadMutation = useMutation<void, Error, string>({
+    mutationFn: async (leadId) => {
+      const { error } = await supabase
+        .from('site_contato')
+        .update({ is_read: true })
+        .eq('id', leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] }); // Invalida para atualizar a lista
+    },
+    onError: (err) => {
+      console.error("Erro ao marcar lead como lido:", err);
+      // Não exibe toast de erro para o usuário, pois é uma ação de fundo
+    },
+  });
+
   const handleRowClick = (lead: LeadItem) => {
     setSelectedLeadForDetails(lead);
     setIsDetailsPopupOpen(true);
+    // Se o lead não foi lido, marca como lido
+    if (!lead.is_read) {
+      markLeadAsReadMutation.mutate(lead.id);
+    }
   };
 
   const handleRefreshLeads = () => {
@@ -146,6 +172,7 @@ export default function LeadsPage() {
             <TableHead className="text-muted-foreground">CONTATO</TableHead>
             <TableHead className="text-muted-foreground">ASSUNTO</TableHead>
             <TableHead className="text-muted-foreground">DATA</TableHead>
+            <TableHead className="text-muted-foreground">STATUS</TableHead> {/* NOVO: Coluna Status */}
             <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
           </TableRow>
         </TableHeader>
@@ -170,6 +197,16 @@ export default function LeadsPage() {
                 <TableCell className="text-muted-foreground py-4">
                   {format(parseISO(lead.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                 </TableCell>
+                <TableCell className="py-4"> {/* NOVO: Célula de Status */}
+                  <Badge className={lead.is_read ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-gray-500 hover:bg-gray-600 text-white'}>
+                    {lead.is_read ? (
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                    ) : (
+                      <CircleDot className="h-3 w-3 mr-1" />
+                    )}
+                    {lead.is_read ? 'Mensagem Lida' : 'Não Lida'}
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-right py-4">
                   <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRowClick(lead); }} className="text-blue-500 hover:text-blue-600">
                     <Eye className="h-4 w-4" />
@@ -182,7 +219,7 @@ export default function LeadsPage() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-8"> {/* Colspan ajustado */}
                 Nenhum lead encontrado nesta categoria.
               </TableCell>
             </TableRow>
