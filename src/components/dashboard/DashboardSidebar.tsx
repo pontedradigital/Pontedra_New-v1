@@ -3,8 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Home as HomeIcon,
-  User as UserIcon,
-  Settings as SettingsIcon,
+  User as UserIcon, // Usado para Meu Perfil
+  Settings as SettingsIcon, // Mantido para outras configurações, se necessário, ou removido se não for mais usado
   LogOut as LogOutIcon,
   Menu as MenuIcon,
   X as XIcon,
@@ -40,15 +40,15 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Início", icon: HomeIcon, href: "/dashboard/home", roles: ['prospect', 'client', 'master'] },
-  { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] },
-  { label: "Clientes", icon: Users, href: "/dashboard/clients", roles: ['master'] }, // NOVO: Item de menu para Clientes
+  { label: "Meu Perfil", icon: UserIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] }, // Alterado de "Configurações" para "Meu Perfil" e ícone para UserIcon
+  { label: "Clientes", icon: Users, href: "/dashboard/clients", roles: ['master'] },
   { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },
   { label: "Relatórios", icon: BarChart, href: "/dashboard/reports", roles: ['master'] },
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
-  { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] }, // NOVO: Item de menu para Orçamentos
+  { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
   { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },

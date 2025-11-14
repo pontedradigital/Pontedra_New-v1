@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays, Tag, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'; // Adicionado Lock, Eye, EyeOff, Loader2
+import { User as UserIcon, Mail, Phone, Building, MapPin, CalendarDays, Tag, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'; // Alterado SettingsIcon para UserIcon
 import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard';
 
 export default function SettingsPage() {
@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const [addressState, setAddressState] = useState('');
   const [addressCep, setAddressCep] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [isSavingProfile, setIsSavingProfile] = useState(false); // Renomeado para clareza
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Estados para alteração de senha
   const [newPassword, setNewPassword] = useState('');
@@ -144,14 +144,14 @@ export default function SettingsPage() {
         className="space-y-8 max-w-3xl mx-auto"
       >
         <div className="flex items-center gap-4 mb-8">
-          <SettingsIcon className="w-10 h-10 text-[#57e389]" />
-          <h1 className="text-4xl font-bold text-foreground">Configurações</h1>
+          <UserIcon className="w-10 h-10 text-[#57e389]" /> {/* Alterado SettingsIcon para UserIcon */}
+          <h1 className="text-4xl font-bold text-foreground">Meu Perfil</h1> {/* Alterado "Configurações" para "Meu Perfil" */}
         </div>
 
         {/* Seção de Perfil */}
         <Card className="bg-card border-border shadow-lg rounded-xl">
           <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-foreground">Meu Perfil</CardTitle>
+            <CardTitle className="text-2xl font-semibold text-foreground">Minhas Informações</CardTitle> {/* Alterado para ser mais específico */}
             <CardDescription className="text-muted-foreground">
               Gerencie suas informações pessoais e de contato.
             </CardDescription>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="first_name" className="text-foreground">Nome</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
                       id="first_name"
                       value={firstName}
@@ -191,7 +191,7 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="last_name" className="text-foreground">Sobrenome</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
                       id="last_name"
                       value={lastName}
