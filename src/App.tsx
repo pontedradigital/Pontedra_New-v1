@@ -18,9 +18,7 @@ import MasterHome from "./pages/dashboard/master/Home";
 import ClientHome from "./pages/dashboard/client/Home";
 import ProspectHome from "./pages/dashboard/prospect/Home";
 import ResourcesPage from "./pages/dashboard/common/ResourcesPage";
-import AppointmentsPage from "./pages/dashboard/client/AppointmentsPage"; // Adicionado novamente
-import ManageUsersPage from "./pages/dashboard/master/ManageUsersPage";
-import ReportsPage from "./pages/dashboard/master/ReportsPage";
+import AppointmentsPage from "./pages/dashboard/client/AppointmentsPage";
 
 // Nova página de configurações combinada
 import SettingsPage from "./pages/dashboard/common/SettingsPage";
@@ -38,6 +36,7 @@ import WhatsAppPage from "./pages/dashboard/master/WhatsAppPage";
 import InstagramPage from "./pages/dashboard/master/InstagramPage";
 import FacebookPage from "./pages/dashboard/master/FacebookPage";
 import BlogPage from "./pages/dashboard/master/BlogPage";
+import LeadsPage from "./pages/dashboard/master/LeadsPage"; // NOVO: Importando LeadsPage
 // import AvailabilityPage from "./pages/dashboard/master/AvailabilityPage"; // Removido
 
 
@@ -67,7 +66,7 @@ function App() {
         <Route path="/dashboard/settings" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><SettingsPage /></ProtectedRoute>} />
         <Route path="/dashboard/resources" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ResourcesPage /></ProtectedRoute>} />
         
-        <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} /> {/* Adicionado novamente */}
+        <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} />
 
         {/* Novas Rotas para o Master */}
         <Route path="/dashboard/clients" element={<ProtectedRoute allowedRoles={['master']}><ClientsPage /></ProtectedRoute>} />
@@ -82,6 +81,7 @@ function App() {
         <Route path="/dashboard/instagram" element={<ProtectedRoute allowedRoles={['master']}><InstagramPage /></ProtectedRoute>} />
         <Route path="/dashboard/facebook" element={<ProtectedRoute allowedRoles={['master']}><FacebookPage /></ProtectedRoute>} />
         <Route path="/dashboard/blog-manager" element={<ProtectedRoute allowedRoles={['master']}><BlogPage /></ProtectedRoute>} />
+        <Route path="/dashboard/leads" element={<ProtectedRoute allowedRoles={['master']}><LeadsPage /></ProtectedRoute>} /> {/* NOVO: Rota para LeadsPage */}
         {/* <Route path="/dashboard/availability" element={<ProtectedRoute allowedRoles={['master']}><AvailabilityPage /></ProtectedRoute>} /> */} {/* Removido */}
 
         <Route path="/dashboard/manage-users" element={<ProtectedRoute allowedRoles={['master']}><ManageUsersPage /></ProtectedRoute>} />
