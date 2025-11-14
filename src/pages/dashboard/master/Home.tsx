@@ -27,7 +27,7 @@ export default function MasterHome() {
       >
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Olá, {profile?.nome || 'Master'}!</h1>
+          <h1 className="text-3xl font-bold text-foreground">Olá, {profile?.first_name || 'Master'}!</h1>
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md w-full sm:w-auto">Importar</Button>
         </div>
 

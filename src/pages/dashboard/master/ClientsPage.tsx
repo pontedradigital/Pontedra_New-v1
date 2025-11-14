@@ -59,6 +59,7 @@ import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup
 // Tipos de dados para o perfil do usuário (atualizado)
 interface UserProfile {
   id: string;
+  client_id: string | null; // NOVO: Adicionado client_id
   first_name: string | null;
   last_name: string | null;
   telefone: string | null;
@@ -96,6 +97,7 @@ export default function ClientsPage() {
         .from('profiles')
         .select(`
           id,
+          client_id, -- NOVO: Selecionar client_id
           first_name,
           last_name,
           telefone,
@@ -268,7 +270,8 @@ export default function ClientsPage() {
         client.telefone?.toLowerCase().includes(searchLower) ||
         client.company_organization?.toLowerCase().includes(searchLower) ||
         client.address_city?.toLowerCase().includes(searchLower) ||
-        client.address_state?.toLowerCase().includes(searchLower);
+        client.address_state?.toLowerCase().includes(searchLower) ||
+        client.client_id?.toLowerCase().includes(searchLower); // NOVO: Busca por client_id
       return matchesRole && matchesSearch;
     });
   }, [clients, searchTerm, filterRole]);
@@ -317,7 +320,7 @@ export default function ClientsPage() {
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <Input
-            placeholder="Buscar por nome, e-mail, telefone, empresa ou cidade..."
+            placeholder="Buscar por nome, e-mail, telefone, empresa, cidade ou ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -342,6 +345,7 @@ export default function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
+                <TableHead className="text-muted-foreground">ID</TableHead> {/* NOVO: Coluna ID */}
                 <TableHead className="text-muted-foreground">NOME</TableHead>
                 <TableHead className="text-muted-foreground">CONTATO</TableHead>
                 <TableHead className="text-muted-foreground">EMPRESA/ENDEREÇO</TableHead>
@@ -354,6 +358,7 @@ export default function ClientsPage() {
               {filteredClients && filteredClients.length > 0 ? (
                 filteredClients.map((client) => (
                   <TableRow key={client.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(client)}>
+                    <TableCell className="font-medium text-foreground py-4">{client.client_id || 'N/A'}</TableCell> {/* NOVO: Exibir client_id */}
                     <TableCell className="font-medium text-foreground py-4">
                       <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-primary" />
@@ -403,7 +408,7 @@ export default function ClientsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum cliente encontrado.
                   </TableCell>
                 </TableRow>
@@ -424,6 +429,18 @@ export default function ClientsPage() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
+              {/* Campo de ID do Cliente (somente leitura) */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="client_id">ID do Cliente</Label>
+                <Input
+                  id="client_id"
+                  name="client_id"
+                  value={editingClient?.client_id || 'N/A'}
+                  readOnly
+                  className="bg-muted/50 border-border text-foreground"
+                />
+              </div>
+
               {/* Campos Obrigatórios */}
               <div className="space-y-2">
                 <Label htmlFor="first_name">Nome</Label>

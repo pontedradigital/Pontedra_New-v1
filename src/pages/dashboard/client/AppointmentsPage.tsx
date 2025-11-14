@@ -17,7 +17,8 @@ export default function AppointmentsPage() {
         <h1 className="text-4xl font-bold text-[#57e389] mb-6">Meus Agendamentos</h1>
         {profile && (
           <p className="text-lg text-[#9ba8b5]">
-            Olá, <span className="font-semibold text-white">{profile.nome}</span>! Gerencie seus agendamentos com a Pontedra aqui.
+            Olá, <span className="font-semibold text-white">{profile.first_name}</span>! Gerencie seus agendamentos com a Pontedra aqui.
+            {profile.client_id && <span className="block text-sm text-muted-foreground mt-1">ID do Cliente: {profile.client_id}</span>}
           </p>
         )}
         <p className="mt-4 text-[#9ba8b5]">

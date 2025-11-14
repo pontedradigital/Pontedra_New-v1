@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays } from 'lucide-react';
+import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays, Tag } from 'lucide-react'; // NOVO: Importar Tag
 import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard';
 
 export default function SettingsPage() {
@@ -123,6 +123,22 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleProfileSubmit} className="space-y-6">
+              {/* ID do Cliente (somente leitura) */}
+              {profile.client_id && (
+                <div className="space-y-2">
+                  <Label htmlFor="client_id" className="text-foreground">ID do Cliente</Label>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      id="client_id"
+                      value={profile.client_id}
+                      readOnly
+                      className="pl-10 bg-muted/50 border-border text-foreground"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="first_name" className="text-foreground">Nome</Label>

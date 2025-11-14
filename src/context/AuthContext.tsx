@@ -6,21 +6,22 @@ import { useNavigate, useLocation } from 'react-router-dom'; // Importar useLoca
 
 interface UserProfile {
   id: string;
+  client_id: string | null; // NOVO: Adicionado client_id
   first_name: string | null;
   last_name: string | null;
   telefone: string | null;
   role: 'prospect' | 'client' | 'master';
   status: 'ativo' | 'inativo';
-  company_organization: string | null; // NOVO
-  address_street: string | null;      // NOVO
-  address_number: string | null;      // NOVO
-  address_complement: string | null;  // NOVO
-  address_neighborhood: string | null; // NOVO
-  address_city: string | null;        // NOVO
-  address_state: string | null;       // NOVO
-  address_cep: string | null;         // NOVO
-  date_of_birth: string | null;       // NOVO (string para input type="date")
-  created_at: string;                 // NOVO (para calcular "cadastrado a tantos dias")
+  company_organization: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_complement: string | null;
+  address_neighborhood: string | null;
+  address_city: string | null;
+  address_state: string | null;
+  address_cep: string | null;
+  date_of_birth: string | null;
+  created_at: string;
 }
 
 interface AuthContextType {
@@ -28,7 +29,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, first_name: string, last_name: string, optional_data?: Partial<Omit<UserProfile, 'id' | 'role' | 'status' | 'created_at'>>) => Promise<boolean>;
+  register: (email: string, password: string, first_name: string, last_name: string, optional_data?: Partial<Omit<UserProfile, 'id' | 'client_id' | 'role' | 'status' | 'created_at'>>) => Promise<boolean>;
   updateProfile: (updates: Partial<UserProfile & { email?: string }>) => Promise<boolean>;
   logout: () => Promise<void>;
 }
@@ -140,7 +141,7 @@ export const AuthProvider = ({ children }: { ReactNode }) => {
     return true;
   };
 
-  const register = async (email: string, password: string, first_name: string, last_name: string, optional_data?: Partial<Omit<UserProfile, 'id' | 'role' | 'status' | 'created_at'>>): Promise<boolean> => {
+  const register = async (email: string, password: string, first_name: string, last_name: string, optional_data?: Partial<Omit<UserProfile, 'id' | 'client_id' | 'role' | 'status' | 'created_at'>>): Promise<boolean> => {
     console.log("AuthContext: Attempting registration for:", email);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -190,15 +191,15 @@ export const AuthProvider = ({ children }: { ReactNode }) => {
       if (updates.first_name !== undefined) profileUpdates.first_name = updates.first_name;
       if (updates.last_name !== undefined) profileUpdates.last_name = updates.last_name;
       if (updates.telefone !== undefined) profileUpdates.telefone = updates.telefone;
-      if (updates.company_organization !== undefined) profileUpdates.company_organization = updates.company_organization; // NOVO
-      if (updates.address_street !== undefined) profileUpdates.address_street = updates.address_street;             // NOVO
-      if (updates.address_number !== undefined) profileUpdates.address_number = updates.address_number;             // NOVO
-      if (updates.address_complement !== undefined) profileUpdates.address_complement = updates.address_complement; // NOVO
-      if (updates.address_neighborhood !== undefined) profileUpdates.address_neighborhood = updates.address_neighborhood; // NOVO
-      if (updates.address_city !== undefined) profileUpdates.address_city = updates.address_city;                 // NOVO
-      if (updates.address_state !== undefined) profileUpdates.address_state = updates.address_state;               // NOVO
-      if (updates.address_cep !== undefined) profileUpdates.address_cep = updates.address_cep;                     // NOVO
-      if (updates.date_of_birth !== undefined) profileUpdates.date_of_birth = updates.date_of_birth;               // NOVO
+      if (updates.company_organization !== undefined) profileUpdates.company_organization = updates.company_organization;
+      if (updates.address_street !== undefined) profileUpdates.address_street = updates.address_street;
+      if (updates.address_number !== undefined) profileUpdates.address_number = updates.address_number;
+      if (updates.address_complement !== undefined) profileUpdates.address_complement = updates.address_complement;
+      if (updates.address_neighborhood !== undefined) profileUpdates.address_neighborhood = updates.address_neighborhood;
+      if (updates.address_city !== undefined) profileUpdates.address_city = updates.address_city;
+      if (updates.address_state !== undefined) profileUpdates.address_state = updates.address_state;
+      if (updates.address_cep !== undefined) profileUpdates.address_cep = updates.address_cep;
+      if (updates.date_of_birth !== undefined) profileUpdates.date_of_birth = updates.date_of_birth;
 
       if (Object.keys(profileUpdates).length > 0) {
         const { error: profileUpdateError } = await supabase

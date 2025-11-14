@@ -101,6 +101,7 @@ interface InstallmentRate {
 // NOVO: Interface para o perfil do cliente (combinando profiles e auth.users)
 interface ClientProfile {
   id: string;
+  client_id: string | null; // NOVO: Adicionado client_id
   first_name: string | null;
   last_name: string | null;
   telefone: string | null;
@@ -267,6 +268,7 @@ export default function BudgetsPage() {
         .from('profiles')
         .select(`
           id,
+          client_id, -- NOVO: Selecionar client_id
           first_name,
           last_name,
           telefone,
@@ -1028,7 +1030,7 @@ export default function BudgetsPage() {
                         <SelectItem key={client.id} value={client.id}>
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            {client.first_name} {client.last_name} ({client.email})
+                            {client.first_name} {client.last_name} ({client.client_id || 'N/A'}) - {client.email}
                           </div>
                         </SelectItem>
                       ))}

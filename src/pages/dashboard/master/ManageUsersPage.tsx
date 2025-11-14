@@ -28,6 +28,7 @@ import ClientDetailsPopup from '@/components/dashboard/master/ClientDetailsPopup
 // Tipos de dados
 interface UserProfile {
   id: string;
+  client_id: string | null; // NOVO: Adicionado client_id
   first_name: string | null;
   last_name: string | null;
   telefone: string | null;
@@ -92,6 +93,7 @@ export default function ManageUsersPage() {
         .from('profiles')
         .select(`
           id,
+          client_id, -- NOVO: Selecionar client_id
           first_name,
           last_name,
           telefone,
@@ -190,6 +192,7 @@ export default function ManageUsersPage() {
       user.email.toLowerCase().includes(searchLower) ||
       user.telefone?.toLowerCase().includes(searchLower) ||
       user.company_organization?.toLowerCase().includes(searchLower) || // Adicionado busca por empresa
+      user.client_id?.toLowerCase().includes(searchLower) || // NOVO: Busca por client_id
       user.contracts.some(contract =>
         contract.services?.name.toLowerCase().includes(searchLower) ||
         contract.packages?.name.toLowerCase().includes(searchLower)
@@ -238,7 +241,7 @@ export default function ManageUsersPage() {
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <Input
-            placeholder="Buscar por nome, e-mail, telefone, empresa ou serviço..."
+            placeholder="Buscar por nome, e-mail, telefone, empresa, serviço ou ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -263,6 +266,7 @@ export default function ManageUsersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20">
+                <TableHead className="text-muted-foreground">ID</TableHead> {/* NOVO: Coluna ID */}
                 <TableHead className="text-muted-foreground">USUÁRIO</TableHead>
                 <TableHead className="text-muted-foreground">CONTATO</TableHead>
                 <TableHead className="text-muted-foreground">PAPEL</TableHead>
@@ -275,6 +279,7 @@ export default function ManageUsersPage() {
               {filteredUsers && filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <TableRow key={user.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(user)}>
+                    <TableCell className="font-medium text-foreground py-4">{user.client_id || 'N/A'}</TableCell> {/* NOVO: Exibir client_id */}
                     <TableCell className="font-medium text-foreground py-4">
                       <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-primary" />
@@ -378,7 +383,7 @@ export default function ManageUsersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>

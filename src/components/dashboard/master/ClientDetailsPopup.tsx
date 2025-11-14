@@ -19,6 +19,7 @@ import {
   Info,
   CheckCircle,
   XCircle,
+  Tag, // NOVO: Importar Tag para o ID
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,6 +27,7 @@ import { ptBR } from 'date-fns/locale';
 // Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
   id: string;
+  client_id: string | null; // NOVO: Adicionado client_id
   first_name: string | null;
   last_name: string | null;
   telefone: string | null;
@@ -104,6 +106,14 @@ const ClientDetailsPopup: React.FC<ClientDetailsPopupProps> = ({ isOpen, onClose
         </DialogHeader>
         <ScrollArea className="h-[calc(90vh-150px)] pr-4 custom-scrollbar">
           <div className="space-y-6 py-4">
+            {/* ID do Cliente */}
+            {client.client_id && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground flex items-center gap-2"><Tag className="w-4 h-4" /> ID do Cliente</p>
+                <p className="font-semibold text-foreground">{client.client_id}</p>
+              </div>
+            )}
+
             {/* Informações Básicas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
