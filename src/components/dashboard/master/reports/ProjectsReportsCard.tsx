@@ -1,14 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Briefcase, CheckCircle, PlayCircle, XCircle } from 'lucide-react';
 import ReportCard from './ReportCard';
 import { format, startOfMonth, endOfMonth, subMonths, isPast, parseISO } from 'date-fns';
-
-interface ProjectCount {
-  contract_type: 'monthly' | 'one-time';
-  count: number;
-}
 
 interface ClientContract {
   id: string;
@@ -28,9 +23,9 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
   const previousMonthStart = startOfMonth(subMonths(selectedDate, 1));
   const previousMonthEnd = endOfMonth(subMonths(selectedDate, 1));
 
-  // Fetch all contracts for status calculation
+  // Fetch all contracts for overall status calculation
   const { data: allContracts, isLoading: isLoadingAllContracts } = useQuery<ClientContract[], Error>({
-    queryKey: ['allContractsForReports'],
+    queryKey: ['projectsReports', 'allContracts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('client_contracts')
@@ -40,9 +35,9 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
     },
   });
 
-  // Fetch new contracts created in the current month
-  const { data: newCurrentMonthContracts, isLoading: isLoadingNewCurrentMonthContracts } = useQuery<ClientContract[], Error>({
-    queryKey: ['newContractsReports', 'currentMonth', currentMonthStart.toISOString()],
+  // Fetch contracts created in the current month for 'new' counts
+  const { data: currentMonthNewContracts, isLoading: isLoadingNewCurrentMonthContracts } = useQuery<ClientContract[], Error>({
+    queryKey: ['projectsReports', 'currentMonthNew', currentMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('client_contracts')
@@ -54,9 +49,9 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
     },
   });
 
-  // Fetch new contracts created in the previous month
-  const { data: newPreviousMonthContracts, isLoading: isLoadingNewPreviousMonthContracts } = useQuery<ClientContract[], Error>({
-    queryKey: ['newContractsReports', 'previousMonth', previousMonthStart.toISOString()],
+  // Fetch contracts created in the previous month for 'new' counts comparison
+  const { data: previousMonthNewContracts, isLoading: isLoadingNewPreviousMonthContracts } = useQuery<ClientContract[], Error>({
+    queryKey: ['projectsReports', 'previousMonthNew', previousMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('client_contracts')
@@ -97,7 +92,7 @@ export default function ProjectsReportsCard({ selectedDate }: ProjectsReportsCar
   const previousMonthOverallData = useMemo(() => processContracts(allContracts), [allContracts, processContracts]); // Overall data doesn't change by month selection
 
   const currentMonthNewData = useMemo(() => newCurrentMonthContracts?.length || 0, [newCurrentMonthContracts]);
-  const previousMonthNewData = useMemo(() => newPreviousMonthContracts?.length || 0, [newPreviousMonthContracts]);
+  const previousMonthNewData = useMemo(() => previousMonthNewContracts?.length || 0, [newPreviousMonthContracts]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

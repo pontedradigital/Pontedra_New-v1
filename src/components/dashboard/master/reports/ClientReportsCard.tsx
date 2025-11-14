@@ -5,15 +5,11 @@ import { Loader2, Users, UserPlus, UserCheck, UserX } from 'lucide-react';
 import ReportCard from './ReportCard';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
-interface ProfileCount {
+interface Profile {
+  id: string;
   role: 'prospect' | 'client' | 'master';
   status: 'ativo' | 'inativo';
-  count: number;
-}
-
-interface NewProfileCount {
-  role: 'prospect' | 'client' | 'master';
-  count: number;
+  created_at: string;
 }
 
 interface ClientReportsCardProps {
@@ -26,43 +22,26 @@ export default function ClientReportsCard({ selectedDate }: ClientReportsCardPro
   const previousMonthStart = startOfMonth(subMonths(selectedDate, 1));
   const previousMonthEnd = endOfMonth(subMonths(selectedDate, 1));
 
-  // Fetch total client/prospect counts by status for current month
-  const { data: currentMonthProfiles, isLoading: isLoadingCurrentMonthProfiles } = useQuery<ProfileCount[], Error>({
-    queryKey: ['clientReports', 'currentMonth', currentMonthStart.toISOString()],
+  // Fetch all profiles for overall counts (total, active, inactive)
+  const { data: allProfiles, isLoading: isLoadingAllProfiles } = useQuery<Profile[], Error>({
+    queryKey: ['clientReports', 'allProfiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, status, count')
-        .in('role', ['client', 'prospect'])
-        .or(`created_at.gte.${currentMonthStart.toISOString()},created_at.lte.${currentMonthEnd.toISOString()}`); // This is not quite right for total counts, but for new users.
-                                                                                                                // For total active/inactive, we need to count all profiles regardless of creation date.
-                                                                                                                // Let's adjust the query to get overall counts and new counts separately.
+        .select('id, role, status, created_at')
+        .in('role', ['client', 'prospect']); // Only interested in clients and prospects
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch total client/prospect counts by status for previous month
-  const { data: previousMonthProfiles, isLoading: isLoadingPreviousMonthProfiles } = useQuery<ProfileCount[], Error>({
-    queryKey: ['clientReports', 'previousMonth', previousMonthStart.toISOString()],
+  // Fetch profiles created in the current month for 'new' counts
+  const { data: currentMonthNewProfiles, isLoading: isLoadingCurrentMonthNewProfiles } = useQuery<Profile[], Error>({
+    queryKey: ['clientReports', 'currentMonthNew', currentMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, status, count')
-        .in('role', ['client', 'prospect'])
-        .or(`created_at.gte.${previousMonthStart.toISOString()},created_at.lte.${previousMonthEnd.toISOString()}`);
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch new clients/prospects created in the current month
-  const { data: newCurrentMonthProfiles, isLoading: isLoadingNewCurrentMonthProfiles } = useQuery<NewProfileCount[], Error>({
-    queryKey: ['newClientReports', 'currentMonth', currentMonthStart.toISOString()],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role, count')
+        .select('id, role, status, created_at')
         .in('role', ['client', 'prospect'])
         .gte('created_at', currentMonthStart.toISOString())
         .lte('created_at', currentMonthEnd.toISOString());
@@ -71,13 +50,13 @@ export default function ClientReportsCard({ selectedDate }: ClientReportsCardPro
     },
   });
 
-  // Fetch new clients/prospects created in the previous month
-  const { data: newPreviousMonthProfiles, isLoading: isLoadingNewPreviousMonthProfiles } = useQuery<NewProfileCount[], Error>({
-    queryKey: ['newClientReports', 'previousMonth', previousMonthStart.toISOString()],
+  // Fetch profiles created in the previous month for 'new' counts comparison
+  const { data: previousMonthNewProfiles, isLoading: isLoadingPreviousMonthNewProfiles } = useQuery<Profile[], Error>({
+    queryKey: ['clientReports', 'previousMonthNew', previousMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, count')
+        .select('id, role, status, created_at')
         .in('role', ['client', 'prospect'])
         .gte('created_at', previousMonthStart.toISOString())
         .lte('created_at', previousMonthEnd.toISOString());
@@ -86,27 +65,29 @@ export default function ClientReportsCard({ selectedDate }: ClientReportsCardPro
     },
   });
 
-  const isLoading = isLoadingCurrentMonthProfiles || isLoadingPreviousMonthProfiles || isLoadingNewCurrentMonthProfiles || isLoadingNewPreviousMonthProfiles;
+  const isLoading = isLoadingAllProfiles || isLoadingCurrentMonthNewProfiles || isLoadingPreviousMonthNewProfiles;
 
   const currentMonthData = useMemo(() => {
-    const totalClients = currentMonthProfiles?.filter(p => p.role === 'client').reduce((sum, p) => sum + p.count, 0) || 0;
-    const totalProspects = currentMonthProfiles?.filter(p => p.role === 'prospect').reduce((sum, p) => sum + p.count, 0) || 0;
-    const newClients = newCurrentMonthProfiles?.filter(p => p.role === 'client').reduce((sum, p) => sum + p.count, 0) || 0;
-    const newProspects = newCurrentMonthProfiles?.filter(p => p.role === 'prospect').reduce((sum, p) => sum + p.count, 0) || 0;
-    const activeClients = currentMonthProfiles?.filter(p => p.role === 'client' && p.status === 'ativo').reduce((sum, p) => sum + p.count, 0) || 0;
-    const inactiveClients = currentMonthProfiles?.filter(p => p.role === 'client' && p.status === 'inativo').reduce((sum, p) => sum + p.count, 0) || 0;
+    const totalClients = allProfiles?.filter(p => p.role === 'client').length || 0;
+    const totalProspects = allProfiles?.filter(p => p.role === 'prospect').length || 0;
+    const newClients = currentMonthNewProfiles?.filter(p => p.role === 'client').length || 0;
+    const newProspects = currentMonthNewProfiles?.filter(p => p.role === 'prospect').length || 0;
+    const activeClients = allProfiles?.filter(p => p.role === 'client' && p.status === 'ativo').length || 0;
+    const inactiveClients = allProfiles?.filter(p => p.role === 'client' && p.status === 'inativo').length || 0;
     return { totalClients, totalProspects, newClients, newProspects, activeClients, inactiveClients };
-  }, [currentMonthProfiles, newCurrentMonthProfiles]);
+  }, [allProfiles, currentMonthNewProfiles]);
 
   const previousMonthData = useMemo(() => {
-    const totalClients = previousMonthProfiles?.filter(p => p.role === 'client').reduce((sum, p) => sum + p.count, 0) || 0;
-    const totalProspects = previousMonthProfiles?.filter(p => p.role === 'prospect').reduce((sum, p) => sum + p.count, 0) || 0;
-    const newClients = newPreviousMonthProfiles?.filter(p => p.role === 'client').reduce((sum, p) => sum + p.count, 0) || 0;
-    const newProspects = newPreviousMonthProfiles?.filter(p => p.role === 'prospect').reduce((sum, p) => sum + p.count, 0) || 0;
-    const activeClients = previousMonthProfiles?.filter(p => p.role === 'client' && p.status === 'ativo').reduce((sum, p) => sum + p.count, 0) || 0;
-    const inactiveClients = previousMonthProfiles?.filter(p => p.role === 'client' && p.status === 'inativo').reduce((sum, p) => sum + p.count, 0) || 0;
+    // For comparison, we only care about 'new' counts from the previous month
+    const newClients = previousMonthNewProfiles?.filter(p => p.role === 'client').length || 0;
+    const newProspects = previousMonthNewProfiles?.filter(p => p.role === 'prospect').length || 0;
+    // Total active/inactive for previous month would require a snapshot, so we'll use current totals for comparison base
+    const totalClients = allProfiles?.filter(p => p.role === 'client').length || 0;
+    const totalProspects = allProfiles?.filter(p => p.role === 'prospect').length || 0;
+    const activeClients = allProfiles?.filter(p => p.role === 'client' && p.status === 'ativo').length || 0;
+    const inactiveClients = allProfiles?.filter(p => p.role === 'client' && p.status === 'inativo').length || 0;
     return { totalClients, totalProspects, newClients, newProspects, activeClients, inactiveClients };
-  }, [previousMonthProfiles, newPreviousMonthProfiles]);
+  }, [allProfiles, previousMonthNewProfiles]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

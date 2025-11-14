@@ -5,9 +5,10 @@ import { Loader2, FileText, CheckCircle, XCircle, Hourglass, DollarSign } from '
 import ReportCard from './ReportCard';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
-interface BudgetCount {
+interface Budget {
+  id: string;
   status: 'pending' | 'approved' | 'rejected' | 'converted';
-  count: number;
+  created_at: string;
 }
 
 interface BudgetsReportsCardProps {
@@ -20,13 +21,13 @@ export default function BudgetsReportsCard({ selectedDate }: BudgetsReportsCardP
   const previousMonthStart = startOfMonth(subMonths(selectedDate, 1));
   const previousMonthEnd = endOfMonth(subMonths(selectedDate, 1));
 
-  // Fetch budget counts by status for current month
-  const { data: currentMonthBudgets, isLoading: isLoadingCurrentMonthBudgets } = useQuery<BudgetCount[], Error>({
+  // Fetch all budgets for current month
+  const { data: currentMonthBudgets, isLoading: isLoadingCurrentMonthBudgets } = useQuery<Budget[], Error>({
     queryKey: ['budgetsReports', 'currentMonth', currentMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('budgets')
-        .select('status, count')
+        .select('id, status, created_at')
         .gte('created_at', currentMonthStart.toISOString())
         .lte('created_at', currentMonthEnd.toISOString());
       if (error) throw error;
@@ -34,13 +35,13 @@ export default function BudgetsReportsCard({ selectedDate }: BudgetsReportsCardP
     },
   });
 
-  // Fetch budget counts by status for previous month
-  const { data: previousMonthBudgets, isLoading: isLoadingPreviousMonthBudgets } = useQuery<BudgetCount[], Error>({
+  // Fetch all budgets for previous month
+  const { data: previousMonthBudgets, isLoading: isLoadingPreviousMonthBudgets } = useQuery<Budget[], Error>({
     queryKey: ['budgetsReports', 'previousMonth', previousMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('budgets')
-        .select('status, count')
+        .select('id, status, created_at')
         .gte('created_at', previousMonthStart.toISOString())
         .lte('created_at', previousMonthEnd.toISOString());
       if (error) throw error;
@@ -51,20 +52,20 @@ export default function BudgetsReportsCard({ selectedDate }: BudgetsReportsCardP
   const isLoading = isLoadingCurrentMonthBudgets || isLoadingPreviousMonthBudgets;
 
   const currentMonthData = useMemo(() => {
-    const total = currentMonthBudgets?.reduce((sum, b) => sum + b.count, 0) || 0;
-    const pending = currentMonthBudgets?.find(b => b.status === 'pending')?.count || 0;
-    const approved = currentMonthBudgets?.find(b => b.status === 'approved')?.count || 0;
-    const rejected = currentMonthBudgets?.find(b => b.status === 'rejected')?.count || 0;
-    const converted = currentMonthBudgets?.find(b => b.status === 'converted')?.count || 0;
+    const total = currentMonthBudgets?.length || 0;
+    const pending = currentMonthBudgets?.filter(b => b.status === 'pending').length || 0;
+    const approved = currentMonthBudgets?.filter(b => b.status === 'approved').length || 0;
+    const rejected = currentMonthBudgets?.filter(b => b.status === 'rejected').length || 0;
+    const converted = currentMonthBudgets?.filter(b => b.status === 'converted').length || 0;
     return { total, pending, approved, rejected, converted };
   }, [currentMonthBudgets]);
 
   const previousMonthData = useMemo(() => {
-    const total = previousMonthBudgets?.reduce((sum, b) => sum + b.count, 0) || 0;
-    const pending = previousMonthBudgets?.find(b => b.status === 'pending')?.count || 0;
-    const approved = previousMonthBudgets?.find(b => b.status === 'approved')?.count || 0;
-    const rejected = previousMonthBudgets?.find(b => b.status === 'rejected')?.count || 0;
-    const converted = previousMonthBudgets?.find(b => b.status === 'converted')?.count || 0;
+    const total = previousMonthBudgets?.length || 0;
+    const pending = previousMonthBudgets?.filter(b => b.status === 'pending').length || 0;
+    const approved = previousMonthBudgets?.filter(b => b.status === 'approved').length || 0;
+    const rejected = previousMonthBudgets?.filter(b => b.status === 'rejected').length || 0;
+    const converted = previousMonthBudgets?.filter(b => b.status === 'converted').length || 0;
     return { total, pending, approved, rejected, converted };
   }, [previousMonthBudgets]);
 

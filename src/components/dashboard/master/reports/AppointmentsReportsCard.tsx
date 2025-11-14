@@ -5,9 +5,10 @@ import { Loader2, CalendarCheck, CalendarX, CalendarClock, CalendarPlus, Calenda
 import ReportCard from './ReportCard';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
-interface AppointmentCount {
+interface Appointment {
+  id: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  count: number;
+  start_time: string;
 }
 
 interface AppointmentsReportsCardProps {
@@ -20,13 +21,13 @@ export default function AppointmentsReportsCard({ selectedDate }: AppointmentsRe
   const previousMonthStart = startOfMonth(subMonths(selectedDate, 1));
   const previousMonthEnd = endOfMonth(subMonths(selectedDate, 1));
 
-  // Fetch appointment counts by status for current month
-  const { data: currentMonthAppointments, isLoading: isLoadingCurrentMonthAppointments } = useQuery<AppointmentCount[], Error>({
+  // Fetch all appointments for current month
+  const { data: currentMonthAppointments, isLoading: isLoadingCurrentMonthAppointments } = useQuery<Appointment[], Error>({
     queryKey: ['appointmentsReports', 'currentMonth', currentMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('appointments')
-        .select('status, count')
+        .select('id, status, start_time')
         .gte('start_time', currentMonthStart.toISOString())
         .lte('start_time', currentMonthEnd.toISOString());
       if (error) throw error;
@@ -34,13 +35,13 @@ export default function AppointmentsReportsCard({ selectedDate }: AppointmentsRe
     },
   });
 
-  // Fetch appointment counts by status for previous month
-  const { data: previousMonthAppointments, isLoading: isLoadingPreviousMonthAppointments } = useQuery<AppointmentCount[], Error>({
+  // Fetch all appointments for previous month
+  const { data: previousMonthAppointments, isLoading: isLoadingPreviousMonthAppointments } = useQuery<Appointment[], Error>({
     queryKey: ['appointmentsReports', 'previousMonth', previousMonthStart.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('appointments')
-        .select('status, count')
+        .select('id, status, start_time')
         .gte('start_time', previousMonthStart.toISOString())
         .lte('start_time', previousMonthEnd.toISOString());
       if (error) throw error;
@@ -51,20 +52,20 @@ export default function AppointmentsReportsCard({ selectedDate }: AppointmentsRe
   const isLoading = isLoadingCurrentMonthAppointments || isLoadingPreviousMonthAppointments;
 
   const currentMonthData = useMemo(() => {
-    const total = currentMonthAppointments?.reduce((sum, app) => sum + app.count, 0) || 0;
-    const confirmed = currentMonthAppointments?.find(app => app.status === 'confirmed')?.count || 0;
-    const pending = currentMonthAppointments?.find(app => app.status === 'pending')?.count || 0;
-    const cancelled = currentMonthAppointments?.find(app => app.status === 'cancelled')?.count || 0;
-    const completed = currentMonthAppointments?.find(app => app.status === 'completed')?.count || 0;
+    const total = currentMonthAppointments?.length || 0;
+    const confirmed = currentMonthAppointments?.filter(app => app.status === 'confirmed').length || 0;
+    const pending = currentMonthAppointments?.filter(app => app.status === 'pending').length || 0;
+    const cancelled = currentMonthAppointments?.filter(app => app.status === 'cancelled').length || 0;
+    const completed = currentMonthAppointments?.filter(app => app.status === 'completed').length || 0;
     return { total, confirmed, pending, cancelled, completed };
   }, [currentMonthAppointments]);
 
   const previousMonthData = useMemo(() => {
-    const total = previousMonthAppointments?.reduce((sum, app) => sum + app.count, 0) || 0;
-    const confirmed = previousMonthAppointments?.find(app => app.status === 'confirmed')?.count || 0;
-    const pending = previousMonthAppointments?.find(app => app.status === 'pending')?.count || 0;
-    const cancelled = previousMonthAppointments?.find(app => app.status === 'cancelled')?.count || 0;
-    const completed = previousMonthAppointments?.find(app => app.status === 'completed')?.count || 0;
+    const total = previousMonthAppointments?.length || 0;
+    const confirmed = previousMonthAppointments?.filter(app => app.status === 'confirmed').length || 0;
+    const pending = previousMonthAppointments?.filter(app => app.status === 'pending').length || 0;
+    const cancelled = previousMonthAppointments?.filter(app => app.status === 'cancelled').length || 0;
+    const completed = previousMonthAppointments?.filter(app => app.status === 'completed').length || 0;
     return { total, confirmed, pending, cancelled, completed };
   }, [previousMonthAppointments]);
 
