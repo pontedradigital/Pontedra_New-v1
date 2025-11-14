@@ -11,7 +11,7 @@ import {
   Briefcase,
   Calendar,
   BookOpen,
-  Users,
+  Users, // Ícone para Clientes
   ClipboardList,
   BarChart,
   Package,
@@ -41,6 +41,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Início", icon: HomeIcon, href: "/dashboard/home", roles: ['prospect', 'client', 'master'] },
   { label: "Configurações", icon: SettingsIcon, href: "/dashboard/settings", roles: ['prospect', 'client', 'master'] },
+  { label: "Clientes", icon: Users, href: "/dashboard/clients", roles: ['master'] }, // NOVO: Item de menu para Clientes
   { label: "Gerenciar Usuários", icon: Users, href: "/dashboard/manage-users", roles: ['master'] },
   { label: "Meus Agendamentos", icon: Calendar, href: "/dashboard/appointments", roles: ['client', 'master'] },
   { label: "Meus Projetos", icon: Briefcase, href: "/dashboard/projects", roles: ['client', 'master'] },

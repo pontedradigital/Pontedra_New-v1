@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, Settings as SettingsIcon } from 'lucide-react';
+import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, profile, loading, updateProfile } = useAuth();
@@ -15,6 +15,15 @@ export default function SettingsPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [companyOrganization, setCompanyOrganization] = useState(''); // NOVO
+  const [addressStreet, setAddressStreet] = useState('');             // NOVO
+  const [addressNumber, setAddressNumber] = useState('');             // NOVO
+  const [addressComplement, setAddressComplement] = useState('');     // NOVO
+  const [addressNeighborhood, setAddressNeighborhood] = useState(''); // NOVO
+  const [addressCity, setAddressCity] = useState('');                 // NOVO
+  const [addressState, setAddressState] = useState('');               // NOVO
+  const [addressCep, setAddressCep] = useState('');                   // NOVO
+  const [dateOfBirth, setDateOfBirth] = useState('');                 // NOVO
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -23,6 +32,15 @@ export default function SettingsPage() {
       setLastName(profile.last_name || '');
       setEmail(user.email || '');
       setPhone(profile.telefone || '');
+      setCompanyOrganization(profile.company_organization || ''); // NOVO
+      setAddressStreet(profile.address_street || '');             // NOVO
+      setAddressNumber(profile.address_number || '');             // NOVO
+      setAddressComplement(profile.address_complement || '');     // NOVO
+      setAddressNeighborhood(profile.address_neighborhood || ''); // NOVO
+      setAddressCity(profile.address_city || '');                 // NOVO
+      setAddressState(profile.address_state || '');               // NOVO
+      setAddressCep(profile.address_cep || '');                   // NOVO
+      setDateOfBirth(profile.date_of_birth || '');                // NOVO
     }
   }, [profile, user]);
 
@@ -36,6 +54,14 @@ export default function SettingsPage() {
     return phone;
   };
 
+  const formatarCep = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length > 5) {
+      return `${cleaned.slice(0, 5)}-${cleaned.slice(5, 8)}`;
+    }
+    return cleaned;
+  };
+
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -44,6 +70,15 @@ export default function SettingsPage() {
       last_name: lastName,
       email: email,
       telefone: phone,
+      company_organization: companyOrganization, // NOVO
+      address_street: addressStreet,             // NOVO
+      address_number: addressNumber,             // NOVO
+      address_complement: addressComplement,     // NOVO
+      address_neighborhood: addressNeighborhood, // NOVO
+      address_city: addressCity,                 // NOVO
+      address_state: addressState,               // NOVO
+      address_cep: addressCep,                   // NOVO
+      date_of_birth: dateOfBirth,                // NOVO
     });
     setIsSaving(false);
   };
@@ -135,16 +170,129 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-foreground">Telefone</Label>
+                <Label htmlFor="telefone" className="text-foreground">Telefone</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
-                    id="phone"
+                    id="telefone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(formatarTelefone(e.target.value))}
                     placeholder="(11) 99999-9999"
                     className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Novos Campos Opcionais */}
+              <div className="space-y-2">
+                <Label htmlFor="company_organization" className="text-foreground">Empresa/Organização</Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="company_organization"
+                    value={companyOrganization}
+                    onChange={(e) => setCompanyOrganization(e.target.value)}
+                    placeholder="Nome da sua empresa"
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date_of_birth" className="text-foreground">Data de Nascimento</Label>
+                <div className="relative">
+                  <CalendarDays className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="date_of_birth"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="address_street" className="text-foreground">Endereço</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="address_street"
+                    value={addressStreet}
+                    onChange={(e) => setAddressStreet(e.target.value)}
+                    placeholder="Rua, Avenida, etc."
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address_number" className="text-foreground">Número</Label>
+                  <Input
+                    id="address_number"
+                    value={addressNumber}
+                    onChange={(e) => setAddressNumber(e.target.value)}
+                    placeholder="123"
+                    className="bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_complement" className="text-foreground">Complemento</Label>
+                  <Input
+                    id="address_complement"
+                    value={addressComplement}
+                    onChange={(e) => setAddressComplement(e.target.value)}
+                    placeholder="Apto, Bloco, etc."
+                    className="bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address_neighborhood" className="text-foreground">Bairro</Label>
+                  <Input
+                    id="address_neighborhood"
+                    value={addressNeighborhood}
+                    onChange={(e) => setAddressNeighborhood(e.target.value)}
+                    placeholder="Seu bairro"
+                    className="bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_city" className="text-foreground">Cidade</Label>
+                  <Input
+                    id="address_city"
+                    value={addressCity}
+                    onChange={(e) => setAddressCity(e.target.value)}
+                    placeholder="Sua cidade"
+                    className="bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address_state" className="text-foreground">Estado</Label>
+                  <Input
+                    id="address_state"
+                    value={addressState}
+                    onChange={(e) => setAddressState(e.target.value)}
+                    placeholder="Seu estado"
+                    className="bg-background border-border text-foreground focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address_cep" className="text-foreground">CEP</Label>
+                  <Input
+                    id="address_cep"
+                    value={addressCep}
+                    onChange={(e) => setAddressCep(formatarCep(e.target.value))}
+                    maxLength={9}
+                    placeholder="00000-000"
+                    className="bg-background border-border text-foreground focus:ring-primary"
                   />
                 </div>
               </div>

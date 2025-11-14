@@ -1,28 +1,68 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, User, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Building, MapPin, Phone, CalendarDays } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 export default function Cadastro() {
   const [formData, setFormData] = useState({
-    first_name: "", // Renomeado de 'nome'
-    last_name: "",  // Renomeado de 'sobrenome'
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    telefone: "",
+    company_organization: "",
+    address_street: "",
+    address_number: "",
+    address_complement: "",
+    address_neighborhood: "",
+    address_city: "",
+    address_state: "",
+    address_cep: "",
+    date_of_birth: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register, loading } = useAuth();
   const navigate = useNavigate();
 
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    let formatted = '';
+
+    if (cleaned.length <= 2) {
+      formatted = cleaned;
+    } else if (cleaned.length <= 6) { // (00) 0000
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    } else if (cleaned.length <= 10) { // (00) 0000-0000 (fixo)
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+    } else if (cleaned.length <= 11) { // (00) 00000-0000 (celular)
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+    } else {
+      formatted = `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`; // Limita a 11 dígitos
+    }
+    return formatted;
+  };
+
+  const formatCep = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length > 5) {
+      return `${cleaned.slice(0, 5)}-${cleaned.slice(5, 8)}`;
+    }
+    return cleaned;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === 'telefone') {
+      setFormData(prev => ({ ...prev, [name]: formatPhoneNumber(value) }));
+    } else if (name === 'address_cep') {
+      setFormData(prev => ({ ...prev, [name]: formatCep(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +73,9 @@ export default function Cadastro() {
       return;
     }
 
-    const success = await register(formData.email, formData.password, formData.first_name, formData.last_name);
+    const { first_name, last_name, email, password, confirmPassword, ...optional_data } = formData;
+
+    const success = await register(email, password, first_name, last_name, optional_data);
     
     if (success) {
       navigate("/login");
@@ -91,7 +133,7 @@ export default function Cadastro() {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-md mx-4"
+        className="relative z-10 w-full max-w-2xl mx-4" // Aumentado max-w para acomodar mais campos
       >
         <div className="absolute -inset-1 bg-gradient-to-r from-[#57e389] to-[#00b4ff] rounded-3xl blur-xl opacity-20" />
         
@@ -109,11 +151,11 @@ export default function Cadastro() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
             {/* Nome */}
             <div>
               <label htmlFor="first_name" className="block text-[#e1e8f0] text-sm font-medium mb-2">
-                Nome
+                Nome *
               </label>
               <div className="relative group">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
@@ -133,7 +175,7 @@ export default function Cadastro() {
             {/* Sobrenome */}
             <div>
               <label htmlFor="last_name" className="block text-[#e1e8f0] text-sm font-medium mb-2">
-                Sobrenome
+                Sobrenome *
               </label>
               <div className="relative group">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
@@ -153,7 +195,7 @@ export default function Cadastro() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-[#e1e8f0] text-sm font-medium mb-2">
-                E-mail
+                E-mail *
               </label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
@@ -170,10 +212,177 @@ export default function Cadastro() {
               </div>
             </div>
 
+            {/* Telefone */}
+            <div>
+              <label htmlFor="telefone" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Telefone
+              </label>
+              <div className="relative group">
+                <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
+                <input
+                  type="tel"
+                  id="telefone"
+                  name="telefone"
+                  value={formData.telefone}
+                  onChange={handleChange}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15} // (00) 00000-0000
+                  className="w-full pl-12 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Empresa/Organização */}
+            <div>
+              <label htmlFor="company_organization" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Empresa/Organização
+              </label>
+              <div className="relative group">
+                <Building className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
+                <input
+                  type="text"
+                  id="company_organization"
+                  name="company_organization"
+                  value={formData.company_organization}
+                  onChange={handleChange}
+                  placeholder="Nome da sua empresa"
+                  className="w-full pl-12 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Data de Nascimento */}
+            <div>
+              <label htmlFor="date_of_birth" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Data de Nascimento
+              </label>
+              <div className="relative group">
+                <CalendarDays className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
+                <input
+                  type="date"
+                  id="date_of_birth"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Endereço (linha completa) */}
+            <div className="md:col-span-2">
+              <label htmlFor="address_street" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Endereço
+              </label>
+              <div className="relative group">
+                <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
+                <input
+                  type="text"
+                  id="address_street"
+                  name="address_street"
+                  value={formData.address_street}
+                  onChange={handleChange}
+                  placeholder="Rua, Avenida, etc."
+                  className="w-full pl-12 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Número e Complemento */}
+            <div>
+              <label htmlFor="address_number" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Número
+              </label>
+              <input
+                type="text"
+                id="address_number"
+                name="address_number"
+                value={formData.address_number}
+                onChange={handleChange}
+                placeholder="123"
+                className="w-full pl-4 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+              />
+            </div>
+            <div>
+              <label htmlFor="address_complement" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Complemento
+              </label>
+              <input
+                type="text"
+                id="address_complement"
+                name="address_complement"
+                value={formData.address_complement}
+                onChange={handleChange}
+                placeholder="Apto, Bloco, etc."
+                className="w-full pl-4 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+              />
+            </div>
+
+            {/* Bairro e Cidade */}
+            <div>
+              <label htmlFor="address_neighborhood" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Bairro
+              </label>
+              <input
+                type="text"
+                id="address_neighborhood"
+                name="address_neighborhood"
+                value={formData.address_neighborhood}
+                onChange={handleChange}
+                placeholder="Seu bairro"
+                className="w-full pl-4 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+              />
+            </div>
+            <div>
+              <label htmlFor="address_city" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Cidade
+              </label>
+              <input
+                type="text"
+                id="address_city"
+                name="address_city"
+                value={formData.address_city}
+                onChange={handleChange}
+                placeholder="Sua cidade"
+                className="w-full pl-4 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+              />
+            </div>
+
+            {/* Estado e CEP */}
+            <div>
+              <label htmlFor="address_state" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                Estado
+              </label>
+              <input
+                type="text"
+                id="address_state"
+                name="address_state"
+                value={formData.address_state}
+                onChange={handleChange}
+                placeholder="Seu estado"
+                className="w-full pl-4 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+              />
+            </div>
+            <div>
+              <label htmlFor="address_cep" className="block text-[#e1e8f0] text-sm font-medium mb-2">
+                CEP
+              </label>
+              <input
+                type="text"
+                id="address_cep"
+                name="address_cep"
+                value={formData.address_cep}
+                onChange={handleChange}
+                maxLength={9} // 00000-000
+                placeholder="00000-000"
+                className="w-full pl-4 pr-4 py-4 bg-[#0a1520] border border-[#1d2c3f] rounded-xl text-white placeholder-[#4a5a6a] focus:outline-none focus:border-[#57e389] focus:ring-2 focus:ring-[#57e389]/20 transition-all"
+              />
+            </div>
+
             {/* Senha */}
             <div>
               <label htmlFor="password" className="block text-[#e1e8f0] text-sm font-medium mb-2">
-                Senha
+                Senha *
               </label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
@@ -200,7 +409,7 @@ export default function Cadastro() {
             {/* Confirmar Senha */}
             <div>
               <label htmlFor="confirmPassword" className="block text-[#e1e8f0] text-sm font-medium mb-2">
-                Confirmar Senha
+                Confirmar Senha *
               </label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9ba8b5] w-5 h-5 group-focus-within:text-[#57e389] transition-colors" />
@@ -230,7 +439,7 @@ export default function Cadastro() {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-r from-[#57e389] to-[#4bc979] hover:from-[#4bc979] hover:to-[#57e389] text-[#0D1B2A] font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-[#57e389]/30 hover:shadow-[#57e389]/50 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+              className="md:col-span-2 w-full bg-gradient-to-r from-[#57e389] to-[#4bc979] hover:from-[#4bc979] hover:to-[#57e389] text-[#0D1B2A] font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-[#57e389]/30 hover:shadow-[#57e389]/50 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
