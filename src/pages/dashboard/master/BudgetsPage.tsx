@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle } from 'lucide-react'; // Added MessageCircle icon
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User } from 'lucide-react'; // Added User icon
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -98,6 +98,15 @@ interface InstallmentRate {
   client_pays_rate: number;
 }
 
+// NOVO: Interface para o perfil do cliente (combinando profiles e auth.users)
+interface ClientProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  telefone: string | null;
+  email: string;
+}
+
 export default function BudgetsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -118,8 +127,8 @@ export default function BudgetsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
-  // NEW STATE: To hold the budget that was just saved/created in the dialog
   const [currentEditableBudget, setCurrentEditableBudget] = useState<Budget | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null); // NOVO: Estado para o cliente selecionado
 
   // Fetch all services
   const { data: services, isLoading: isLoadingServices } = useQuery<ServiceItem[], Error>({
@@ -232,7 +241,7 @@ export default function BudgetsPage() {
     staleTime: Infinity,
   });
 
-  // NOVO: Fetch WhatsApp contact number from settings
+  // Fetch WhatsApp contact number from settings
   const { data: whatsappNumberSetting, isLoading: isLoadingWhatsappNumber } = useQuery<{ key: string; value: string } | null, Error>({
     queryKey: ['settings', 'whatsapp_contact_number'],
     queryFn: async () => {
@@ -249,6 +258,37 @@ export default function BudgetsPage() {
     staleTime: Infinity,
   });
   const whatsappContactNumber = whatsappNumberSetting?.value || '';
+
+  // NOVO: Fetch client profiles
+  const { data: clientProfiles, isLoading: isLoadingClientProfiles } = useQuery<ClientProfile[], Error>({
+    queryKey: ['clientProfiles'],
+    queryFn: async () => {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          telefone,
+          role,
+          auth_users:id (email)
+        `)
+        .eq('role', 'client'); // Apenas clientes
+
+      if (profilesError) throw profilesError;
+
+      return profiles.map(p => ({
+        id: p.id,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        telefone: p.telefone,
+        role: p.role,
+        email: p.auth_users?.email || 'N/A'
+      }));
+    },
+    enabled: user?.id !== undefined, // Só busca se houver um usuário logado
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
 
   // Combine packagesData with availableServices on the client side for full package details
   const allPackages = useMemo(() => {
@@ -463,7 +503,7 @@ export default function BudgetsPage() {
         description: item.item_description,
         price: item.item_price,
       })));
-      // When duplicating, set currentEditableBudget to the duplicated budget
+      setSelectedClientId(budgetToDuplicate.user_id); // Pre-select client if duplicating
       setCurrentEditableBudget(budgetToDuplicate); 
     } else {
       setFormData({
@@ -479,12 +519,50 @@ export default function BudgetsPage() {
         client_cep: '',
       });
       setSelectedItems([]);
+      setSelectedClientId(null); // Clear selected client for new budget
       setCurrentEditableBudget(null); // Clear for new budget
     }
     setIsDialogOpen(true);
   };
 
-  // Renamed createBudgetMutation to saveBudgetMutation
+  // NOVO: Função para lidar com a seleção de um cliente existente
+  const handleClientSelect = (clientId: string) => {
+    if (clientId === 'new') {
+      setSelectedClientId(null);
+      setFormData({
+        client_name: '',
+        client_phone: '',
+        client_email: '',
+        client_street: '',
+        client_number: '',
+        client_complement: '',
+        client_neighborhood: '',
+        client_city: '',
+        client_state: '',
+        client_cep: '',
+      });
+    } else {
+      const client = clientProfiles?.find(p => p.id === clientId);
+      if (client) {
+        setSelectedClientId(clientId);
+        setFormData(prev => ({
+          ...prev,
+          client_name: `${client.first_name || ''} ${client.last_name || ''}`.trim(),
+          client_phone: client.telefone || '',
+          client_email: client.email || '',
+          // Endereço não está no perfil, então não preenche
+          client_street: '',
+          client_number: '',
+          client_complement: '',
+          client_neighborhood: '',
+          client_city: '',
+          client_state: '',
+          client_cep: '',
+        }));
+      }
+    }
+  };
+
   const saveBudgetMutation = useMutation<Budget, Error, { budgetData: Partial<Budget>; items: typeof selectedItems }>({
     mutationFn: async ({ budgetData, items }) => {
       if (!user) throw new Error("Usuário não autenticado.");
@@ -495,7 +573,7 @@ export default function BudgetsPage() {
       const { data: newBudgetResult, error: budgetError } = await supabase
         .from('budgets')
         .insert({
-          user_id: user.id,
+          user_id: selectedClientId || user.id, // Usa o ID do cliente selecionado ou o ID do master
           client_name: budgetData.client_name,
           client_phone: budgetData.client_phone,
           client_email: budgetData.client_email,
@@ -719,7 +797,7 @@ export default function BudgetsPage() {
 
       budgetToUse = {
         id: 'temp-budget-id', // Placeholder ID
-        user_id: user?.id || 'anonymous', // Use current user ID or anonymous
+        user_id: selectedClientId || user?.id || 'anonymous', // Use selected client ID or current user ID
         proposal_number: 'PREVIEW', // Placeholder for unsaved budget
         client_name: formData.client_name || 'Cliente Desconhecido',
         client_phone: formData.client_phone || null,
@@ -795,13 +873,14 @@ export default function BudgetsPage() {
     setIsDialogOpen(false);
     setFormData({});
     setSelectedItems([]);
+    setSelectedClientId(null); // Reset selected client
     setCurrentEditableBudget(null);
   };
 
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
   const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0; // Updated condition
 
-  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber) {
+  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber || isLoadingClientProfiles) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -910,6 +989,40 @@ export default function BudgetsPage() {
               {/* Dados do Cliente */}
               <div className="md:col-span-2">
                 <h3 className="text-xl font-bold text-primary mb-4">Dados do Cliente</h3>
+                
+                {/* Seletor de Cliente Existente */}
+                <div className="space-y-2 mb-4">
+                  <Label htmlFor="select-client">Selecionar Cliente Existente</Label>
+                  <Select
+                    value={selectedClientId || 'new'}
+                    onValueChange={handleClientSelect}
+                  >
+                    <SelectTrigger className="w-full bg-background border-border text-foreground">
+                      <SelectValue placeholder="Selecionar um cliente..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectItem value="new">
+                        <div className="flex items-center gap-2 text-primary">
+                          <PlusCircle className="w-4 h-4" /> Novo Cliente (Preencher Manualmente)
+                        </div>
+                      </SelectItem>
+                      {clientProfiles?.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            {client.first_name} {client.last_name} ({client.email})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedClientId && (
+                    <Button variant="outline" size="sm" onClick={() => handleClientSelect('new')} className="mt-2 bg-background border-border text-foreground hover:bg-muted">
+                      <X className="mr-2 h-4 w-4" /> Limpar Seleção
+                    </Button>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="client_name">Nome do Cliente *</Label>
@@ -920,6 +1033,7 @@ export default function BudgetsPage() {
                       onChange={handleFormChange}
                       className="bg-background border-border text-foreground"
                       required
+                      disabled={!!selectedClientId} // Desabilita se um cliente for selecionado
                     />
                   </div>
                   <div className="space-y-2">
@@ -932,6 +1046,7 @@ export default function BudgetsPage() {
                       onChange={handleFormChange}
                       placeholder="(00) 00000-0000"
                       className="bg-background border-border text-foreground"
+                      disabled={!!selectedClientId} // Desabilita se um cliente for selecionado
                     />
                   </div>
                   <div className="space-y-2">
@@ -943,6 +1058,7 @@ export default function BudgetsPage() {
                       value={formData.client_email || ''}
                       onChange={handleFormChange}
                       className="bg-background border-border text-foreground"
+                      disabled={!!selectedClientId} // Desabilita se um cliente for selecionado
                     />
                   </div>
                   <div className="space-y-2">
@@ -1142,7 +1258,7 @@ export default function BudgetsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handlePdfAction(null, 'download')} // Pass null for budgetFromTable when generating from dialog
+                  onClick={() => handlePdfAction(null, 'download')}
                   disabled={isPdfActionDisabled}
                   className="bg-green-500 hover:bg-green-600 text-white"
                 >
@@ -1150,7 +1266,7 @@ export default function BudgetsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handlePdfAction(null, 'view')} // Pass null for budgetFromTable when generating from dialog
+                  onClick={() => handlePdfAction(null, 'view')}
                   disabled={isPdfActionDisabled}
                   className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
