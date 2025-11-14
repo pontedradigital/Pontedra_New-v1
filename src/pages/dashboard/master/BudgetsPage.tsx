@@ -1074,7 +1074,7 @@ export default function BudgetsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.invalidateQueries({ queryKey: ['clientProjects'] }); // Invalidar a query de projetos do cliente
+      queryClient.refetchQueries({ queryKey: ['clientProjects'] }); // Alterado para refetchQueries
       toast.success('Orçamento aprovado e projeto criado com sucesso!');
       setIsApproveConfirmOpen(false); // Fechar o pop-up de confirmação
       setBudgetToApprove(null); // Limpar o orçamento em aprovação
