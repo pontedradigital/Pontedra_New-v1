@@ -17,6 +17,7 @@ import {
   Globe,
   CalendarDays,
   MapPin,
+  Info, // Adicionado o ícone Info
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
