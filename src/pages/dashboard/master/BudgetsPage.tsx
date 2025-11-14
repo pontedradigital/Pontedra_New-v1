@@ -36,7 +36,7 @@ import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } = '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporárias
@@ -526,7 +526,7 @@ export default function BudgetsPage() {
         }
         return [...prev, {
           id: itemToToggle.id,
-          type: itemToToggle.type, // Corrigido: removido o backtick extra
+          type: itemToToggle.type,
           name: itemToToggle.name,
           description: itemToToggle.description,
           price: itemToToggle.price,
@@ -1540,8 +1540,8 @@ export default function BudgetsPage() {
               <Button variant="outline" onClick={() => setIsRevertConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                 Cancelar
               </Button>
-              <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+              <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertRevertMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
