@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
@@ -68,8 +67,8 @@ interface ClientContract {
   price_agreed: number;
   is_paid: boolean;
   payment_due_date: string | null;
-  services: Service | null; // Relação com a tabela services
-  packages: Package | null; // Relação com a tabela packages
+  services: Service | null; // Relação com a tabela products (via service_id)
+  packages: Package | null; // Relação com a tabela packages (via package_id)
 }
 
 interface UserWithContracts extends UserProfile {
@@ -143,8 +142,8 @@ export default function ManageUsersPage() {
         .from('client_contracts')
         .select(`
           *,
-          services (id, name),
-          packages (id, name)
+          services:service_id (id, name),
+          packages:package_id (id, name)
         `);
 
       if (contractsError) throw contractsError;
