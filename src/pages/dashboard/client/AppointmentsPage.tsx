@@ -38,6 +38,7 @@ import {
   setMilliseconds,
   isBefore,
   isAfter,
+  subDays, // Adicionado subDays aqui
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar'; // Shadcn Calendar
