@@ -89,18 +89,18 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<ClientContract | null>(null);
   const [formData, setFormData] = useState<{
     projectName: string;
-    contractType: 'one-time' | 'monthly' | '';
-    selectedItemId: string; // ID do serviço ou pacote
+    contractType: 'one-time' | 'monthly' | undefined; // Alterado para undefined
+    selectedItemId: string | undefined; // Alterado para undefined
     priceAgreed: number;
     startDate: string;
     estimatedCompletionDate: string;
-    budget_id: string; // ID do orçamento
+    budget_id: string;
     is_paid: boolean;
     payment_due_date: string;
   }>({
     projectName: '',
-    contractType: '',
-    selectedItemId: '',
+    contractType: undefined, // Alterado para undefined
+    selectedItemId: undefined, // Alterado para undefined
     priceAgreed: 0,
     startDate: format(new Date(), 'yyyy-MM-dd'),
     estimatedCompletionDate: '',
@@ -275,8 +275,8 @@ export default function ProjectsPage() {
       setEditingProject(null);
       setFormData({
         projectName: '',
-        contractType: '',
-        selectedItemId: '',
+        contractType: undefined, // Alterado para undefined
+        selectedItemId: undefined, // Alterado para undefined
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
         estimatedCompletionDate: '',
@@ -310,8 +310,8 @@ export default function ProjectsPage() {
       setEditingProject(project);
       setFormData({
         projectName: project.products?.name || project.packages?.name || '',
-        contractType: project.contract_type,
-        selectedItemId: project.service_id || project.package_id || '',
+        contractType: project.contract_type || undefined, // Garante undefined se for null
+        selectedItemId: project.service_id || project.package_id || undefined, // Garante undefined se for null
         priceAgreed: project.price_agreed,
         startDate: project.start_date,
         estimatedCompletionDate: project.end_date || '', // Usar end_date como estimatedCompletionDate
@@ -323,8 +323,8 @@ export default function ProjectsPage() {
       setEditingProject(null);
       setFormData({
         projectName: '',
-        contractType: '',
-        selectedItemId: '',
+        contractType: undefined, // Alterado para undefined
+        selectedItemId: undefined, // Alterado para undefined
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
         estimatedCompletionDate: '',
@@ -352,7 +352,7 @@ export default function ProjectsPage() {
 
     // Se mudar o tipo de contrato, limpa o item selecionado
     if (name === 'contractType') {
-      setFormData(prev => ({ ...prev, selectedItemId: '' }));
+      setFormData(prev => ({ ...prev, selectedItemId: undefined })); // Alterado para undefined
     }
     // Se selecionar um item, preenche o preço acordado
     if (name === 'selectedItemId') {
@@ -374,8 +374,8 @@ export default function ProjectsPage() {
         setFormData(prev => ({
           ...prev,
           projectName: selectedBudget.client_name + (selectedBudget.budget_items.length > 1 ? ` (${selectedBudget.budget_items.length} itens)` : ` - ${firstItem?.item_name || ''}`),
-          contractType: firstItem?.item_type || '',
-          selectedItemId: firstItem?.service_id || firstItem?.package_id || '',
+          contractType: firstItem?.item_type || undefined, // Alterado para undefined
+          selectedItemId: firstItem?.service_id || firstItem?.package_id || undefined, // Alterado para undefined
           priceAgreed: selectedBudget.total_amount,
           // startDate: já preenchido com a data atual
           // estimatedCompletionDate: pode ser calculado ou deixado para o usuário
