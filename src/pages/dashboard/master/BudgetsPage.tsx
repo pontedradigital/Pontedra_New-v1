@@ -1026,8 +1026,14 @@ export default function BudgetsPage() {
         .eq('id', budgetId)
         .single();
 
-      if (fetchError) throw fetchError;
-      if (!budgetToApproveData) throw new Error("Orçamento não encontrado.");
+      if (fetchError) {
+        console.error("Erro ao buscar orçamento para aprovação:", fetchError);
+        throw fetchError;
+      }
+      if (!budgetToApproveData) {
+        console.error("Orçamento não encontrado para aprovação:", budgetId);
+        throw new Error("Orçamento não encontrado.");
+      }
 
       // 2. Atualizar o status do orçamento para 'converted' e registrar a data de aprovação
       const approvedAt = new Date().toISOString();
@@ -1035,7 +1041,10 @@ export default function BudgetsPage() {
         .from('budgets')
         .update({ status: 'converted', approved_at: approvedAt })
         .eq('id', budgetId);
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Erro ao atualizar status do orçamento:", updateError);
+        throw updateError;
+      }
 
       // 3. Criar um registro em 'client_contracts'
       if (budgetToApproveData.budget_items.length > 0) {
@@ -1069,12 +1078,22 @@ export default function BudgetsPage() {
             service_id: firstItem.item_type === 'service' ? firstItem.service_id : null,
             package_id: firstItem.item_type === 'package' ? firstItem.package_id : null,
           });
-        if (contractError) throw contractError;
+        if (contractError) {
+          console.error("Erro ao criar contrato do cliente:", contractError);
+          throw contractError;
+        }
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, budgetId) => { // Adicionado budgetId para usar o user_id
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.refetchQueries({ queryKey: ['clientProjects'] }); // Alterado para refetchQueries
+      // Corrigido: Passar o user_id do cliente para refetchQueries
+      const approvedBudget = budgets?.find(b => b.id === budgetId);
+      if (approvedBudget) {
+        queryClient.refetchQueries({ queryKey: ['clientProjects', approvedBudget.user_id] });
+      } else {
+        // Fallback caso o orçamento não seja encontrado no cache local
+        queryClient.refetchQueries({ queryKey: ['clientProjects'] });
+      }
       toast.success('Orçamento aprovado e projeto criado com sucesso!');
       setIsApproveConfirmOpen(false); // Fechar o pop-up de confirmação
       setBudgetToApprove(null); // Limpar o orçamento em aprovação
@@ -1637,7 +1656,7 @@ export default function BudgetsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
@@ -1658,8 +1677,8 @@ export default function BudgetsPage() {
               <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                 Cancelar
               </Button>
-              <Button onClick={() => budgetToDelete && deleteBudgetMutation.mutate(budgetToDelete.id)} disabled={deleteBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {deleteBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              <Button onClick={() => budgetToDelete && deleteBudgetMutation.mutate(budgetToDelete.id)} disabled={deleteDeleteMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {deleteDeleteMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                 Excluir Orçamento
               </Button>
             </DialogFooter>
