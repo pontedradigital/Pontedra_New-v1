@@ -13,6 +13,10 @@ import {
   Phone,
   Info,
   PlusCircle,
+  CheckCircle,
+  XCircle,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import {
   format,
@@ -23,11 +27,6 @@ import {
   startOfMonth,
   endOfMonth,
   isWithinInterval,
-  isMonday,
-  isTuesday,
-  isWednesday,
-  isThursday,
-  isFriday,
   setHours,
   setMinutes,
 } from 'date-fns';
@@ -36,8 +35,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import DateSelectionList from '@/components/dashboard/common/DateSelectionList'; // NOVO: Importar DateSelectionList
-import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog'; // NOVO: Importar TimeSlotSelectionDialog
+import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
+import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog';
+import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog'; // NOVO: Importar AddAppointmentDialog
 import { toast } from 'sonner';
 
 // Interfaces para as tabelas
@@ -50,12 +50,18 @@ interface Appointment {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes: string | null;
   created_at: string;
-  profiles?: {
+  profiles?: { // Perfil do cliente
+    first_name: string | null;
+    last_name: string | null;
+    telefone: string | null;
+  };
+  master_profiles?: { // Perfil do master
     first_name: string | null;
     last_name: string | null;
     telefone: string | null;
   };
   client_email?: string; // Adicionado para o email do cliente
+  master_email?: string; // Adicionado para o email do master
 }
 
 interface UserProfile {
@@ -64,15 +70,19 @@ interface UserProfile {
   last_name: string | null;
   telefone: string | null;
   email: string;
+  role: 'prospect' | 'client' | 'master';
 }
 
 export default function AppointmentsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date()); // Data de referência para todos os filtros e para o DateSelectionList
-  const [isTimeSlotDialogOpen, setIsTimeSlotDialogOpen] = useState(false); // Estado para o diálogo de seleção de horário
-  const [masterIdForBooking, setMasterIdForBooking] = useState<string | null>(null); // ID do master para quem o agendamento será feito
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isTimeSlotDialogOpen, setIsTimeSlotDialogOpen] = useState(false);
+  const [masterIdForBooking, setMasterIdForBooking] = useState<string | null>(null);
+
+  const [isAddAppointmentDialogOpen, setIsAddAppointmentDialogOpen] = useState(false); // NOVO: Estado para o diálogo de adição de agendamento
+  const [isEditingAppointment, setIsEditingAppointment] = useState<Appointment | null>(null); // NOVO: Estado para edição
 
   // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
   const handleViewDetails = useCallback((appointment: Appointment) => {
@@ -86,13 +96,13 @@ export default function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, telefone')
+        .select('id, first_name, last_name, telefone, role')
         .eq('role', 'master')
         .single();
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 means no rows found
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    staleTime: Infinity, // Master profile doesn't change often
+    staleTime: Infinity,
   });
 
   useEffect(() => {
@@ -111,7 +121,12 @@ export default function AppointmentsPage() {
         .from('appointments')
         .select(`
           *,
-          profiles (
+          profiles!appointments_client_id_fkey (
+            first_name,
+            last_name,
+            telefone
+          ),
+          master_profiles:profiles!appointments_master_id_fkey (
             first_name,
             last_name,
             telefone
@@ -124,27 +139,32 @@ export default function AppointmentsPage() {
       } else if (profile?.role === 'master') {
         // Master sees all appointments, but we might want to filter by master_id if there are multiple masters
         // For now, assuming the logged-in master is THE master.
-        query = query.eq('master_id', user.id);
+        // query = query.eq('master_id', user.id); // Removido para master ver todos os agendamentos
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch client emails for master view
-      if (profile?.role === 'master' && data) {
-        const clientIds = Array.from(new Set(data.map(app => app.client_id)));
+      // Fetch client and master emails
+      if (data) {
+        const allUserIds = Array.from(new Set([...data.map(app => app.client_id), ...data.map(app => app.master_id)]));
         const { data: emailsMap, error: emailError } = await supabase.functions.invoke('get-user-emails', {
-          body: { userIds: clientIds },
+          body: { userIds: allUserIds },
         });
 
         if (emailError) {
-          console.error("Error fetching client emails:", emailError);
-          return data.map(app => ({ ...app, client_email: 'Erro ao carregar e-mail' }));
+          console.error("Error fetching emails:", emailError);
+          return data.map(app => ({
+            ...app,
+            client_email: 'Erro ao carregar e-mail',
+            master_email: 'Erro ao carregar e-mail',
+          }));
         }
 
         return data.map(app => ({
           ...app,
           client_email: (emailsMap as Record<string, string>)?.[app.client_id] || 'N/A',
+          master_email: (emailsMap as Record<string, string>)?.[app.master_id] || 'N/A',
         }));
       }
 
@@ -153,29 +173,66 @@ export default function AppointmentsPage() {
     enabled: !!user?.id && !authLoading,
   });
 
-  // Mutation to create a new appointment
-  const createAppointmentMutation = useMutation<void, Error, { startTime: Date; endTime: Date }>({
-    mutationFn: async ({ startTime, endTime }) => {
-      if (!user?.id || !masterIdForBooking) throw new Error("Usuário ou Master não identificados.");
+  // Mutation to create a new appointment (used by both client and master dialog)
+  const upsertAppointmentMutation = useMutation<void, Error, {
+    id?: string; // Optional for update
+    client_id: string;
+    master_id: string;
+    start_time: Date;
+    end_time: Date;
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    notes: string;
+  }>({
+    mutationFn: async (appointmentData) => {
+      if (appointmentData.id) {
+        // Update existing appointment
+        const { error } = await supabase.from('appointments').update({
+          client_id: appointmentData.client_id,
+          master_id: appointmentData.master_id,
+          start_time: appointmentData.start_time.toISOString(),
+          end_time: appointmentData.end_time.toISOString(),
+          status: appointmentData.status,
+          notes: appointmentData.notes,
+        }).eq('id', appointmentData.id);
+        if (error) throw error;
+      } else {
+        // Insert new appointment
+        const { error } = await supabase.from('appointments').insert({
+          client_id: appointmentData.client_id,
+          master_id: appointmentData.master_id,
+          start_time: appointmentData.start_time.toISOString(),
+          end_time: appointmentData.end_time.toISOString(),
+          status: appointmentData.status,
+          notes: appointmentData.notes,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success(variables.id ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
+      setIsTimeSlotDialogOpen(false);
+      setIsAddAppointmentDialogOpen(false);
+      setIsEditingAppointment(null);
+      setSelectedDate(undefined);
+    },
+    onError: (err) => {
+      toast.error(`Erro ao salvar agendamento: ${err.message}`);
+    },
+  });
 
-      const { error } = await supabase.from('appointments').insert({
-        client_id: user.id,
-        master_id: masterIdForBooking,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        status: 'pending', // New appointments start as pending
-        notes: `Agendamento com ${profile?.first_name || 'Cliente'}`,
-      });
+  // Mutation to delete an appointment
+  const deleteAppointmentMutation = useMutation<void, Error, string>({
+    mutationFn: async (appointmentId) => {
+      const { error } = await supabase.from('appointments').delete().eq('id', appointmentId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] }); // Invalidate appointments list
-      toast.success('Agendamento criado com sucesso! Aguardando confirmação.');
-      setIsTimeSlotDialogOpen(false);
-      setSelectedDate(undefined); // Clear selected date after booking
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success('Agendamento excluído com sucesso!');
     },
     onError: (err) => {
-      toast.error(`Erro ao criar agendamento: ${err.message}`);
+      toast.error(`Erro ao excluir agendamento: ${err.message}`);
     },
   });
 
@@ -221,11 +278,31 @@ export default function AppointmentsPage() {
 
   const handleDateSelectedFromList = (date: Date) => {
     setSelectedDate(date);
-    setIsTimeSlotDialogOpen(true); // Open time slot dialog when a date is selected
+    setIsTimeSlotDialogOpen(true);
   };
 
   const handleAppointmentConfirm = (startTime: Date, endTime: Date) => {
-    createAppointmentMutation.mutate({ startTime, endTime });
+    if (!user?.id || !masterIdForBooking) {
+      toast.error("Erro: Usuário ou Master não identificados para agendamento.");
+      return;
+    }
+    upsertAppointmentMutation.mutate({
+      client_id: user.id,
+      master_id: masterIdForBooking,
+      start_time: startTime,
+      end_time: endTime,
+      status: 'pending',
+      notes: `Agendamento com ${profile?.first_name || 'Cliente'}`,
+    });
+  };
+
+  const handleOpenAddAppointmentDialog = (appointment?: Appointment) => {
+    if (appointment) {
+      setIsEditingAppointment(appointment);
+    } else {
+      setIsEditingAppointment(null);
+    }
+    setIsAddAppointmentDialogOpen(true);
   };
 
   if (authLoading || isLoadingAppointments || isLoadingMasterProfile) {
@@ -270,6 +347,11 @@ export default function AppointmentsPage() {
           <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
             <CalendarIcon className="w-10 h-10 text-[#57e389]" /> Agendamentos
           </h1>
+          {isMaster && (
+            <Button onClick={() => handleOpenAddAppointmentDialog()} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
+              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Agendamento
+            </Button>
+          )}
         </div>
         <p className="text-lg text-[#9ba8b5]">
           Olá, <span className="font-semibold text-white">{profile?.first_name}</span>!
@@ -278,8 +360,8 @@ export default function AppointmentsPage() {
             : ' Acompanhe seus compromissos com a Pontedra.'}
         </p>
 
-        {/* NOVO: Componente de seleção de data em lista */}
-        {!isMaster && masterIdForBooking && ( // Apenas clientes podem agendar
+        {/* NOVO: Componente de seleção de data em lista (apenas para clientes) */}
+        {!isMaster && masterIdForBooking && (
           <DateSelectionList
             masterId={masterIdForBooking}
             onDateSelect={handleDateSelectedFromList}
@@ -305,7 +387,8 @@ export default function AppointmentsPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/20">
                       <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                      {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
+                      <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                      {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
                       <TableHead className="text-muted-foreground">STATUS</TableHead>
                       <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                     </TableRow>
@@ -317,9 +400,14 @@ export default function AppointmentsPage() {
                           <TableCell className="font-medium text-foreground py-3">
                             {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                           </TableCell>
+                          <TableCell className="text-muted-foreground py-3">
+                            {app.profiles?.first_name} {app.profiles?.last_name}
+                            {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
+                          </TableCell>
                           {isMaster && (
                             <TableCell className="text-muted-foreground py-3">
-                              {app.profiles?.first_name} {app.profiles?.last_name}
+                              {app.master_profiles?.first_name} {app.master_profiles?.last_name}
+                              {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                             </TableCell>
                           )}
                           <TableCell className="py-3">
@@ -331,12 +419,22 @@ export default function AppointmentsPage() {
                             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
                               <Info className="h-4 w-4" />
                             </Button>
+                            {isMaster && (
+                              <>
+                                <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isMaster ? 4 : 3} className="text-center text-muted-foreground py-4">
+                        <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
                           Nenhum agendamento.
                         </TableCell>
                       </TableRow>
@@ -363,7 +461,8 @@ export default function AppointmentsPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/20">
                       <TableHead className="text-muted-foreground">DATA</TableHead>
-                      {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
+                      <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                      {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
                       <TableHead className="text-muted-foreground">STATUS</TableHead>
                       <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                     </TableRow>
@@ -375,9 +474,14 @@ export default function AppointmentsPage() {
                           <TableCell className="font-medium text-foreground py-3">
                             {format(parseISO(app.start_time), 'dd/MM HH:mm', { locale: ptBR })}
                           </TableCell>
+                          <TableCell className="text-muted-foreground py-3">
+                            {app.profiles?.first_name} {app.profiles?.last_name}
+                            {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
+                          </TableCell>
                           {isMaster && (
                             <TableCell className="text-muted-foreground py-3">
-                              {app.profiles?.first_name} {app.profiles?.last_name}
+                              {app.master_profiles?.first_name} {app.master_profiles?.last_name}
+                              {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                             </TableCell>
                           )}
                           <TableCell className="py-3">
@@ -389,12 +493,22 @@ export default function AppointmentsPage() {
                             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
                               <Info className="h-4 w-4" />
                             </Button>
+                            {isMaster && (
+                              <>
+                                <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isMaster ? 4 : 3} className="text-center text-muted-foreground py-4">
+                        <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
                           Nenhum agendamento.
                         </TableCell>
                       </TableRow>
@@ -421,7 +535,8 @@ export default function AppointmentsPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/20">
                       <TableHead className="text-muted-foreground">DATA</TableHead>
-                      {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
+                      <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                      {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
                       <TableHead className="text-muted-foreground">STATUS</TableHead>
                       <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                     </TableRow>
@@ -433,9 +548,14 @@ export default function AppointmentsPage() {
                           <TableCell className="font-medium text-foreground py-3">
                             {format(parseISO(app.start_time), 'dd/MM HH:mm', { locale: ptBR })}
                           </TableCell>
+                          <TableCell className="text-muted-foreground py-3">
+                            {app.profiles?.first_name} {app.profiles?.last_name}
+                            {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
+                          </TableCell>
                           {isMaster && (
                             <TableCell className="text-muted-foreground py-3">
-                              {app.profiles?.first_name} {app.profiles?.last_name}
+                              {app.master_profiles?.first_name} {app.master_profiles?.last_name}
+                              {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                             </TableCell>
                           )}
                           <TableCell className="py-3">
@@ -447,12 +567,22 @@ export default function AppointmentsPage() {
                             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
                               <Info className="h-4 w-4" />
                             </Button>
+                            {isMaster && (
+                              <>
+                                <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isMaster ? 4 : 3} className="text-center text-muted-foreground py-4">
+                        <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
                           Nenhum agendamento.
                         </TableCell>
                       </TableRow>
@@ -465,7 +595,7 @@ export default function AppointmentsPage() {
         </div>
       </motion.div>
 
-      {/* NOVO: Diálogo de Seleção de Horário */}
+      {/* NOVO: Diálogo de Seleção de Horário (para clientes) */}
       {!isMaster && masterIdForBooking && (
         <TimeSlotSelectionDialog
           isOpen={isTimeSlotDialogOpen}
@@ -473,6 +603,18 @@ export default function AppointmentsPage() {
           selectedDate={selectedDate}
           masterId={masterIdForBooking}
           onAppointmentConfirm={handleAppointmentConfirm}
+        />
+      )}
+
+      {/* NOVO: Diálogo de Adição/Edição de Agendamento (para Masters) */}
+      {isMaster && (
+        <AddAppointmentDialog
+          isOpen={isAddAppointmentDialogOpen}
+          onClose={() => setIsAddAppointmentDialogOpen(false)}
+          onSave={async (data) => {
+            await upsertAppointmentMutation.mutate({ ...data, id: isEditingAppointment?.id });
+          }}
+          isSaving={upsertAppointmentMutation.isPending}
         />
       )}
     </DashboardLayout>
