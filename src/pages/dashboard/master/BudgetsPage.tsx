@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle, RotateCcw } from 'lucide-react';
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle, RotateCcw, Trash2 } from 'lucide-react';
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -155,6 +155,9 @@ export default function BudgetsPage() {
 
   const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false); // NOVO: Estado para o pop-up de confirmação de reversão
   const [budgetToRevert, setBudgetToRevert] = useState<Budget | null>(null); // NOVO: Orçamento a ser revertido
+
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false); // NOVO: Estado para o pop-up de confirmação de exclusão
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null); // NOVO: Orçamento a ser excluído
 
   // Helper function for badge styling
   const getBudgetStatusBadgeVariant = (status: Budget['status']) => {
@@ -1096,6 +1099,54 @@ export default function BudgetsPage() {
     },
   });
 
+  // NOVO: Mutação para deletar orçamento
+  const deleteBudgetMutation = useMutation<void, Error, string>({
+    mutationFn: async (budgetId) => {
+      // Primeiro, verificar se há um contrato vinculado e deletá-lo
+      const { data: existingContract, error: fetchContractError } = await supabase
+        .from('client_contracts')
+        .select('id')
+        .eq('budget_id', budgetId)
+        .single();
+
+      if (fetchContractError && fetchContractError.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw fetchContractError;
+      }
+
+      if (existingContract) {
+        const { error: deleteContractError } = await supabase
+          .from('client_contracts')
+          .delete()
+          .eq('budget_id', budgetId);
+        if (deleteContractError) throw deleteContractError;
+      }
+
+      // Em seguida, deletar os itens do orçamento
+      const { error: deleteItemsError } = await supabase
+        .from('budget_items')
+        .delete()
+        .eq('budget_id', budgetId);
+      if (deleteItemsError) throw deleteItemsError;
+
+      // Finalmente, deletar o orçamento
+      const { error: deleteBudgetError } = await supabase
+        .from('budgets')
+        .delete()
+        .eq('id', budgetId);
+      if (deleteBudgetError) throw deleteBudgetError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] }); // Invalidar a query de projetos do cliente
+      toast.success('Orçamento excluído com sucesso!');
+      setIsDeleteConfirmOpen(false); // Fechar o pop-up de confirmação de exclusão
+      setBudgetToDelete(null); // Limpar o orçamento a ser excluído
+    },
+    onError: (err) => {
+      toast.error(`Erro ao excluir orçamento: ${err.message}`);
+    },
+  });
+
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_first_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId);
   const isPdfActionDisabled = !formData.client_first_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId); // Updated condition
 
@@ -1202,6 +1253,9 @@ export default function BudgetsPage() {
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handlePdfAction(budget, 'view')} className="text-blue-500 hover:text-blue-600">
                         <Eye className="h-4 w-4 mr-2" /> Visualizar PDF
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setBudgetToDelete(budget); setIsDeleteConfirmOpen(true); }} className="text-destructive hover:text-destructive/80">
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -1571,6 +1625,28 @@ export default function BudgetsPage() {
               <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                 {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* NOVO: Pop-up de Confirmação de Exclusão */}
+        <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+          <DialogContent className="sm:max-w-md bg-card border-border text-foreground rounded-xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-destructive">Confirmar Exclusão</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Tem certeza que deseja <span className="font-semibold text-destructive">excluir</span> o orçamento <span className="font-semibold text-white">#{budgetToDelete?.proposal_number}</span>?
+                Esta ação é irreversível e também removerá qualquer projeto vinculado.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+                Cancelar
+              </Button>
+              <Button onClick={() => budgetToDelete && deleteBudgetMutation.mutate(budgetToDelete.id)} disabled={deleteBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {deleteBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                Excluir Orçamento
               </Button>
             </DialogFooter>
           </DialogContent>
