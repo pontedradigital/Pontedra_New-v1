@@ -76,7 +76,7 @@ interface MasterAvailability {
   master_id: string;
   day_of_week: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
   start_time: string; // HH:mm:ss
-  end_time:   // HH:mm:ss
+  end_time: string;   // HH:mm:ss
 }
 
 interface MasterException {
@@ -94,7 +94,7 @@ interface Appointment {
   client_id: string;
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
-  end_time:   // TIMESTAMP WITH TIME ZONE
+  end_time: string;   // TIMESTAMP WITH TIME ZONE
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes: string | null;
   created_at: string;
