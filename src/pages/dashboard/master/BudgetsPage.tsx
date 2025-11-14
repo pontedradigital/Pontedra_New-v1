@@ -259,9 +259,9 @@ export default function BudgetsPage() {
   });
   const whatsappContactNumber = whatsappNumberSetting?.value || '';
 
-  // NOVO: Fetch client profiles
-  const { data: clientProfiles, isLoading: isLoadingClientProfiles } = useQuery<ClientProfile[], Error>({
-    queryKey: ['clientProfiles'],
+  // Fetch client profiles (without email initially)
+  const { data: clientProfilesData, isLoading: isLoadingClientProfilesData } = useQuery<Omit<ClientProfile, 'email'>[], Error>({
+    queryKey: ['clientProfilesData'],
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -270,25 +270,43 @@ export default function BudgetsPage() {
           first_name,
           last_name,
           telefone,
-          role,
-          auth_users!id (email)
+          role
         `)
-        .eq('role', 'client'); // Apenas clientes
+        .eq('role', 'client');
 
       if (profilesError) throw profilesError;
-
-      return profiles.map(p => ({
-        id: p.id,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        telefone: p.telefone,
-        role: p.role,
-        email: p.auth_users?.email || 'N/A'
-      }));
+      return profiles;
     },
-    enabled: user?.id !== undefined, // Só busca se houver um usuário logado
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    enabled: user?.id !== undefined,
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Fetch emails for client profiles via Edge Function
+  const { data: clientEmailsMap, isLoading: isLoadingClientEmails } = useQuery<Record<string, string>, Error>({
+    queryKey: ['clientProfileEmails', clientProfilesData?.map(p => p.id)],
+    queryFn: async ({ queryKey }) => {
+      const userIds = queryKey[1] as string[];
+      if (!userIds || userIds.length === 0) return {};
+
+      const { data, error } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds },
+      });
+
+      if (error) throw error;
+      return data as Record<string, string>;
+    },
+    enabled: !!clientProfilesData && clientProfilesData.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Combine client profiles with emails
+  const clientProfiles = useMemo(() => {
+    if (!clientProfilesData) return [];
+    return clientProfilesData.map(profile => ({
+      ...profile,
+      email: clientEmailsMap?.[profile.id] || 'N/A',
+    }));
+  }, [clientProfilesData, clientEmailsMap]);
 
   // Combine packagesData with availableServices on the client side for full package details
   const allPackages = useMemo(() => {
@@ -880,7 +898,7 @@ export default function BudgetsPage() {
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
   const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0; // Updated condition
 
-  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber || isLoadingClientProfiles) {
+  if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber || isLoadingClientProfilesData || isLoadingClientEmails) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">

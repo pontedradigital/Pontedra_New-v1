@@ -85,7 +85,7 @@ export default function ClientsPage() {
   const [filterRole, setFilterRole] = useState<'all' | 'prospect' | 'client' | 'master'>('all');
 
   // Fetch all user profiles
-  const { data: clients, isLoading, isError, error } = useQuery<UserProfile[], Error>({
+  const { data: profilesData, isLoading, isError, error } = useQuery<Omit<UserProfile, 'email'>[], Error>({
     queryKey: ['clients'],
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
@@ -106,18 +106,40 @@ export default function ClientsPage() {
           address_state,
           address_cep,
           date_of_birth,
-          created_at,
-          auth_users!id(email)
+          created_at
         `);
 
       if (profilesError) throw profilesError;
-
-      return profiles.map(p => ({
-        ...p,
-        email: p.auth_users?.email || 'N/A',
-      }));
+      return profiles;
     },
   });
+
+  // Fetch emails via Edge Function
+  const { data: emailsMap, isLoading: isLoadingEmails } = useQuery<Record<string, string>, Error>({
+    queryKey: ['clientEmails', profilesData?.map(p => p.id)],
+    queryFn: async ({ queryKey }) => {
+      const userIds = queryKey[1] as string[];
+      if (!userIds || userIds.length === 0) return {};
+
+      const { data, error } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds },
+      });
+
+      if (error) throw error;
+      return data as Record<string, string>;
+    },
+    enabled: !!profilesData && profilesData.length > 0,
+    staleTime: 5 * 60 * 1000, // Cache emails for 5 minutes
+  });
+
+  // Combine profiles with emails
+  const clients = useMemo(() => {
+    if (!profilesData) return [];
+    return profilesData.map(profile => ({
+      ...profile,
+      email: emailsMap?.[profile.id] || 'N/A',
+    }));
+  }, [profilesData, emailsMap]);
 
   // Mutation to update a client profile
   const updateClientMutation = useMutation<void, Error, Partial<UserProfile>>({
@@ -142,6 +164,7 @@ export default function ClientsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clientEmails'] }); // Invalidate emails cache too
       toast.success('Perfil do cliente atualizado com sucesso!');
       setIsDialogOpen(false);
       setEditingClient(null);
@@ -163,6 +186,7 @@ export default function ClientsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clientEmails'] }); // Invalidate emails cache too
       toast.success('Cliente excluído com sucesso!');
     },
     onError: (err) => {
@@ -245,7 +269,7 @@ export default function ClientsPage() {
     });
   }, [clients, searchTerm, filterRole]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingEmails) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">

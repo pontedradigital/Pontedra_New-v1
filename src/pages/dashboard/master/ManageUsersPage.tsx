@@ -70,8 +70,8 @@ export default function ManageUsersPage() {
   const [filterRole, setFilterRole] = useState<'all' | 'prospect' | 'client'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch users and their contracts
-  const { data: usersData, isLoading, isError, error } = useQuery<UserWithContracts[], Error>({
+  // Fetch profiles data without email initially
+  const { data: profilesData, isLoading: isLoadingProfiles, isError, error } = useQuery<Omit<UserProfile, 'email'>[], Error>({
     queryKey: ['usersWithContracts'],
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
@@ -82,17 +82,37 @@ export default function ManageUsersPage() {
           last_name,
           telefone,
           role,
-          status,
-          auth_users!id (email)
+          status
         `);
 
       if (profilesError) throw profilesError;
+      return profiles;
+    },
+    enabled: currentUserProfile?.role === 'master',
+  });
 
-      const usersWithEmails: UserProfile[] = profiles.map(p => ({
-        ...p,
-        email: p.auth_users?.email || 'N/A'
-      }));
+  // Fetch emails via Edge Function
+  const { data: emailsMap, isLoading: isLoadingEmails } = useQuery<Record<string, string>, Error>({
+    queryKey: ['userEmails', profilesData?.map(p => p.id)],
+    queryFn: async ({ queryKey }) => {
+      const userIds = queryKey[1] as string[];
+      if (!userIds || userIds.length === 0) return {};
 
+      const { data, error } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds },
+      });
+
+      if (error) throw error;
+      return data as Record<string, string>;
+    },
+    enabled: !!profilesData && profilesData.length > 0,
+    staleTime: 5 * 60 * 1000, // Cache emails for 5 minutes
+  });
+
+  // Fetch contracts
+  const { data: contractsData, isLoading: isLoadingContracts } = useQuery<ClientContract[], Error>({
+    queryKey: ['clientContracts'],
+    queryFn: async () => {
       const { data: contracts, error: contractsError } = await supabase
         .from('client_contracts')
         .select(`
@@ -102,16 +122,21 @@ export default function ManageUsersPage() {
         `);
 
       if (contractsError) throw contractsError;
-
-      const usersWithContracts = usersWithEmails.map(user => ({
-        ...user,
-        contracts: contracts.filter(contract => contract.client_id === user.id) as ClientContract[]
-      }));
-
-      return usersWithContracts;
+      return contracts;
     },
-    enabled: currentUserProfile?.role === 'master', // Só busca se o usuário logado for master
+    enabled: currentUserProfile?.role === 'master',
   });
+
+  // Combine all data
+  const usersData = useMemo(() => {
+    if (!profilesData || !emailsMap || !contractsData) return [];
+
+    return profilesData.map(profile => ({
+      ...profile,
+      email: emailsMap[profile.id] || 'N/A',
+      contracts: contractsData.filter(contract => contract.client_id === profile.id) as ClientContract[]
+    }));
+  }, [profilesData, emailsMap, contractsData]);
 
   // Mutation para alterar o papel do usuário
   const changeUserRoleMutation = useMutation<void, Error, { userId: string; newRole: 'prospect' | 'client' }>({
@@ -147,7 +172,7 @@ export default function ManageUsersPage() {
     return matchesRole && matchesSearch;
   });
 
-  if (isLoading) {
+  if (isLoadingProfiles || isLoadingEmails || isLoadingContracts) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
