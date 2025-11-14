@@ -118,8 +118,8 @@ export default function ClientsPage() {
     address_state: string;
     address_cep: string;
     date_of_birth: string;
-    role: 'prospect' | 'client' | 'master';
-    status: 'ativo' | 'inativo';
+    role: 'prospect' | 'client' | 'master'; // Adicionado role
+    status: 'ativo' | 'inativo'; // Adicionado status
   }>({
     first_name: '',
     last_name: '',
@@ -439,7 +439,8 @@ export default function ClientsPage() {
 
   // NOVO: Função para atualizar os dados dos clientes
   const handleRefreshClients = () => {
-    refetch(); // Força a re-execução da query 'clients'
+    queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalida a query 'clients'
+    queryClient.invalidateQueries({ queryKey: ['clientEmails'] }); // Invalida a query de emails
     toast.info("Atualizando lista de clientes...");
   };
 
