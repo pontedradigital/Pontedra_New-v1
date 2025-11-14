@@ -111,6 +111,7 @@ interface ClientProfile {
   last_name: string | null;
   telefone: string | null;
   email: string;
+  role: 'prospect' | 'client' | 'master'; // Adicionado role para exibição
 }
 
 // Função para gerar uma senha temporária
@@ -314,8 +315,7 @@ export default function BudgetsPage() {
           last_name,
           telefone,
           role
-        `)
-        .eq('role', 'client');
+        `); // REMOVIDO: .eq('role', 'client') para buscar todos os perfis
 
       if (profilesError) throw profilesError;
       return profiles;
@@ -1313,7 +1313,7 @@ export default function BudgetsPage() {
                         <SelectItem key={client.id} value={client.id}>
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            {client.first_name} {client.last_name} ({client.client_id || 'N/A'}) - {client.email}
+                            {client.first_name} {client.last_name} ({client.client_id || 'N/A'}) - {client.email} ({client.role})
                           </div>
                         </SelectItem>
                       ))}
