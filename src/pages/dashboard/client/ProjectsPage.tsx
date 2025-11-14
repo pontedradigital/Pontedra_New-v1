@@ -89,22 +89,22 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<ClientContract | null>(null);
   const [formData, setFormData] = useState<{
     projectName: string;
-    contractType: 'one-time' | 'monthly' | undefined; // Alterado para undefined
-    selectedItemId: string | undefined; // Alterado para undefined
+    contractType: 'one-time' | 'monthly' | undefined;
+    selectedItemId: string | undefined;
     priceAgreed: number;
     startDate: string;
-    estimatedCompletionDate: string;
-    budget_id: string | undefined; // Alterado para undefined
+    estimatedCompletionDate: string | undefined; // Alterado para opcional
+    budget_id: string | undefined;
     is_paid: boolean;
     payment_due_date: string;
   }>({
     projectName: '',
-    contractType: undefined, // Alterado para undefined
-    selectedItemId: undefined, // Alterado para undefined
+    contractType: undefined,
+    selectedItemId: undefined,
     priceAgreed: 0,
     startDate: format(new Date(), 'yyyy-MM-dd'),
-    estimatedCompletionDate: '',
-    budget_id: undefined, // Alterado para undefined
+    estimatedCompletionDate: undefined, // Alterado para undefined
+    budget_id: undefined,
     is_paid: false,
     payment_due_date: '',
   });
@@ -275,12 +275,12 @@ export default function ProjectsPage() {
       setEditingProject(null);
       setFormData({
         projectName: '',
-        contractType: undefined, // Alterado para undefined
-        selectedItemId: undefined, // Alterado para undefined
+        contractType: undefined,
+        selectedItemId: undefined,
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
-        estimatedCompletionDate: '',
-        budget_id: undefined, // Alterado para undefined
+        estimatedCompletionDate: undefined, // Alterado para undefined
+        budget_id: undefined,
         is_paid: false,
         payment_due_date: '',
       });
@@ -310,12 +310,12 @@ export default function ProjectsPage() {
       setEditingProject(project);
       setFormData({
         projectName: project.products?.name || project.packages?.name || '',
-        contractType: project.contract_type || undefined, // Garante undefined se for null
-        selectedItemId: project.service_id || project.package_id || undefined, // Garante undefined se for null
+        contractType: project.contract_type || undefined,
+        selectedItemId: project.service_id || project.package_id || undefined,
         priceAgreed: project.price_agreed,
         startDate: project.start_date,
-        estimatedCompletionDate: project.end_date || '', // Usar end_date como estimatedCompletionDate
-        budget_id: project.budget_id || undefined, // Garante undefined se for null
+        estimatedCompletionDate: project.end_date || undefined, // Garante undefined se for null
+        budget_id: project.budget_id || undefined,
         is_paid: project.is_paid,
         payment_due_date: project.payment_due_date || '',
       });
@@ -323,12 +323,12 @@ export default function ProjectsPage() {
       setEditingProject(null);
       setFormData({
         projectName: '',
-        contractType: undefined, // Alterado para undefined
-        selectedItemId: undefined, // Alterado para undefined
+        contractType: undefined,
+        selectedItemId: undefined,
         priceAgreed: 0,
         startDate: format(new Date(), 'yyyy-MM-dd'),
-        estimatedCompletionDate: '',
-        budget_id: undefined, // Alterado para undefined
+        estimatedCompletionDate: undefined, // Alterado para undefined
+        budget_id: undefined,
         is_paid: false,
         payment_due_date: '',
       });
@@ -344,7 +344,7 @@ export default function ProjectsPage() {
     }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = (name: string, value: string | undefined) => { // value pode ser undefined
     setFormData(prev => ({
       ...prev,
       [name]: value,
@@ -352,7 +352,7 @@ export default function ProjectsPage() {
 
     // Se mudar o tipo de contrato, limpa o item selecionado
     if (name === 'contractType') {
-      setFormData(prev => ({ ...prev, selectedItemId: undefined })); // Alterado para undefined
+      setFormData(prev => ({ ...prev, selectedItemId: undefined }));
     }
     // Se selecionar um item, preenche o preço acordado
     if (name === 'selectedItemId') {
@@ -374,8 +374,8 @@ export default function ProjectsPage() {
         setFormData(prev => ({
           ...prev,
           projectName: selectedBudget.client_name + (selectedBudget.budget_items.length > 1 ? ` (${selectedBudget.budget_items.length} itens)` : ` - ${firstItem?.item_name || ''}`),
-          contractType: firstItem?.item_type || undefined, // Alterado para undefined
-          selectedItemId: firstItem?.service_id || firstItem?.package_id || undefined, // Alterado para undefined
+          contractType: firstItem?.item_type || undefined,
+          selectedItemId: firstItem?.service_id || firstItem?.package_id || undefined,
           priceAgreed: selectedBudget.total_amount,
           // startDate: já preenchido com a data atual
           // estimatedCompletionDate: pode ser calculado ou deixado para o usuário
@@ -392,7 +392,8 @@ export default function ProjectsPage() {
       toast.error("Usuário não autenticado.");
       return;
     }
-    if (!formData.projectName || !formData.contractType || !formData.selectedItemId || !formData.priceAgreed || !formData.startDate || !formData.estimatedCompletionDate) {
+    // Removido formData.estimatedCompletionDate da validação de campos obrigatórios
+    if (!formData.projectName || !formData.contractType || !formData.selectedItemId || !formData.priceAgreed || !formData.startDate) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
@@ -403,7 +404,7 @@ export default function ProjectsPage() {
       budget_id: formData.budget_id || null,
       contract_type: formData.contractType,
       start_date: formData.startDate,
-      end_date: formData.estimatedCompletionDate,
+      end_date: formData.estimatedCompletionDate || null, // Garante que seja null se não preenchido
       price_agreed: formData.priceAgreed,
       is_paid: formData.is_paid,
       payment_due_date: formData.payment_due_date || null,
@@ -607,7 +608,7 @@ export default function ProjectsPage() {
                     <SelectValue placeholder="Vincular a um orçamento existente" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border text-popover-foreground">
-                    <SelectItem value={undefined}>Nenhum Orçamento</SelectItem> {/* CORRIGIDO AQUI */}
+                    <SelectItem value={undefined}>Nenhum Orçamento</SelectItem>
                     {budgets?.map(budget => (
                       <SelectItem key={budget.id} value={budget.id}>
                         {budget.client_name} - R$ {budget.total_amount.toFixed(2)}
@@ -628,7 +629,7 @@ export default function ProjectsPage() {
                 <Select
                   name="contractType"
                   value={formData.contractType}
-                  onValueChange={(value: 'one-time' | 'monthly') => handleSelectChange('contractType', value)}
+                  onValueChange={(value: 'one-time' | 'monthly' | undefined) => handleSelectChange('contractType', value)}
                   required
                 >
                   <SelectTrigger className="w-full bg-background border-border text-foreground">
@@ -700,15 +701,15 @@ export default function ProjectsPage() {
 
               {/* Data Estimada de Conclusão */}
               <div className="space-y-2">
-                <Label htmlFor="estimatedCompletionDate">Data Estimada de Conclusão *</Label>
+                <Label htmlFor="estimatedCompletionDate">Data Estimada de Conclusão</Label> {/* Removido o '*' */}
                 <Input
                   id="estimatedCompletionDate"
                   name="estimatedCompletionDate"
                   type="date"
-                  value={formData.estimatedCompletionDate}
+                  value={formData.estimatedCompletionDate || ''} // Garante que o valor seja uma string vazia se undefined
                   onChange={handleFormChange}
                   className="w-full bg-background border-border text-foreground"
-                  required
+                  // Removido o atributo 'required'
                 />
               </div>
 
