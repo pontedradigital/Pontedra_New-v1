@@ -48,10 +48,12 @@ interface Appointment {
   client_id: string;
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
-  end_time: string;   // TIMESTAMP WITH TIME ZONE
+  end_time:   string;   // TIMESTAMP WITH TIME ZONE
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Manter o tipo para compatibilidade com DB
   notes: string | null;
   created_at: string;
+  client_name: string | null; // NOVO: Adicionado client_name
+  client_email: string | null; // NOVO: Adicionado client_email
 }
 
 interface AddAppointmentDialogProps {
@@ -64,12 +66,9 @@ interface AddAppointmentDialogProps {
     end_time: Date;
     status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Status é sempre 'confirmed'
     notes: string;
-    existingClientId?: string; // ID do cliente existente
-    newClientDetails?: { // Detalhes do novo cliente
-      name: string;
-      email: string;
-      phone?: string;
-    };
+    client_id: string; // ID do cliente (existente ou recém-criado)
+    client_name: string; // Nome do cliente
+    client_email: string; // E-mail do cliente
   }) => Promise<void>;
   isSaving: boolean;
   initialData?: Appointment | null; // NOVA PROPRIEDADE
@@ -108,7 +107,6 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
   const [selectedMasterId, setSelectedMasterId] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
-  // Removido o estado 'status' pois será sempre 'confirmed'
   const [notes, setNotes] = useState('');
 
   const isMaster = profile?.role === 'master'; // Determina se o usuário logado é master
@@ -119,8 +117,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, telefone, role')
-        .in('role', ['prospect', 'client']);
+        .select('id, first_name, last_name, telefone, role');
       if (profilesError) throw profilesError;
 
       const clientIds = profiles.map(p => p.id);
@@ -292,16 +289,17 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       setSelectedMasterId(undefined);
       setSelectedDate(undefined);
       setSelectedTimeSlot(null);
-      // setStatus('pending'); // Removido
       setNotes('');
     } else if (initialData) {
       // If editing, assume client is existing and pre-fill
       setClientSelectionMode('existing');
       setSelectedClientId(initialData.client_id);
+      setNewClientName(initialData.client_name || ''); // Pre-fill client name
+      setNewClientEmail(initialData.client_email || ''); // Pre-fill client email
+      // New client phone is not stored in appointment, so it won't be pre-filled
       setSelectedMasterId(initialData.master_id);
       setSelectedDate(parseISO(initialData.start_time));
       setSelectedTimeSlot(parseISO(initialData.start_time));
-      // setStatus(initialData.status); // Removido
       setNotes(initialData.notes || '');
     } else {
       // For new appointments, if logged-in user is master, pre-select them as master
@@ -339,12 +337,24 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       return;
     }
 
-    if (clientSelectionMode === 'existing' && !selectedClientId) {
-      toast.error('Por favor, selecione um cliente existente.');
-      return;
-    }
+    let finalClientId: string | undefined;
+    let finalClientName: string;
+    let finalClientEmail: string;
 
-    if (clientSelectionMode === 'new') {
+    if (clientSelectionMode === 'existing') {
+      if (!selectedClientId) {
+        toast.error('Por favor, selecione um cliente existente.');
+        return;
+      }
+      const client = clientProfiles?.find(c => c.id === selectedClientId);
+      if (!client) {
+        toast.error('Cliente existente não encontrado.');
+        return;
+      }
+      finalClientId = client.id;
+      finalClientName = `${client.first_name || ''} ${client.last_name || ''}`.trim();
+      finalClientEmail = client.email;
+    } else { // new client
       if (!newClientName.trim()) {
         toast.error('O nome do novo cliente é obrigatório.');
         return;
@@ -353,11 +363,13 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
         toast.error('O e-mail do novo cliente é obrigatório.');
         return;
       }
-      // Basic email format validation
       if (!/\S+@\S+\.\S+/.test(newClientEmail)) {
         toast.error('Por favor, insira um e-mail válido para o novo cliente.');
         return;
       }
+      finalClientName = newClientName.trim();
+      finalClientEmail = newClientEmail.trim();
+      // clientId will be created by onSave function
     }
 
     const startTime = selectedTimeSlot;
@@ -388,7 +400,11 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       end_time: endTime,
       status: 'confirmed', // Sempre 'confirmed'
       notes,
-      existingClientId: clientSelectionMode === 'existing' ? selectedClientId : undefined,
+      client_id: finalClientId!, // Garante que client_id é passado
+      client_name: finalClientName,
+      client_email: finalClientEmail,
+      // newClientDetails is handled internally by onSave if clientSelectionMode is 'new'
+      // but the actual client_id, name, email are passed directly now.
       newClientDetails: clientSelectionMode === 'new' ? { name: newClientName, email: newClientEmail, phone: newClientPhone } : undefined,
     });
   };

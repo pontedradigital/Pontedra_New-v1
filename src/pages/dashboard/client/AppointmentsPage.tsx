@@ -51,7 +51,9 @@ interface Appointment {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Manter o tipo para compatibilidade com DB
   notes: string | null;
   created_at: string;
-  client_profile?: { // Alias para o perfil do cliente
+  client_name: string | null; // NOVO: Adicionado client_name
+  client_email: string | null; // NOVO: Adicionado client_email
+  client_profile?: { // Alias para o perfil do cliente (ainda útil para telefone, etc.)
     first_name: string | null;
     last_name: string | null;
     telefone: string | null;
@@ -61,7 +63,7 @@ interface Appointment {
     last_name: string | null;
     telefone: string | null;
   };
-  client_email?: string; // Adicionado para o email do cliente
+  // client_email?: string; // Removido, agora está diretamente no Appointment
   master_email?: string; // Adicionado para o email do master
 }
 
@@ -135,6 +137,8 @@ export default function AppointmentsPage() {
           status,
           notes,
           created_at,
+          client_name,
+          client_email,
           client_profile:profiles!client_id ( // Alias para o perfil do cliente
             first_name,
             last_name,
@@ -159,25 +163,23 @@ export default function AppointmentsPage() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch client and master emails
+      // Fetch master emails (client emails are now directly in appointment)
       if (data) {
-        const allUserIds = Array.from(new Set([...data.map(app => app.client_id), ...data.map(app => app.master_id)]));
+        const allMasterIds = Array.from(new Set(data.map(app => app.master_id)));
         const { data: emailsMap, error: emailError } = await supabase.functions.invoke('get-user-emails', {
-          body: { userIds: allUserIds },
+          body: { userIds: allMasterIds },
         });
 
         if (emailError) {
-          console.error("Error fetching emails:", emailError);
+          console.error("Error fetching master emails:", emailError);
           return data.map(app => ({
             ...app,
-            client_email: 'Erro ao carregar e-mail',
             master_email: 'Erro ao carregar e-mail',
           }));
         }
 
         return data.map(app => ({
           ...app,
-          client_email: (emailsMap as Record<string, string>)?.[app.client_id] || 'N/A',
           master_email: (emailsMap as Record<string, string>)?.[app.master_id] || 'N/A',
         }));
       }
@@ -195,7 +197,9 @@ export default function AppointmentsPage() {
     end_time: Date;
     status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Status é opcional aqui, será 'confirmed'
     notes: string;
-    existingClientId?: string;
+    client_id: string; // ID do cliente (existente ou recém-criado)
+    client_name: string; // Nome do cliente
+    client_email: string; // E-mail do cliente
     newClientDetails?: { // Detalhes do novo cliente
       name: string;
       email: string;
@@ -203,7 +207,7 @@ export default function AppointmentsPage() {
     };
   }>({
     mutationFn: async (appointmentData) => {
-      let clientIdToUse = appointmentData.existingClientId;
+      let clientIdToUse = appointmentData.client_id;
 
       // If new client details are provided, create a new user first
       if (appointmentData.newClientDetails) {
@@ -245,6 +249,8 @@ export default function AppointmentsPage() {
         // Update existing appointment
         const { error } = await supabase.from('appointments').update({
           client_id: clientIdToUse, // Use o ID do cliente (existente ou recém-criado)
+          client_name: appointmentData.client_name, // NOVO: Salva o nome do cliente
+          client_email: appointmentData.client_email, // NOVO: Salva o e-mail do cliente
           master_id: appointmentData.master_id,
           start_time: appointmentData.start_time.toISOString(),
           end_time: appointmentData.end_time.toISOString(),
@@ -256,6 +262,8 @@ export default function AppointmentsPage() {
         // Insert new appointment
         const { error } = await supabase.from('appointments').insert({
           client_id: clientIdToUse, // Use o ID do cliente (existente ou recém-criado)
+          client_name: appointmentData.client_name, // NOVO: Salva o nome do cliente
+          client_email: appointmentData.client_email, // NOVO: Salva o e-mail do cliente
           master_id: appointmentData.master_id,
           start_time: appointmentData.start_time.toISOString(),
           end_time: appointmentData.end_time.toISOString(),
@@ -328,12 +336,14 @@ export default function AppointmentsPage() {
   };
 
   const handleAppointmentConfirm = (startTime: Date, endTime: Date) => {
-    if (!user?.id || !masterIdForBooking) {
-      toast.error("Erro: Usuário ou Master não identificados para agendamento.");
+    if (!user?.id || !masterIdForBooking || !profile?.first_name || !user?.email) {
+      toast.error("Erro: Usuário, Master, nome ou e-mail não identificados para agendamento.");
       return;
     }
     upsertAppointmentMutation.mutate({
-      existingClientId: user.id, // Cliente logado
+      client_id: user.id, // Cliente logado
+      client_name: `${profile.first_name} ${profile.last_name || ''}`.trim(), // Nome do cliente logado
+      client_email: user.email, // E-mail do cliente logado
       master_id: masterIdForBooking,
       start_time: startTime,
       end_time: endTime,
@@ -447,7 +457,7 @@ export default function AppointmentsPage() {
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
                         <TableCell className="text-muted-foreground py-3">
-                          {app.client_profile?.first_name} {app.client_profile?.last_name}
+                          {app.client_name}
                           {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
                         </TableCell>
                         {isMaster && (
@@ -517,7 +527,7 @@ export default function AppointmentsPage() {
                     latestAppointments.map((app) => (
                       <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                         <TableCell className="font-medium text-foreground py-3">
-                          {app.client_profile?.first_name} {app.client_profile?.last_name}
+                          {app.client_name}
                         </TableCell>
                         <TableCell className="text-muted-foreground py-3">
                           {app.client_email}
