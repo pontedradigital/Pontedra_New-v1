@@ -243,7 +243,7 @@ export default function ClientsPage() {
       const tempPassword = clientData.password; // Usar a senha fornecida pelo master
       const userMetadata = {
         first_name: clientData.first_name,
-        last_name: clientData.last_name,
+        last_name: clientData.last_name || null, // Sobrenome agora é opcional
         telefone: clientData.telefone || null,
         company_organization: clientData.company_organization || null,
         address_street: clientData.address_street || null,
@@ -494,8 +494,8 @@ export default function ClientsPage() {
             <DropdownMenuContent className="bg-popover border-border text-popover-foreground">
               <DropdownMenuItem onClick={() => setFilterRole('all')}>Todos</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterRole('prospect')}>Prospect</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterRole('client')}>Cliente</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterRole('master')}>Master</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterRole('client')}>Cliente</SelectItem>
+              <DropdownMenuItem onClick={() => setFilterRole('master')}>Master</SelectItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -813,14 +813,14 @@ export default function ClientsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-client-last_name">Sobrenome *</Label>
+                <Label htmlFor="new-client-last_name">Sobrenome</Label> {/* Removido o asterisco */}
                 <Input
                   id="new-client-last_name"
                   name="last_name"
                   value={newClientFormData.last_name}
                   onChange={handleNewClientFormChange}
                   className="bg-background border-border text-foreground"
-                  required
+                  // Removido o atributo 'required'
                 />
               </div>
               <div className="space-y-2">
