@@ -31,14 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle, RotateCcw } from 'lucide-react'; // Added RotateCcw icon
+import { PlusCircle, Copy, FileText, Loader2, CalendarDays, Mail, Phone, MapPin, DollarSign, Download, Eye, X, MessageCircle, User, CheckCircle, RotateCcw } from 'lucide-react';
 import { format, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useAuth } from '@/context/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge'; // Importar Badge
+import { Badge } from '@/components/ui/badge';
+import { v4 as uuidv4 } from 'uuid'; // Importar uuid para gerar senhas temporárias
 
 // Tipos de dados para Serviços (products)
 interface ServiceItem {
@@ -111,6 +112,19 @@ interface ClientProfile {
   telefone: string | null;
   email: string;
 }
+
+// Função para gerar uma senha temporária
+const generateTemporaryPassword = () => {
+  return uuidv4().replace(/-/g, '').substring(0, 12); // 12 caracteres alfanuméricos
+};
+
+// Função para dividir o nome completo em primeiro e último nome
+const splitFullName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/);
+  const firstName = parts[0] || '';
+  const lastName = parts.slice(1).join(' ') || '';
+  return { firstName, lastName };
+};
 
 export default function BudgetsPage() {
   const { user, profile } = useAuth();
@@ -610,13 +624,52 @@ export default function BudgetsPage() {
     mutationFn: async ({ budgetData, items }) => {
       if (!user) throw new Error("Usuário não autenticado.");
 
+      let finalUserId = selectedClientId;
+
+      if (!finalUserId) { // Se nenhum cliente existente for selecionado, crie um novo
+        if (!budgetData.client_email || !budgetData.client_name) {
+          throw new Error("E-mail e nome do cliente são obrigatórios para criar um novo usuário.");
+        }
+
+        const { firstName, lastName } = splitFullName(budgetData.client_name);
+        const tempPassword = generateTemporaryPassword();
+
+        console.log("Attempting to create new user for email:", budgetData.client_email);
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: budgetData.client_email,
+          password: tempPassword, // Senha temporária
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              telefone: budgetData.client_phone || null,
+              // company_organization não está em budgetData, então não é passado aqui
+            },
+          },
+        });
+
+        if (signUpError) {
+          if (signUpError.message.includes("already registered")) {
+            throw new Error(`O e-mail '${budgetData.client_email}' já está registrado. Por favor, selecione o cliente existente ou use um e-mail diferente.`);
+          }
+          throw new Error(`Falha ao criar novo usuário: ${signUpError.message}`);
+        }
+
+        if (!signUpData.user) {
+          throw new Error("Falha ao criar novo usuário: Nenhum usuário retornado após o cadastro.");
+        }
+
+        finalUserId = signUpData.user.id;
+        toast.info(`Novo usuário '${budgetData.client_email}' criado com sucesso! O cliente precisará redefinir a senha através do link de confirmação de e-mail.`);
+      }
+
       const validUntil = calculateValidUntil();
       const total = items.reduce((sum, item) => sum + item.price, 0);
 
       const { data: newBudgetResult, error: budgetError } = await supabase
         .from('budgets')
         .insert({
-          user_id: selectedClientId || user.id, // Usa o ID do cliente selecionado ou o ID do master
+          user_id: finalUserId, // Usa o ID do cliente recém-criado ou selecionado
           client_name: budgetData.client_name,
           client_phone: budgetData.client_phone,
           client_email: budgetData.client_email,
@@ -654,6 +707,7 @@ export default function BudgetsPage() {
     },
     onSuccess: (newlyCreatedBudget) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProfilesData'] }); // Invalidate client profiles to show new user
       toast.success('Orçamento salvo com sucesso!');
       setCurrentEditableBudget(newlyCreatedBudget); // Store the newly created budget
       // Do NOT close dialog or clear form here, allow user to generate PDF
@@ -667,6 +721,10 @@ export default function BudgetsPage() {
     e.preventDefault();
     if (!formData.client_name || selectedItems.length === 0) {
       toast.error('Nome do cliente e pelo menos um item são obrigatórios.');
+      return;
+    }
+    if (!formData.client_email && !selectedClientId) {
+      toast.error('E-mail do cliente é obrigatório para novos cadastros.');
       return;
     }
     saveBudgetMutation.mutate({ budgetData: formData, items: selectedItems });
@@ -1020,8 +1078,8 @@ export default function BudgetsPage() {
     },
   });
 
-  const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
-  const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0; // Updated condition
+  const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId);
+  const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0 || (!formData.client_email && !selectedClientId); // Updated condition
 
   if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount || isLoadingWhatsappNumber || isLoadingClientProfilesData || isLoadingClientEmails) {
     return (
@@ -1225,6 +1283,7 @@ export default function BudgetsPage() {
                       value={formData.client_email || ''}
                       onChange={handleFormChange}
                       className="bg-background border-border text-foreground"
+                      required={!selectedClientId} // Obrigatório apenas se for um novo cliente
                       disabled={!!selectedClientId} // Desabilita se um cliente for selecionado
                     />
                   </div>
@@ -1481,7 +1540,7 @@ export default function BudgetsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
