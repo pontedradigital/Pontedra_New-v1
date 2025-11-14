@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays } from 'lucide-react';
+import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard'; // NOVO: Importar o novo componente
 
 export default function SettingsPage() {
   const { user, profile, loading, updateProfile } = useAuth();
@@ -303,6 +304,11 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* WhatsAppNumberSettingCard - Visível apenas para Master */}
+        {profile.role === 'master' && (
+          <WhatsAppNumberSettingCard />
+        )}
 
         {/* Outras Configurações (Placeholder) */}
         <Card className="bg-card border-border shadow-lg rounded-xl">

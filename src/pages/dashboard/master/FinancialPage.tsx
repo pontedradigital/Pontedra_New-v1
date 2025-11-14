@@ -5,7 +5,6 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard';
 import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard';
 import AnnualPackageDiscountSettingCard from '@/components/dashboard/master/AnnualPackageDiscountSettingCard';
-import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard'; // NOVO: Importar o novo componente
 import { DollarSign } from 'lucide-react'; // Ícone para a página
 
 export default function FinancialPage() {
@@ -37,9 +36,6 @@ export default function FinancialPage() {
         <InstallmentRatesSettingCard />
 
         <AnnualPackageDiscountSettingCard />
-
-        {/* NOVO: Adicionando o WhatsAppNumberSettingCard aqui */}
-        <WhatsAppNumberSettingCard />
 
         {/* Outras seções financeiras podem ser adicionadas aqui */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6">
