@@ -21,7 +21,7 @@ interface PackageInContract {
   id: string;
   name: string;
   package_services: {
-    services: ServiceInContract;
+    products: ServiceInContract; // Corrigido para 'products'
   }[];
 }
 
@@ -35,7 +35,7 @@ interface ClientContract {
   price_agreed: number;
   is_paid: boolean;
   payment_due_date: string | null;
-  services: ServiceInContract | null; // Serviço direto se contract_type for 'one-time'
+  products: ServiceInContract | null; // Corrigido para 'products'
   packages: PackageInContract | null; // Pacote se contract_type for 'monthly'
 }
 
@@ -66,7 +66,7 @@ export default function ProjectsPage() {
           price_agreed,
           is_paid,
           payment_due_date,
-          services:service_id (
+          products:service_id (
             id,
             name,
             initial_delivery_days
@@ -75,7 +75,7 @@ export default function ProjectsPage() {
             id,
             name,
             package_services (
-              services:service_id (
+              products:service_id (
                 id,
                 name,
                 initial_delivery_days
@@ -100,13 +100,13 @@ export default function ProjectsPage() {
       let totalDeliveryDays = 0;
       const items: { name: string; type: 'service' | 'package' }[] = [];
 
-      if (contract.contract_type === 'one-time' && contract.services) {
-        totalDeliveryDays += contract.services.initial_delivery_days || 0;
-        items.push({ name: contract.services.name, type: 'service' });
+      if (contract.contract_type === 'one-time' && contract.products) { // Corrigido para 'products'
+        totalDeliveryDays += contract.products.initial_delivery_days || 0;
+        items.push({ name: contract.products.name, type: 'service' });
       } else if (contract.contract_type === 'monthly' && contract.packages) {
         items.push({ name: contract.packages.name, type: 'package' });
         contract.packages.package_services.forEach(ps => {
-          totalDeliveryDays += ps.services.initial_delivery_days || 0;
+          totalDeliveryDays += ps.products.initial_delivery_days || 0; // Corrigido para 'products'
         });
       }
 
