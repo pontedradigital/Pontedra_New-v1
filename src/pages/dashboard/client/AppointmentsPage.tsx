@@ -38,6 +38,7 @@ import { Button } from '@/components/ui/button';
 import DateSelectionList from '@/components/dashboard/common/DateSelectionList';
 import TimeSlotSelectionDialog from '@/components/dashboard/client/TimeSlotSelectionDialog';
 import AddAppointmentDialog from '@/components/dashboard/master/AddAppointmentDialog';
+import AppointmentDetailsPopup from '@/components/dashboard/common/AppointmentDetailsPopup'; // Importar o novo componente
 import { toast } from 'sonner';
 // import { Calendar } from '@/components/ui/calendar'; // Removido o componente Calendar
 
@@ -53,17 +54,9 @@ interface Appointment {
   created_at: string;
   client_name: string | null; // NOVO: Adicionado client_name
   client_email: string | null; // NOVO: Adicionado client_email
-  // client_profile?: { // Alias para o perfil do cliente (ainda útil para telefone, etc.)
-  //   first_name: string | null;
-  //   last_name: string | null;
-  //   telefone: string | null;
-  // };
-  // master_profile?: { // Alias para o perfil do master
-  //   first_name: string | null;
-  //   last_name: string | null;
-  //   telefone: string | null;
-  // };
   master_email?: string; // Adicionado para o email do master
+  master_name?: string; // Adicionado para o nome do master
+  client_phone?: string; // Adicionado para o telefone do cliente
 }
 
 interface UserProfile {
@@ -86,13 +79,10 @@ export default function AppointmentsPage() {
   const [isAddAppointmentDialogOpen, setIsAddAppointmentDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
 
-  const isMaster = profile?.role === 'master';
+  const [isDetailsPopupOpen, setIsDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
+  const [selectedAppointmentForDetails, setSelectedAppointmentForDetails] = useState<Appointment | null>(null); // Agendamento para exibir no pop-up
 
-  // Placeholder para a função de ver detalhes (será implementada em uma etapa futura, se necessário)
-  const handleViewDetails = useCallback((appointment: Appointment) => {
-    console.log("Ver detalhes do agendamento:", appointment);
-    // Implementar lógica para abrir um pop-up de detalhes aqui
-  }, []);
+  const isMaster = profile?.role === 'master';
 
   // Fetch the master's ID (assuming there's only one master for now, or picking the first one)
   // This query is now only for clients to find THE master to book with.
@@ -119,6 +109,55 @@ export default function AppointmentsPage() {
     }
   }, [isMaster, user?.id, singleMasterProfile]);
 
+  // Fetch all client profiles (for master to see client names/phones)
+  const { data: allClientProfiles, isLoading: isLoadingAllClientProfiles } = useQuery<UserProfile[], Error>({
+    queryKey: ['allClientProfilesForAppointments'],
+    queryFn: async () => {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, telefone, role');
+      if (profilesError) throw profilesError;
+
+      const userIds = profiles.map(p => p.id);
+      const { data: emailsMap, error: emailError } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds },
+      });
+      if (emailError) throw emailError;
+
+      return profiles.map(p => ({
+        ...p,
+        email: (emailsMap as Record<string, string>)?.[p.id] || 'N/A',
+      }));
+    },
+    enabled: isMaster, // Only fetch if master is logged in
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch all master profiles (for client to see master names/phones)
+  const { data: allMasterProfiles, isLoading: isLoadingAllMasterProfiles } = useQuery<UserProfile[], Error>({
+    queryKey: ['allMasterProfilesForAppointments'],
+    queryFn: async () => {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, telefone, role')
+        .eq('role', 'master');
+      if (profilesError) throw profilesError;
+
+      const userIds = profiles.map(p => p.id);
+      const { data: emailsMap, error: emailError } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds },
+      });
+      if (emailError) throw emailError;
+
+      return profiles.map(p => ({
+        ...p,
+        email: (emailsMap as Record<string, string>)?.[p.id] || 'N/A',
+      }));
+    },
+    enabled: !isMaster, // Only fetch if client is logged in
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Fetch Appointments (filtered by client_id for clients, all for master)
   const { data: appointments, isLoading: isLoadingAppointments } = useQuery<Appointment[], Error>({
     queryKey: ['appointments', user?.id, profile?.role],
@@ -139,43 +178,35 @@ export default function AppointmentsPage() {
           client_name,
           client_email
         `)
-        .order('start_time', { ascending: true }); // Reativado a ordenação
+        .order('start_time', { ascending: true });
 
       if (profile?.role === 'client') {
         query = query.eq('client_id', user.id);
-      } else if (profile?.role === 'master') {
-        // Master sees all appointments, no specific filter by master_id here
-        // If a master wants to see only their own appointments, an additional filter would be needed.
-        // For now, assuming master sees all.
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch master emails (client emails are now directly in appointment)
+      // Enrich appointments with master/client names and phones
       if (data) {
-        const allMasterIds = Array.from(new Set(data.map(app => app.master_id)));
-        const { data: emailsMap, error: emailError } = await supabase.functions.invoke('get-user-emails', {
-          body: { userIds: allMasterIds },
-        });
+        return data.map(app => {
+          const masterProfile = allMasterProfiles?.find(p => p.id === app.master_id);
+          const clientProfile = allClientProfiles?.find(p => p.id === app.client_id);
 
-        if (emailError) {
-          console.error("Error fetching master emails:", emailError);
-          return data.map(app => ({
+          return {
             ...app,
-            master_email: 'Erro ao carregar e-mail',
-          }));
-        }
-
-        return data.map(app => ({
-          ...app,
-          master_email: (emailsMap as Record<string, string>)?.[app.master_id] || 'N/A',
-        }));
+            master_name: masterProfile ? `${masterProfile.first_name || ''} ${masterProfile.last_name || ''}`.trim() : 'N/A',
+            master_email: masterProfile?.email || 'N/A',
+            client_name: app.client_name || (clientProfile ? `${clientProfile.first_name || ''} ${clientProfile.last_name || ''}`.trim() : 'N/A'),
+            client_email: app.client_email || clientProfile?.email || 'N/A',
+            client_phone: clientProfile?.telefone || 'N/A',
+          };
+        });
       }
 
       return data as Appointment[];
     },
-    enabled: !!user?.id && !authLoading,
+    enabled: !!user?.id && !authLoading && (isMaster ? !isLoadingAllClientProfiles : !isLoadingAllMasterProfiles),
   });
 
   // Mutation to create a new appointment (used by both client and master dialog)
@@ -348,8 +379,6 @@ export default function AppointmentsPage() {
       .slice(0, 5); // Apenas os 5 mais recentes
   }, [appointments]);
 
-  // Removido getStatusBadgeVariant pois o status não será mais exibido
-
   const handleDateSelectedFromList = (date: Date) => {
     setSelectedDate(date);
     setIsTimeSlotDialogOpen(true);
@@ -385,7 +414,12 @@ export default function AppointmentsPage() {
     deleteAppointmentMutation.mutate(appointmentId);
   };
 
-  if (authLoading || isLoadingAppointments || (isMaster ? false : isLoadingSingleMasterProfile)) {
+  const handleRowClick = (appointment: Appointment) => {
+    setSelectedAppointmentForDetails(appointment);
+    setIsDetailsPopupOpen(true);
+  };
+
+  if (authLoading || isLoadingAppointments || (isMaster ? isLoadingAllClientProfiles : isLoadingSingleMasterProfile || isLoadingAllMasterProfiles)) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full text-[#9ba8b5]">
@@ -463,13 +497,13 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">DATA</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {latestAppointments.length > 0 ? (
                     latestAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(app)}>
                         <TableCell className="font-medium text-foreground py-3">
                           {app.client_name}
                         </TableCell>
@@ -482,7 +516,7 @@ export default function AppointmentsPage() {
                         <TableCell className="text-muted-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                        <TableCell className="text-right py-3">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -497,7 +531,7 @@ export default function AppointmentsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento recente.
                       </TableCell>
                     </TableRow>
@@ -509,13 +543,13 @@ export default function AppointmentsPage() {
         </Card>
 
         {/* Componente de seleção de data */}
-        {masterIdForBooking && ( // Renderiza DateSelectionList para ambos os papéis
+        {masterIdForBooking && (
           <DateSelectionList
             masterId={masterIdForBooking}
             onDateSelect={setSelectedDate}
             selectedDate={selectedDate}
-            isMasterBooking={isMaster} // Passa a nova propriedade
-            allAppointments={appointments || []} // Passa todos os agendamentos
+            isMasterBooking={isMaster}
+            allAppointments={appointments || []}
           />
         )}
 
@@ -537,13 +571,13 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">NOME</TableHead>
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {todayAppointments.length > 0 ? (
                     todayAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(app)}>
                         <TableCell className="font-medium text-foreground py-3">
                           {app.client_name}
                         </TableCell>
@@ -553,7 +587,7 @@ export default function AppointmentsPage() {
                         <TableCell className="font-medium text-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                        <TableCell className="text-right py-3">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -568,7 +602,7 @@ export default function AppointmentsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento.
                       </TableCell>
                     </TableRow>
@@ -598,13 +632,13 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">DATA</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {weeklyAppointments.length > 0 ? (
                     weeklyAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(app)}>
                         <TableCell className="font-medium text-foreground py-3">
                           {app.client_name}
                         </TableCell>
@@ -617,7 +651,7 @@ export default function AppointmentsPage() {
                         <TableCell className="text-muted-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                        <TableCell className="text-right py-3">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -632,7 +666,7 @@ export default function AppointmentsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento para esta semana.
                       </TableCell>
                     </TableRow>
@@ -662,13 +696,13 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">E-MAIL</TableHead>
                     <TableHead className="text-muted-foreground">DATA</TableHead>
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead> {/* NOVA COLUNA */}
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {monthlyAppointments.length > 0 ? (
                     monthlyAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(app)}>
                         <TableCell className="font-medium text-foreground py-3">
                           {app.client_name}
                         </TableCell>
@@ -681,7 +715,7 @@ export default function AppointmentsPage() {
                         <TableCell className="text-muted-foreground py-3">
                           {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="text-right py-3"> {/* NOVA CÉLULA DE AÇÕES */}
+                        <TableCell className="text-right py-3">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -696,7 +730,7 @@ export default function AppointmentsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4"> {/* Ajustado colSpan */}
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento para este mês.
                       </TableCell>
                     </TableRow>
@@ -730,6 +764,13 @@ export default function AppointmentsPage() {
             initialData={editingAppointment}
           />
         )}
+
+        {/* Pop-up de Detalhes do Agendamento */}
+        <AppointmentDetailsPopup
+          isOpen={isDetailsPopupOpen}
+          onClose={() => setIsDetailsPopupOpen(false)}
+          appointment={selectedAppointmentForDetails}
+        />
       </motion.div>
     </DashboardLayout>
   );
