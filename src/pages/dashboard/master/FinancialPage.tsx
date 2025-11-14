@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DefaultTaxSettingCard from '@/components/dashboard/master/DefaultTaxSettingCard';
 import InstallmentRatesSettingCard from '@/components/dashboard/master/InstallmentRatesSettingCard';
 import AnnualPackageDiscountSettingCard from '@/components/dashboard/master/AnnualPackageDiscountSettingCard';
+import CurrencyConversionSettingsCard from '@/components/dashboard/master/CurrencyConversionSettingsCard'; // NOVO: Importar
 import { DollarSign } from 'lucide-react'; // Ícone para a página
 
 export default function FinancialPage() {
@@ -37,6 +38,8 @@ export default function FinancialPage() {
         <InstallmentRatesSettingCard />
 
         <AnnualPackageDiscountSettingCard />
+
+        <CurrencyConversionSettingsCard /> {/* NOVO: Adicionar o componente aqui */}
 
         {/* Outras seções financeiras podem ser adicionadas aqui */}
         <div className="bg-card border-border shadow-lg rounded-xl p-6">

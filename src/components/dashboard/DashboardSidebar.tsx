@@ -17,7 +17,7 @@ import {
   Package,
   DollarSign,
   FileText, // Ícone para Orçamentos
-  CreditCard,
+  CreditCard, // Ícone para Custos
   Bot,
   HardHat,
   MessageCircle,
@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   { label: "Serviços", icon: HardHat, href: "/dashboard/services", roles: ['master'] },
   { label: "Pacotes", icon: Package, href: "/dashboard/packages", roles: ['master'] },
   { label: "Orçamentos", icon: FileText, href: "/dashboard/budgets", roles: ['master'] },
-  { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] },
+  { label: "Custos", icon: CreditCard, href: "/dashboard/costs", roles: ['master'] }, // NOVO: Adicionado item de menu para Custos
   { label: "Financeiro", icon: DollarSign, href: "/dashboard/financial", roles: ['master'] },
   { label: "IA Atendimento (Vedra)", icon: Bot, href: "/dashboard/vedra-ai", roles: ['master'] },
   {

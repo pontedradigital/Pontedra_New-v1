@@ -30,10 +30,10 @@ import SettingsPage from "./pages/dashboard/common/SettingsPage";
 import ServicesPage from "./pages/dashboard/master/ServicesPage";
 import PackagesPage from "./pages/dashboard/master/PackagesPage";
 import BudgetsPage from "./pages/dashboard/master/BudgetsPage";
-import CostsPage from "./pages/dashboard/master/CostsPage";
+import CostsPage from "./pages/dashboard/master/CostsPage"; // NOVO: Importar CostsPage
 import FinancialPage from "./pages/dashboard/master/FinancialPage";
 import VedraAIPage from "./pages/dashboard/master/VedraAIPage";
-import ClientsPage from "./pages/dashboard/master/ClientsPage"; // NOVO: Importar ClientsPage
+import ClientsPage from "./pages/dashboard/master/ClientsPage";
 
 function App() {
   return (
@@ -65,11 +65,11 @@ function App() {
         <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} />
 
         {/* Novas Rotas para o Master */}
-        <Route path="/dashboard/clients" element={<ProtectedRoute allowedRoles={['master']}><ClientsPage /></ProtectedRoute>} /> {/* NOVO: Rota para ClientsPage */}
+        <Route path="/dashboard/clients" element={<ProtectedRoute allowedRoles={['master']}><ClientsPage /></ProtectedRoute>} />
         <Route path="/dashboard/services" element={<ProtectedRoute allowedRoles={['master']}><ServicesPage /></ProtectedRoute>} />
         <Route path="/dashboard/packages" element={<ProtectedRoute allowedRoles={['master']}><PackagesPage /></ProtectedRoute>} />
         <Route path="/dashboard/budgets" element={<ProtectedRoute allowedRoles={['master']}><BudgetsPage /></ProtectedRoute>} />
-        <Route path="/dashboard/costs" element={<ProtectedRoute allowedRoles={['master']}><CostsPage /></ProtectedRoute>} />
+        <Route path="/dashboard/costs" element={<ProtectedRoute allowedRoles={['master']}><CostsPage /></ProtectedRoute>} /> {/* NOVO: Rota para CostsPage */}
         <Route path="/dashboard/financial" element={<ProtectedRoute allowedRoles={['master']}><FinancialPage /></ProtectedRoute>} />
         <Route path="/dashboard/vedra-ai" element={<ProtectedRoute allowedRoles={['master']}><VedraAIPage /></ProtectedRoute>} />
 
