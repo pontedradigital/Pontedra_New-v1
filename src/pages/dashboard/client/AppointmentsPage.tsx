@@ -618,7 +618,6 @@ export default function AppointmentsPage() {
             </p>
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1">
-                {/* Removido o contêiner 'react-calendar-container' */}
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -926,7 +925,7 @@ export default function AppointmentsPage() {
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground flex items-center gap-2"><Phone className="w-4 h-4" /> Telefone do Cliente</p>
                       <p className="font-semibold text-foreground">{selectedAppointment.profiles.telefone || 'N/A'}</p>
-                    </p>
+                    </div>
                   </>
                 )}
                 {selectedAppointment.notes && (
