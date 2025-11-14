@@ -711,16 +711,22 @@ export default function BudgetsPage() {
 
       return newBudgetResult as Budget;
     },
-    onSuccess: (newlyCreatedBudget) => {
-      queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.invalidateQueries({ queryKey: ['clientProfilesData'] }); // Invalidate client profiles for the dropdown
-      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate the clients list in ClientsPage
-      toast.success('Orçamento salvo com sucesso!');
-      setCurrentEditableBudget(newlyCreatedBudget); // Store the newly created budget
-      // Do NOT close dialog or clear form here, allow user to generate PDF
-    },
-    onError: (err) => {
-      toast.error(`Erro ao salvar orçamento: ${err.message}`);
+    onError: (err: any) => { // Usar 'any' para inspecionar a estrutura do erro
+      console.error("Erro completo da mutação:", err);
+
+      let userCreationErrorMessage = "Erro desconhecido ao criar novo usuário.";
+
+      // Tenta extrair a mensagem de erro da resposta da Edge Function
+      if (err && err.context && err.context.data && err.context.data.error) {
+        userCreationErrorMessage = `Erro ao criar usuário: ${err.context.data.error}`;
+      } else if (err && err.message) {
+        // Fallback para a mensagem genérica se a estrutura específica não for encontrada
+        userCreationErrorMessage = `Erro ao criar usuário: ${err.message}`;
+      } else {
+        userCreationErrorMessage = `Erro ao criar usuário: ${String(err)}`;
+      }
+
+      toast.error(`Erro ao salvar orçamento: ${userCreationErrorMessage}`);
     },
   });
 
@@ -1623,7 +1629,7 @@ export default function BudgetsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
