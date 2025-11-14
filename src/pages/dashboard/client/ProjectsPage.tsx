@@ -21,7 +21,7 @@ interface PackageInContract {
   id: string;
   name: string;
   package_services: {
-    service_id: ServiceInContract;
+    products: ServiceInContract; // Corrigido para 'products' na interface
   }[];
 }
 
@@ -75,7 +75,7 @@ export default function ProjectsPage() {
             id,
             name,
             package_services (
-              service_id (
+              products:service_id ( -- CORREÇÃO AQUI: Usando 'products:service_id' novamente
                 id,
                 name,
                 initial_delivery_days
@@ -106,8 +106,8 @@ export default function ProjectsPage() {
       } else if (contract.contract_type === 'monthly' && contract.packages) {
         items.push({ name: contract.packages.name, type: 'package' });
         contract.packages.package_services.forEach(ps => {
-          totalDeliveryDays += ps.service_id.initial_delivery_days || 0;
-          items.push({ name: ps.service_id.name, type: 'service' });
+          totalDeliveryDays += ps.products.initial_delivery_days || 0; // Acessando via 'products'
+          items.push({ name: ps.products.name, type: 'service' }); // Adiciona serviços individuais do pacote
         });
       }
 
