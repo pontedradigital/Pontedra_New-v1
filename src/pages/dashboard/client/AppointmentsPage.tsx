@@ -102,7 +102,7 @@ interface Appointment {
   client_email?: string; // Adicionado para o email do cliente
 }
 
-interface UserProfile {
+interface ClientProfile {
   id: string;
   first_name: string | null;
   last_name: string | null;
@@ -131,6 +131,22 @@ export default function AppointmentsPage() {
   const [isStatusChangeOpen, setIsStatusChangeOpen] = useState(false);
   const [appointmentToChangeStatus, setAppointmentToChangeStatus] = useState<Appointment | null>(null);
   const [newStatus, setNewStatus] = useState<Appointment['status'] | ''>('');
+
+  // NOVO: Estados para o diálogo de criação de agendamento pelo Master
+  const [isCreateAppointmentDialogOpen, setIsCreateAppointmentDialogOpen] = useState(false);
+  const [newAppointmentFormData, setNewAppointmentFormData] = useState<{
+    clientId: string | undefined;
+    selectedDate: Date | undefined;
+    selectedSlot: Date | null;
+    notes: string;
+    status: Appointment['status'];
+  }>({
+    clientId: undefined,
+    selectedDate: new Date(),
+    selectedSlot: null,
+    notes: '',
+    status: 'pending', // Default status for new appointments
+  });
 
   // Fetch Master's Availability (assuming a single master for now, or fetching all masters' availability)
   const { data: masterAvailability, isLoading: isLoadingAvailability } = useQuery<MasterAvailability[], Error>({
@@ -213,9 +229,61 @@ export default function AppointmentsPage() {
     enabled: !!user?.id && !authLoading,
   });
 
+  // NOVO: Fetch all client profiles for Master to select from
+  const { data: clientProfilesData, isLoading: isLoadingClientProfilesData } = useQuery<Omit<ClientProfile, 'email'>[], Error>({
+    queryKey: ['clientProfilesData'],
+    queryFn: async () => {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          client_id,
+          first_name,
+          last_name,
+          telefone
+        `)
+        .neq('role', 'master'); // Excluir masters da lista de clientes para agendamento
+
+      if (profilesError) throw profilesError;
+      return profiles;
+    },
+    enabled: profile?.role === 'master' && !authLoading,
+  });
+
+  // NOVO: Fetch emails for client profiles via Edge Function
+  const { data: clientEmailsMap, isLoading: isLoadingClientEmails } = useQuery<Record<string, string>, Error>({
+    queryKey: ['clientProfileEmails', clientProfilesData?.map(p => p.id)],
+    queryFn: async ({ queryKey }) => {
+      const userIds = queryKey[1] as string[];
+      if (!userIds || userIds.length === 0) return {};
+
+      const { data, error } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds },
+      });
+
+      if (error) throw error;
+      return data as Record<string, string>;
+    },
+    enabled: !!clientProfilesData && clientProfilesData.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // NOVO: Combine client profiles with emails
+  const clientProfiles = useMemo(() => {
+    if (!clientProfilesData) return [];
+    return clientProfilesData.map(profile => ({
+      ...profile,
+      email: clientEmailsMap?.[profile.id] || 'N/A',
+    }));
+  }, [clientProfilesData, clientEmailsMap]);
+
+
   // Generate available slots for the selected date
   const availableSlots = useMemo(() => {
-    if (!selectedDate || !masterAvailability || !masterExceptions || !appointments || !user) return [];
+    // Use selectedDate from newAppointmentFormData if in create dialog, otherwise use selectedDate from main state
+    const dateToUse = isCreateAppointmentDialogOpen ? newAppointmentFormData.selectedDate : selectedDate;
+
+    if (!dateToUse || !masterAvailability || !masterExceptions || !appointments || !user) return [];
 
     const slots: Date[] = [];
     const today = new Date();
@@ -223,8 +291,8 @@ export default function AppointmentsPage() {
 
     if (!currentMasterId) return []; // Cannot generate slots without a master
 
-    const dayOfWeek = selectedDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
-    const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd');
+    const dayOfWeek = dateToUse.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const formattedSelectedDate = format(dateToUse, 'yyyy-MM-dd');
 
     // 1. Check for full day exceptions (blocked or fully available)
     const dayException = masterExceptions.find(
@@ -250,8 +318,8 @@ export default function AppointmentsPage() {
       potentialIntervals.push({ start, end });
     } else if (dayException && dayException.is_available && !dayException.start_time && !dayException.end_time) {
       // Exception overrides as fully available (e.g., 00:00 to 23:59)
-      const start = startOfDay(selectedDate);
-      const end = endOfDay(selectedDate);
+      const start = startOfDay(dateToUse);
+      const end = endOfDay(dateToUse);
       potentialIntervals.push({ start, end });
     } else {
       // Use recurring availability
@@ -270,8 +338,8 @@ export default function AppointmentsPage() {
           break; // Slot would extend past the end of the availability interval
         }
 
-        // Filter out past slots (only for client booking)
-        if (profile?.role === 'client' && isPast(slotEnd)) {
+        // Filter out past slots (only for client booking, or for master if creating for today/past)
+        if ((profile?.role === 'client' || isCreateAppointmentDialogOpen) && isPast(slotEnd)) {
           currentTime = slotEnd;
           continue;
         }
@@ -299,28 +367,35 @@ export default function AppointmentsPage() {
     });
 
     return slots.sort((a, b) => a.getTime() - b.getTime());
-  }, [selectedDate, masterAvailability, masterExceptions, appointments, user, profile?.role]);
+  }, [isCreateAppointmentDialogOpen, newAppointmentFormData.selectedDate, selectedDate, masterAvailability, masterExceptions, appointments, user, profile?.role]);
 
-  // Mutation to create a new appointment
-  const createAppointmentMutation = useMutation<void, Error, { masterId: string; startTime: Date; endTime: Date; notes: string }>({
-    mutationFn: async ({ masterId, startTime, endTime, notes }) => {
-      if (!user?.id) throw new Error("Usuário não autenticado.");
+  // Mutation to create a new appointment (modified to accept clientId and status)
+  const createAppointmentMutation = useMutation<void, Error, { clientId: string; masterId: string; startTime: Date; endTime: Date; notes: string; status: Appointment['status'] }>({
+    mutationFn: async ({ clientId, masterId, startTime, endTime, notes, status }) => {
       const { error } = await supabase.from('appointments').insert({
-        client_id: user.id,
+        client_id: clientId,
         master_id: masterId,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         notes: notes,
-        status: 'pending',
+        status: status,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments', user?.id, profile?.role] });
       toast.success('Agendamento solicitado com sucesso! Aguarde a confirmação.');
-      setIsBookingDialogOpen(false);
+      setIsBookingDialogOpen(false); // For client booking
+      setIsCreateAppointmentDialogOpen(false); // For master creation
       setSelectedSlot(null);
       setClientNotes('');
+      setNewAppointmentFormData({ // Reset master form data
+        clientId: undefined,
+        selectedDate: new Date(),
+        selectedSlot: null,
+        notes: '',
+        status: 'pending',
+      });
     },
     onError: (err) => {
       toast.error(`Erro ao solicitar agendamento: ${err.message}`);
@@ -370,7 +445,7 @@ export default function AppointmentsPage() {
     const startTime = selectedSlot;
     const endTime = addMinutes(selectedSlot, APPOINTMENT_DURATION_MINUTES);
 
-    createAppointmentMutation.mutate({ masterId, startTime, endTime, notes: clientNotes });
+    createAppointmentMutation.mutate({ clientId: user.id, masterId, startTime, endTime, notes: clientNotes, status: 'pending' });
   };
 
   const handleViewDetails = (appointment: Appointment) => {
@@ -399,6 +474,54 @@ export default function AppointmentsPage() {
     updateAppointmentStatusMutation.mutate({ appointmentId: appointmentToChangeStatus.id, status: newStatus });
   };
 
+  // NOVO: Handlers para o diálogo de criação de agendamento pelo Master
+  const handleOpenCreateAppointmentDialog = () => {
+    setNewAppointmentFormData({
+      clientId: undefined,
+      selectedDate: new Date(),
+      selectedSlot: null,
+      notes: '',
+      status: 'pending',
+    });
+    setIsCreateAppointmentDialogOpen(true);
+  };
+
+  const handleNewAppointmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewAppointmentFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewAppointmentSelectChange = (name: string, value: string | Date | null) => {
+    if (name === 'selectedDate' && value instanceof Date) {
+      setNewAppointmentFormData(prev => ({ ...prev, selectedDate: value, selectedSlot: null })); // Reset slot on date change
+    } else if (name === 'selectedSlot' && value instanceof Date) {
+      setNewAppointmentFormData(prev => ({ ...prev, selectedSlot: value }));
+    } else {
+      setNewAppointmentFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleCreateAppointmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAppointmentFormData.clientId || !newAppointmentFormData.selectedSlot || !user) {
+      toast.error("Por favor, selecione um cliente e um horário.");
+      return;
+    }
+
+    const masterId = user.id; // Master logado é o master do agendamento
+    const startTime = newAppointmentFormData.selectedSlot;
+    const endTime = addMinutes(startTime, APPOINTMENT_DURATION_MINUTES);
+
+    createAppointmentMutation.mutate({
+      clientId: newAppointmentFormData.clientId,
+      masterId,
+      startTime,
+      endTime,
+      notes: newAppointmentFormData.notes,
+      status: newAppointmentFormData.status,
+    });
+  };
+
   const getStatusBadgeVariant = (status: Appointment['status']) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
@@ -409,7 +532,7 @@ export default function AppointmentsPage() {
     }
   };
 
-  const isLoading = authLoading || isLoadingAvailability || isLoadingExceptions || isLoadingAppointments;
+  const isLoading = authLoading || isLoadingAvailability || isLoadingExceptions || isLoadingAppointments || isLoadingClientProfilesData || isLoadingClientEmails;
 
   if (isLoading) {
     return (
@@ -441,11 +564,15 @@ export default function AppointmentsPage() {
         transition={{ duration: 0.5 }}
         className="space-y-8"
       >
-        <div className="flex items-center gap-4 mb-8">
-          <CalendarIcon className="w-10 h-10 text-[#57e389]" />
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-foreground">
             {isMaster ? 'Gerenciar Agendamentos' : 'Meus Agendamentos'}
           </h1>
+          {isMaster && (
+            <Button onClick={handleOpenCreateAppointmentDialog} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
+              <PlusCircle className="mr-2 h-4 w-4" /> Criar Agendamento
+            </Button>
+          )}
         </div>
         <p className="text-lg text-[#9ba8b5]">
           Olá, <span className="font-semibold text-white">{profile?.first_name}</span>!
@@ -455,11 +582,11 @@ export default function AppointmentsPage() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Coluna do Calendário e Slots Disponíveis (para clientes) */}
-          {!isMaster && (
+          {/* Coluna do Calendário e Slots Disponíveis (para clientes e Master ao criar) */}
+          {(isMaster || !isMaster) && ( // Always show calendar, but behavior changes
             <div className="bg-card border border-border rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CalendarIcon className="w-6 h-6 text-blue-500" /> Agendar Reunião
+                <CalendarIcon className="w-6 h-6 text-blue-500" /> {isMaster ? 'Selecionar Data para Agendamento' : 'Agendar Reunião'}
               </h2>
               <p className="text-muted-foreground mb-6">
                 Selecione uma data e um horário disponível para sua reunião.
@@ -738,6 +865,151 @@ export default function AppointmentsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* NOVO: Dialog de Criação de Agendamento (Master) */}
+        {isMaster && (
+          <Dialog open={isCreateAppointmentDialogOpen} onOpenChange={setIsCreateAppointmentDialogOpen}>
+            <DialogContent className="sm:max-w-md bg-card border-border text-foreground rounded-xl">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-primary">Criar Novo Agendamento</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Preencha os detalhes para agendar uma reunião para um cliente.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreateAppointmentSubmit} className="space-y-4 py-4">
+                {/* Seleção de Cliente */}
+                <div className="space-y-2">
+                  <Label htmlFor="client-select" className="text-foreground">Cliente *</Label>
+                  <Select
+                    name="clientId"
+                    value={newAppointmentFormData.clientId}
+                    onValueChange={(value) => handleNewAppointmentSelectChange('clientId', value)}
+                    required
+                  >
+                    <SelectTrigger id="client-select" className="w-full bg-background border-border text-foreground">
+                      <SelectValue placeholder="Selecione um cliente" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      {clientProfiles.length > 0 ? (
+                        clientProfiles.map(client => (
+                          <SelectItem key={client.id} value={client.id}>
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                              {client.first_name} {client.last_name} ({client.email})
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-clients" disabled>Nenhum cliente disponível</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Seleção de Data */}
+                <div className="space-y-2">
+                  <Label htmlFor="date-select" className="text-foreground">Data *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal bg-background border-border text-foreground",
+                          !newAppointmentFormData.selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newAppointmentFormData.selectedDate ? format(newAppointmentFormData.selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-popover border-border text-popover-foreground">
+                      <Calendar
+                        mode="single"
+                        selected={newAppointmentFormData.selectedDate}
+                        onSelect={(date) => handleNewAppointmentSelectChange('selectedDate', date)}
+                        initialFocus
+                        locale={ptBR}
+                        disabled={(date) => isBefore(date, subDays(new Date(), 1))} // Disable past dates
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Seleção de Horário */}
+                <div className="space-y-2">
+                  <Label htmlFor="slot-select" className="text-foreground">Horário *</Label>
+                  <Select
+                    name="selectedSlot"
+                    value={newAppointmentFormData.selectedSlot ? newAppointmentFormData.selectedSlot.toISOString() : ''}
+                    onValueChange={(value) => handleNewAppointmentSelectChange('selectedSlot', parseISO(value))}
+                    required
+                    disabled={!newAppointmentFormData.selectedDate}
+                  >
+                    <SelectTrigger id="slot-select" className="w-full bg-background border-border text-foreground">
+                      <SelectValue placeholder="Selecione um horário" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      {availableSlots.length > 0 ? (
+                        availableSlots.map((slot, index) => (
+                          <SelectItem key={index} value={slot.toISOString()}>
+                            {format(slot, 'HH:mm', { locale: ptBR })}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-slots" disabled>Nenhum horário disponível</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Notas */}
+                <div className="space-y-2">
+                  <Label htmlFor="master-notes" className="text-foreground">Notas (Opcional)</Label>
+                  <Textarea
+                    id="master-notes"
+                    name="notes"
+                    value={newAppointmentFormData.notes}
+                    onChange={handleNewAppointmentFormChange}
+                    placeholder="Adicione detalhes ou observações..."
+                    rows={3}
+                    className="bg-background border-border text-foreground"
+                  />
+                </div>
+
+                {/* Status Inicial */}
+                <div className="space-y-2">
+                  <Label htmlFor="status-select" className="text-foreground">Status Inicial *</Label>
+                  <Select
+                    name="status"
+                    value={newAppointmentFormData.status}
+                    onValueChange={(value: Appointment['status']) => handleNewAppointmentSelectChange('status', value)}
+                    required
+                  >
+                    <SelectTrigger id="status-select" className="w-full bg-background border-border text-foreground">
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="confirmed">Confirmado</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                      <SelectItem value="completed">Concluído</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <DialogFooter className="mt-6">
+                  <Button variant="outline" onClick={() => setIsCreateAppointmentDialogOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createAppointmentMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    {createAppointmentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                    Criar Agendamento
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </motion.div>
     </DashboardLayout>
   );
