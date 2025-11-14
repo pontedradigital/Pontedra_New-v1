@@ -58,6 +58,13 @@ import { // Adicionado importação dos componentes Dialog
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Tipos de dados para o perfil do usuário (completo)
 interface UserProfile {
