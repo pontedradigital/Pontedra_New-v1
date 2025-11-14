@@ -138,19 +138,19 @@ export default function AppointmentsPage() {
           notes,
           created_at,
           client_name,
-          client_email,
-          client_profile:profiles!client_id ( // Alias para o perfil do cliente
-            first_name,
-            last_name,
-            telefone
-          ),
-          master_profile:profiles!master_id ( // Alias para o perfil do master
-            first_name,
-            last_name,
-            telefone
-          )
-        `);
-        // .order('start_time', { ascending: true }); // REMOVIDO TEMPORARIAMENTE
+          client_email
+          // client_profile:profiles!client_id ( // Removido temporariamente
+          //   first_name,
+          //   last_name,
+          //   telefone
+          // ),
+          // master_profile:profiles!master_id ( // Removido temporariamente
+          //   first_name,
+          //   last_name,
+          //   telefone
+          // )
+        `)
+        .order('start_time', { ascending: true }); // Reativado a ordenação
 
       if (profile?.role === 'client') {
         query = query.eq('client_id', user.id);
