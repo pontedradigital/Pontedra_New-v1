@@ -654,6 +654,7 @@ export default function BudgetsPage() {
         });
 
         if (signUpError) {
+          console.error("Supabase signUp error:", signUpError); // ADDED LOG
           if (signUpError.message.includes("already registered")) {
             throw new Error(`O e-mail '${budgetData.client_email}' já está registrado. Por favor, selecione o cliente existente ou use um e-mail diferente.`);
           }
@@ -661,8 +662,10 @@ export default function BudgetsPage() {
         }
 
         if (!signUpData.user) {
+          console.error("Supabase signUp returned no user data:", signUpData); // ADDED LOG
           throw new Error("Falha ao criar novo usuário: Nenhum usuário retornado após o cadastro.");
         }
+        console.log("Supabase signUp successful, new user ID:", signUpData.user.id); // ADDED LOG
 
         finalUserId = signUpData.user.id;
         toast.info(`Novo usuário '${budgetData.client_email}' criado com sucesso! O cliente precisará redefinir a senha através do link de confirmação de e-mail.`);
