@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { BarChart, CalendarDays, Loader2, Users, DollarSign } from 'lucide-react'; // Adicionado Users e DollarSign
+import { BarChart, CalendarDays, Loader2, Users, DollarSign, FileText, Briefcase } from 'lucide-react'; // Adicionado FileText e Briefcase
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { format, getMonth, getYear, setMonth, setYear, subMonths } from 'date-fns';
@@ -14,6 +14,13 @@ import AppointmentsReportsCard from '@/components/dashboard/master/reports/Appoi
 import ProjectsReportsCard from '@/components/dashboard/master/reports/ProjectsReportsCard';
 import BudgetsReportsCard from '@/components/dashboard/master/reports/BudgetsReportsCard';
 import FinancialReportsCard from '@/components/dashboard/master/reports/FinancialReportsCard';
+
+// Import new monthly charts
+import ClientMonthlyChart from '@/components/dashboard/master/reports/ClientMonthlyChart';
+import AppointmentsMonthlyChart from '@/components/dashboard/master/reports/AppointmentsMonthlyChart';
+import ProjectsMonthlyChart from '@/components/dashboard/master/reports/ProjectsMonthlyChart';
+import BudgetsMonthlyChart from '@/components/dashboard/master/reports/BudgetsMonthlyChart';
+import MonthlyFinancialCharts from '@/components/dashboard/master/MonthlyFinancialCharts'; // Reutilizando o componente existente
 
 export default function ReportsPage() {
   const { profile, loading: authLoading } = useAuth();
@@ -110,6 +117,7 @@ export default function ReportsPage() {
             <Users className="w-6 h-6 text-blue-500" /> Relatório de Clientes
           </h2>
           <ClientReportsCard selectedDate={selectedDate} />
+          <ClientMonthlyChart selectedDate={selectedDate} />
         </section>
 
         {/* Relatórios de Agendamentos */}
@@ -118,22 +126,25 @@ export default function ReportsPage() {
             <CalendarDays className="w-6 h-6 text-green-500" /> Relatório de Agendamentos
           </h2>
           <AppointmentsReportsCard selectedDate={selectedDate} />
+          <AppointmentsMonthlyChart selectedDate={selectedDate} />
         </section>
 
         {/* Relatórios de Projetos */}
         <section className="space-y-4">
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <BarChart className="w-6 h-6 text-purple-500" /> Relatório de Projetos
+            <Briefcase className="w-6 h-6 text-purple-500" /> Relatório de Projetos
           </h2>
           <ProjectsReportsCard selectedDate={selectedDate} />
+          <ProjectsMonthlyChart selectedDate={selectedDate} />
         </section>
 
         {/* Relatórios de Orçamentos */}
         <section className="space-y-4">
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <BarChart className="w-6 h-6 text-orange-500" /> Relatório de Orçamentos
+            <FileText className="w-6 h-6 text-orange-500" /> Relatório de Orçamentos
           </h2>
           <BudgetsReportsCard selectedDate={selectedDate} />
+          <BudgetsMonthlyChart selectedDate={selectedDate} />
         </section>
 
         {/* Relatórios Financeiros */}
@@ -142,6 +153,8 @@ export default function ReportsPage() {
             <DollarSign className="w-6 h-6 text-red-500" /> Relatório Financeiro
           </h2>
           <FinancialReportsCard selectedDate={selectedDate} />
+          {/* MonthlyFinancialCharts já está configurado para os últimos 12 meses */}
+          <MonthlyFinancialCharts data={[]} isLoading={false} /> {/* Será preenchido pela query interna */}
         </section>
       </motion.div>
     </DashboardLayout>
