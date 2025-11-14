@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays, Tag } from 'lucide-react'; // NOVO: Importar Tag
+import { User, Mail, Phone, Settings as SettingsIcon, Building, MapPin, CalendarDays, Tag, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'; // Adicionado Lock, Eye, EyeOff, Loader2
 import WhatsAppNumberSettingCard from '@/components/dashboard/master/WhatsAppNumberSettingCard';
 
 export default function SettingsPage() {
@@ -25,7 +25,14 @@ export default function SettingsPage() {
   const [addressState, setAddressState] = useState('');
   const [addressCep, setAddressCep] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false); // Renomeado para clareza
+
+  // Estados para alteração de senha
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   useEffect(() => {
     if (profile && user) {
@@ -65,7 +72,7 @@ export default function SettingsPage() {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
+    setIsSavingProfile(true);
     const success = await updateProfile({
       first_name: firstName,
       last_name: lastName,
@@ -81,7 +88,35 @@ export default function SettingsPage() {
       address_cep: addressCep,
       date_of_birth: dateOfBirth,
     });
-    setIsSaving(false);
+    setIsSavingProfile(false);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmNewPassword) {
+      toast.error("As novas senhas não coincidem.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      const { error } = await user?.update({ password: newPassword });
+      if (error) {
+        throw error;
+      }
+      toast.success("Senha atualizada com sucesso!");
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error: any) {
+      console.error("Erro ao atualizar senha:", error.message);
+      toast.error(`Erro ao atualizar senha: ${error.message}`);
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   if (loading) {
@@ -314,8 +349,67 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={isSaving} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
-                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+              <Button type="submit" disabled={isSavingProfile} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
+                {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Salvar Alterações'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Seção de Alterar Senha */}
+        <Card className="bg-card border-border shadow-lg rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold text-foreground">Alterar Senha</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Mantenha sua conta segura atualizando sua senha regularmente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="new-password" className="text-foreground">Nova Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="new-password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-new-password" className="text-foreground">Confirmar Nova Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    id="confirm-new-password"
+                    type={showConfirmNewPassword ? "text" : "password"}
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="pl-10 bg-background border-border text-foreground focus:ring-primary"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary"
+                  >
+                    {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" disabled={isSavingPassword} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md">
+                {isSavingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Alterar Senha'}
               </Button>
             </form>
           </CardContent>
