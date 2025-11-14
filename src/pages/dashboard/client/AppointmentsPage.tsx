@@ -423,230 +423,79 @@ export default function AppointmentsPage() {
           />
         )}
 
-        {/* Três caixas de resumo - em linhas */}
-        <div className="flex flex-col gap-6">
-          {/* Primeira Caixa: Agendamentos do Dia */}
-          <Card className="bg-card border-border shadow-lg rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5 text-blue-500" /> Agendamentos do Dia
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos para {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : 'o dia selecionado'}.
-              </p>
-              <div className="overflow-x-auto max-h-60 custom-scrollbar">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/20">
-                      <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                      <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-                      {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
-                      <TableHead className="text-muted-foreground">STATUS</TableHead>
-                      <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {todayAppointments.length > 0 ? (
-                      todayAppointments.map((app) => (
-                        <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                          <TableCell className="font-medium text-foreground py-3">
-                            {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
-                          </TableCell>
+        {/* Tabela de Agendamentos do Dia */}
+        <Card className="bg-card border-border shadow-lg rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-blue-500" /> Agendamentos para {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : 'o dia selecionado'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Total: <span className="font-bold text-primary">{todayAppointments.length}</span> agendamentos.
+            </p>
+            <div className="overflow-x-auto max-h-60 custom-scrollbar">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20">
+                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                    <TableHead className="text-muted-foreground">CLIENTE</TableHead>
+                    {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
+                    <TableHead className="text-muted-foreground">STATUS</TableHead>
+                    <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {todayAppointments.length > 0 ? (
+                    todayAppointments.map((app) => (
+                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                        <TableCell className="font-medium text-foreground py-3">
+                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground py-3">
+                          {app.client_profile?.first_name} {app.client_profile?.last_name}
+                          {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
+                        </TableCell>
+                        {isMaster && (
                           <TableCell className="text-muted-foreground py-3">
-                            {app.client_profile?.first_name} {app.client_profile?.last_name}
-                            {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
+                            {app.master_profile?.first_name} {app.master_profile?.last_name}
+                            {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                           </TableCell>
+                        )}
+                        <TableCell className="py-3">
+                          <Badge className={getStatusBadgeVariant(app.status)}>
+                            {app.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right py-3">
+                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
+                            <Info className="h-4 w-4" />
+                          </Button>
                           {isMaster && (
-                            <TableCell className="text-muted-foreground py-3">
-                              {app.master_profile?.first_name} {app.master_profile?.last_name}
-                              {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
-                            </TableCell>
+                            <>
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
-                          <TableCell className="py-3">
-                            <Badge className={getStatusBadgeVariant(app.status)}>
-                              {app.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right py-3">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
-                              <Info className="h-4 w-4" />
-                            </Button>
-                            {isMaster && (
-                              <>
-                                <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
-                          Nenhum agendamento.
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Segunda Caixa: Agendamentos da Semana */}
-          <Card className="bg-card border-border shadow-lg rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <Clock className="w-5 h-5 text-purple-500" /> Agendamentos da Semana
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{weekAppointments.length}</span> agendamentos para a semana de {selectedDate ? format(startOfWeek(selectedDate, { locale: ptBR }), 'dd/MM', { locale: ptBR }) : 'o dia selecionado'}.
-              </p>
-              <div className="overflow-x-auto max-h-60 custom-scrollbar">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/20">
-                      <TableHead className="text-muted-foreground">DATA</TableHead>
-                      <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-                      {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
-                      <TableHead className="text-muted-foreground">STATUS</TableHead>
-                      <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
+                        Nenhum agendamento.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {weekAppointments.length > 0 ? (
-                      weekAppointments.map((app) => (
-                        <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                          <TableCell className="font-medium text-foreground py-3">
-                            {format(parseISO(app.start_time), 'dd/MM HH:mm', { locale: ptBR })}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.client_profile?.first_name} {app.client_profile?.last_name}
-                            {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
-                          </TableCell>
-                          {isMaster && (
-                            <TableCell className="text-muted-foreground py-3">
-                              {app.master_profile?.first_name} {app.master_profile?.last_name}
-                              {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
-                            </TableCell>
-                          )}
-                          <TableCell className="py-3">
-                            <Badge className={getStatusBadgeVariant(app.status)}>
-                              {app.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right py-3">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
-                              <Info className="h-4 w-4" />
-                            </Button>
-                            {isMaster && (
-                              <>
-                                <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
-                          Nenhum agendamento.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Terceira Caixa: Agendamentos do Mês */}
-          <Card className="bg-card border-border shadow-lg rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5 text-green-500" /> Agendamentos do Mês
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Total: <span className="font-bold text-primary">{monthAppointments.length}</span> agendamentos para {selectedDate ? format(selectedDate, 'MMMM/yyyy', { locale: ptBR }) : 'o dia selecionado'}.
-              </p>
-              <div className="overflow-x-auto max-h-60 custom-scrollbar">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/20">
-                      <TableHead className="text-muted-foreground">DATA</TableHead>
-                      <TableHead className="text-muted-foreground">CLIENTE</TableHead>
-                      {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
-                      <TableHead className="text-muted-foreground">STATUS</TableHead>
-                      <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {monthAppointments.length > 0 ? (
-                      monthAppointments.map((app) => (
-                        <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                          <TableCell className="font-medium text-foreground py-3">
-                            {format(parseISO(app.start_time), 'dd/MM HH:mm', { locale: ptBR })}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.client_profile?.first_name} {app.client_profile?.last_name}
-                            {isMaster && app.client_email && <p className="text-xs text-muted-foreground">{app.client_email}</p>}
-                          </TableCell>
-                          {isMaster && (
-                            <TableCell className="text-muted-foreground py-3">
-                              {app.master_profile?.first_name} {app.master_profile?.last_name}
-                              {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
-                            </TableCell>
-                          )}
-                          <TableCell className="py-3">
-                            <Badge className={getStatusBadgeVariant(app.status)}>
-                              {app.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right py-3">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
-                              <Info className="h-4 w-4" />
-                            </Button>
-                            {isMaster && (
-                              <>
-                                <Button variant="ghost" size="sm" onClick={() => handleOpenAddAppointmentDialog(app)} className="text-primary hover:text-primary/80">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => deleteAppointmentMutation.mutate(app.id)} className="text-destructive hover:text-destructive/80">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
-                          Nenhum agendamento.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* Diálogo de Seleção de Horário (para clientes) */}
