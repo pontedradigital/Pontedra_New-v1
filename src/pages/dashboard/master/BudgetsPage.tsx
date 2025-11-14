@@ -526,7 +526,7 @@ export default function BudgetsPage() {
         }
         return [...prev, {
           id: itemToToggle.id,
-          type: itemToToggle.type,
+          type: itemToTo`gle.type,
           name: itemToToggle.name,
           description: itemToToggle.description,
           price: itemToToggle.price,
@@ -707,7 +707,8 @@ export default function BudgetsPage() {
     },
     onSuccess: (newlyCreatedBudget) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.invalidateQueries({ queryKey: ['clientProfilesData'] }); // Invalidate client profiles to show new user
+      queryClient.invalidateQueries({ queryKey: ['clientProfilesData'] }); // Invalidate client profiles for the dropdown
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate the clients list in ClientsPage
       toast.success('Orçamento salvo com sucesso!');
       setCurrentEditableBudget(newlyCreatedBudget); // Store the newly created budget
       // Do NOT close dialog or clear form here, allow user to generate PDF
