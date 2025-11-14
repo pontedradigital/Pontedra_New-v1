@@ -315,7 +315,7 @@ export default function BudgetsPage() {
           last_name,
           telefone,
           role
-        `); // REMOVIDO: .eq('role', 'client') para buscar todos os perfis
+        `); 
 
       if (profilesError) throw profilesError;
       return profiles;
@@ -647,6 +647,9 @@ export default function BudgetsPage() {
           first_name: budgetData.client_first_name,
           last_name: budgetData.client_last_name || null,
           telefone: budgetData.client_phone || null,
+          // Definir role e status padrão para novos usuários criados via orçamento
+          role: 'prospect', 
+          status: 'ativo',
         };
 
         // Chamar a Edge Function para criar o usuário sem verificação
