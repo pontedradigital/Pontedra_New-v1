@@ -18,7 +18,6 @@ import {
   Edit,
   Trash2,
   ChevronDown,
-  Filter, // Adicionado para o filtro
 } from 'lucide-react';
 import {
   format,
@@ -28,15 +27,20 @@ import {
   isSameDay,
   startOfDay,
   endOfDay,
+  eachHourOfInterval,
   eachDayOfInterval,
   isWithinInterval,
+  isSameHour,
+  isSameMinute,
+  setHours,
+  setMinutes,
+  setSeconds,
+  setMilliseconds,
   isBefore,
   isAfter,
   subDays,
-  startOfWeek, // NOVO: Importar startOfWeek
-  endOfWeek,   // NOVO: Importar endOfWeek
-  startOfMonth,
-  endOfMonth,
+  startOfMonth, // NOVO: Importar startOfMonth
+  endOfMonth,   // NOVO: Importar endOfMonth
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar'; // Shadcn Calendar
@@ -71,7 +75,8 @@ interface MasterAvailability {
   master_id: string;
   day_of_week: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
   start_time: string; // HH:mm:ss
-  end_time: string;   // HH:mm:ss
+  end_time:   // HH:mm:ss
+  string;
 }
 
 interface MasterException {
@@ -89,7 +94,8 @@ interface Appointment {
   client_id: string;
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
-  end_time: string;   // TIMESTAMP WITH TIME ZONE
+  end_time:   // TIMESTAMP WITH TIME ZONE
+  string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   notes: string | null;
   created_at: string;
@@ -334,11 +340,12 @@ export default function AppointmentsPage() {
         const isBooked = appointments.some((app) => {
           const appStart = parseISO(app.start_time);
           const appEnd = parseISO(app.end_time);
-          // Corrected overlap logic: intervals [A_start, A_end) and [B_start, B_end) overlap if A_start < B_end AND B_start < A_end
           return (
             app.master_id === currentMasterId &&
             app.status !== 'cancelled' &&
-            (isBefore(currentTime, appEnd) && isBefore(appStart, slotEnd))
+            (isWithinInterval(currentTime, { start: appStart, end: addMinutes(appEnd, -1) }) ||
+            isWithinInterval(slotEnd, { start: addMinutes(appStart, 1), end: appEnd }) ||
+            (isBefore(appStart, currentTime) && isAfter(appEnd, slotEnd)))
           );
         });
 
@@ -376,7 +383,7 @@ export default function AppointmentsPage() {
 
     daysInMonth.forEach(day => {
       // Only check future dates or today
-      if (isBefore(day, startOfDay(new Date()))) { // Corrected to disable dates before today
+      if (isBefore(day, startOfDay(subDays(new Date(), 1)))) {
         return;
       }
       const slots = getAvailableSlotsForDate(day);
@@ -574,32 +581,6 @@ export default function AppointmentsPage() {
 
   const isMaster = profile?.role === 'master';
 
-  // --- NOVO: Filtros de Agendamentos por Período ---
-  const today = new Date();
-  const startOfCurrentWeek = startOfWeek(today, { locale: ptBR });
-  const endOfCurrentWeek = endOfWeek(today, { locale: ptBR });
-  const startOfCurrentMonth = startOfMonth(today);
-  const endOfCurrentMonth = endOfMonth(today);
-
-  const allFutureAppointments = useMemo(() => {
-    return appointments?.filter(app => isAfter(parseISO(app.start_time), new Date())) || [];
-  }, [appointments]);
-
-  const todayAppointments = useMemo(() => {
-    return appointments?.filter(app => isSameDay(parseISO(app.start_time), today)) || [];
-  }, [appointments, today]);
-
-  const weekAppointments = useMemo(() => {
-    return appointments?.filter(app => isWithinInterval(parseISO(app.start_time), { start: startOfCurrentWeek, end: endOfCurrentWeek })) || [];
-  }, [appointments, startOfCurrentWeek, endOfCurrentWeek]);
-
-  const monthAppointments = useMemo(() => {
-    return appointments?.filter(app => isWithinInterval(parseISO(app.start_time), { start: startOfCurrentMonth, end: endOfCurrentMonth })) || [];
-  }, [appointments, startOfCurrentMonth, endOfCurrentMonth]);
-
-  // Determine which list to display in the main table based on user role
-  const mainAppointmentsList = isMaster ? appointments : allFutureAppointments;
-
   return (
     <DashboardLayout>
       <motion.div
@@ -643,7 +624,7 @@ export default function AppointmentsPage() {
                   initialFocus
                   locale={ptBR}
                   className="rounded-md border bg-background"
-                  disabled={(date) => isBefore(date, startOfDay(new Date()))} // Disable past dates
+                  disabled={(date) => isBefore(date, subDays(new Date(), 1))} // Disable past dates
                   modifiers={{
                     available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
                   }}
@@ -684,7 +665,7 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          {/* Coluna de Agendamentos (Principal) */}
+          {/* Coluna de Meus Agendamentos (para clientes) / Todos os Agendamentos (para Master) */}
           <div className="bg-card border border-border rounded-xl shadow-lg p-6 col-span-full lg:col-span-1">
             <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
               <Clock className="w-6 h-6 text-purple-500" />
@@ -708,8 +689,8 @@ export default function AppointmentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mainAppointmentsList && mainAppointmentsList.length > 0 ? (
-                    mainAppointmentsList.map((app) => (
+                  {appointments && appointments.length > 0 ? (
+                    appointments.map((app) => (
                       <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
                         <TableCell className="font-medium text-foreground py-4">
                           {format(parseISO(app.start_time), 'dd/MM/yyyy', { locale: ptBR })}
@@ -760,153 +741,6 @@ export default function AppointmentsPage() {
             </div>
           </div>
         </div>
-
-        {/* NOVO: Seções de Agendamentos por Período */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-          {/* Agendamentos de Hoje */}
-          <div className="bg-card border border-border rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <CalendarIcon className="w-6 h-6 text-green-500" /> Agendamentos de Hoje
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Compromissos marcados para {format(today, 'dd/MM/yyyy', { locale: ptBR })}.
-            </p>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/20">
-                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
-                    <TableHead className="text-muted-foreground">STATUS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {todayAppointments.length > 0 ? (
-                    todayAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                        <TableCell className="text-foreground py-3">
-                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
-                        </TableCell>
-                        {isMaster && (
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.profiles?.first_name}
-                          </TableCell>
-                        )}
-                        <TableCell className="py-3">
-                          <Badge className={getStatusBadgeVariant(app.status)}>
-                            {app.status === 'pending' ? 'Pendente' :
-                             app.status === 'confirmed' ? 'Confirmado' :
-                             app.status === 'cancelled' ? 'Cancelado' :
-                             app.status === 'completed' ? 'Concluído' : 'Desconhecido'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={isMaster ? 3 : 2} className="text-center text-muted-foreground py-6">
-                        Nenhum agendamento para hoje.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-
-          {/* Agendamentos da Semana */}
-          <div className="bg-card border border-border rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <CalendarIcon className="w-6 h-6 text-yellow-500" /> Agendamentos da Semana
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Compromissos de {format(startOfCurrentWeek, 'dd/MM', { locale: ptBR })} a {format(endOfCurrentWeek, 'dd/MM', { locale: ptBR })}.
-            </p>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/20">
-                    <TableHead className="text-muted-foreground">DATA</TableHead>
-                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {weekAppointments.length > 0 ? (
-                    weekAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                        <TableCell className="font-medium text-foreground py-3">
-                          {format(parseISO(app.start_time), 'dd/MM', { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-foreground py-3">
-                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
-                        </TableCell>
-                        {isMaster && (
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.profiles?.first_name}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={isMaster ? 3 : 2} className="text-center text-muted-foreground py-6">
-                        Nenhum agendamento para esta semana.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-
-          {/* Agendamentos do Mês */}
-          <div className="bg-card border border-border rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <CalendarIcon className="w-6 h-6 text-purple-500" /> Agendamentos do Mês
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Compromissos para {format(today, 'MMMM/yyyy', { locale: ptBR })}.
-            </p>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/20">
-                    <TableHead className="text-muted-foreground">DATA</TableHead>
-                    <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
-                    {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
-                  </TableHead>
-                </TableHeader>
-                <TableBody>
-                  {monthAppointments.length > 0 ? (
-                    monthAppointments.map((app) => (
-                      <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
-                        <TableCell className="font-medium text-foreground py-3">
-                          {format(parseISO(app.start_time), 'dd/MM', { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-foreground py-3">
-                          {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })}
-                        </TableCell>
-                        {isMaster && (
-                          <TableCell className="text-muted-foreground py-3">
-                            {app.profiles?.first_name}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={isMaster ? 3 : 2} className="text-center text-muted-foreground py-6">
-                        Nenhum agendamento para este mês.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
-
 
         {/* Dialog de Agendamento (Cliente) */}
         <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
@@ -1129,7 +963,7 @@ export default function AppointmentsPage() {
                         onSelect={(date) => handleNewAppointmentSelectChange('selectedDate', date)}
                         initialFocus
                         locale={ptBR}
-                        disabled={(date) => isBefore(date, startOfDay(new Date()))} // Disable past dates
+                        disabled={(date) => isBefore(date, subDays(new Date(), 1))} // Disable past dates
                         modifiers={{
                           available: (date) => datesWithAvailableSlots.has(format(date, 'yyyy-MM-dd')),
                         }}
