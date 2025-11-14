@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import ProjectDetailsPopup from '@/components/dashboard/client/ProjectDetailsPopup'; // Importar o novo componente
 
 // Interfaces para dados aninhados
 interface ServiceItem {
@@ -82,6 +83,13 @@ interface ClientContract {
   budgets: Budget | null; // NOVO: Adicionado para vincular ao orçamento completo
 }
 
+// Interface para os dados do projeto com informações adicionais para exibição
+interface ProjectDisplayData extends ClientContract {
+  totalDeliveryDays: number;
+  estimatedDeliveryDate: string; // Formatted string
+  items: { name: string; type: 'service' | 'package' }[];
+}
+
 export default function ProjectsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -106,6 +114,9 @@ export default function ProjectsPage() {
     estimatedCompletionDate: undefined,
     budget_id: undefined,
   });
+
+  const [isProjectDetailsPopupOpen, setIsProjectDetailsPopupOpen] = useState(false); // Estado para o pop-up de detalhes
+  const [selectedProjectForDetails, setSelectedProjectForDetails] = useState<ProjectDisplayData | null>(null); // Projeto para exibir no pop-up
 
   // Fetch all available services (products)
   const { data: services, isLoading: isLoadingServices } = useQuery<ServiceItem[], Error>({
@@ -218,6 +229,10 @@ export default function ProjectsPage() {
           ),
           budgets (
             id,
+            client_name,
+            client_phone,
+            client_email,
+            total_amount,
             budget_items (
               id, item_type, item_name, item_description, item_price, service_id, package_id
             )
@@ -239,7 +254,7 @@ export default function ProjectsPage() {
   });
 
   // Process projects for display
-  const projects = useMemo(() => {
+  const projects: ProjectDisplayData[] = useMemo(() => {
     if (!contracts) return [];
 
     return contracts.map(contract => {
@@ -458,6 +473,11 @@ export default function ProjectsPage() {
 
   const isLoading = authLoading || isLoadingContracts || isLoadingServices || isLoadingPackages || isLoadingBudgets;
 
+  const handleRowClick = (project: ProjectDisplayData) => {
+    setSelectedProjectForDetails(project);
+    setIsProjectDetailsPopupOpen(true);
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -529,7 +549,7 @@ export default function ProjectsPage() {
             <TableBody>
               {projects.length > 0 ? (
                 projects.map((project) => (
-                  <TableRow key={project.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                  <TableRow key={project.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10 cursor-pointer" onClick={() => handleRowClick(project)}>
                     <TableCell className="font-medium text-foreground py-4 flex items-center gap-2">
                       <Tag className="w-4 h-4 text-primary" /> {project.project_id}
                     </TableCell>
@@ -570,10 +590,10 @@ export default function ProjectsPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(project)} className="text-primary hover:text-primary/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenDialog(project); }} className="text-primary hover:text-primary/80">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteProjectMutation.mutate(project.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deleteProjectMutation.mutate(project.id); }} className="text-destructive hover:text-destructive/80">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -761,6 +781,13 @@ export default function ProjectsPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Pop-up de Detalhes do Projeto */}
+        <ProjectDetailsPopup
+          isOpen={isProjectDetailsPopupOpen}
+          onClose={() => setIsProjectDetailsPopupOpen(false)}
+          project={selectedProjectForDetails}
+        />
       </motion.div>
     </DashboardLayout>
   );
