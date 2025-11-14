@@ -196,7 +196,7 @@ export default function CostsPage() {
         value_usd: null,
         payment_method: 'credit_card',
         function_category: 'tool',
-        code: '',
+        code: '', // Reset code for new entry
       });
     }
     setIsDialogOpen(true);
@@ -367,10 +367,9 @@ export default function CostsPage() {
                 <Input
                   id="code"
                   name="code"
-                  value={formData.code || ''}
-                  onChange={handleFormChange}
-                  className="w-full bg-background border-border text-foreground"
-                  placeholder="Ex: FER001"
+                  value={editingCost?.code || 'Gerado Automaticamente'}
+                  readOnly
+                  className="w-full bg-muted/50 border-border text-foreground"
                 />
               </div>
               <div className="space-y-2">
