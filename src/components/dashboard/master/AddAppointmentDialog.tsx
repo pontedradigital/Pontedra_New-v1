@@ -49,7 +49,7 @@ interface Appointment {
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
   end_time: string;   // TIMESTAMP WITH TIME ZONE
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Manter o tipo para compatibilidade com DB
   notes: string | null;
   created_at: string;
 }
@@ -62,7 +62,7 @@ interface AddAppointmentDialogProps {
     master_id: string;
     start_time: Date;
     end_time: Date;
-    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Status é sempre 'confirmed'
     notes: string;
     existingClientId?: string; // ID do cliente existente
     newClientDetails?: { // Detalhes do novo cliente
@@ -87,7 +87,7 @@ interface UserProfile {
 interface MasterAvailability {
   day_of_week: number; // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
   start_time: string; // e.g., "10:00:00"
-  end_time: string;   // e.g., "16:00:00"
+  end_time:   string;   // e.g., "16:00:00"
 }
 
 interface MasterException {
@@ -108,7 +108,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
   const [selectedMasterId, setSelectedMasterId] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
-  const [status, setStatus] = useState<'pending' | 'confirmed' | 'cancelled' | 'completed'>('pending');
+  // Removido o estado 'status' pois será sempre 'confirmed'
   const [notes, setNotes] = useState('');
 
   const isMaster = profile?.role === 'master'; // Determina se o usuário logado é master
@@ -292,7 +292,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       setSelectedMasterId(undefined);
       setSelectedDate(undefined);
       setSelectedTimeSlot(null);
-      setStatus('pending');
+      // setStatus('pending'); // Removido
       setNotes('');
     } else if (initialData) {
       // If editing, assume client is existing and pre-fill
@@ -301,7 +301,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       setSelectedMasterId(initialData.master_id);
       setSelectedDate(parseISO(initialData.start_time));
       setSelectedTimeSlot(parseISO(initialData.start_time));
-      setStatus(initialData.status);
+      // setStatus(initialData.status); // Removido
       setNotes(initialData.notes || '');
     } else {
       // For new appointments, if logged-in user is master, pre-select them as master
@@ -386,7 +386,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
       master_id: selectedMasterId,
       start_time: startTime,
       end_time: endTime,
-      status,
+      status: 'confirmed', // Sempre 'confirmed'
       notes,
       existingClientId: clientSelectionMode === 'existing' ? selectedClientId : undefined,
       newClientDetails: clientSelectionMode === 'new' ? { name: newClientName, email: newClientEmail, phone: newClientPhone } : undefined,
@@ -534,6 +534,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
               onDateSelect={setSelectedDate}
               selectedDate={selectedDate}
               isMasterBooking={isMaster} // Passa a nova propriedade
+              allAppointments={[]} // Não precisamos de todos os agendamentos aqui, apenas para o AppointmentsPage
             />
           </div>
 
@@ -577,21 +578,7 @@ const AddAppointmentDialog: React.FC<AddAppointmentDialogProps> = ({ isOpen, onC
             </ScrollArea>
           </div>
 
-          {/* Status */}
-          <div className="space-y-2">
-            <Label htmlFor="status-select">Status *</Label>
-            <Select value={status} onValueChange={(value: 'pending' | 'confirmed' | 'cancelled' | 'completed') => setStatus(value)} disabled={isSaving}>
-              <SelectTrigger id="status-select" className="w-full bg-background border-border text-foreground">
-                <SelectValue placeholder="Selecione o Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border text-popover-foreground">
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="confirmed">Confirmado</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-                <SelectItem value="completed">Concluído</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Removido o campo de seleção de Status */}
 
           {/* Notas */}
           <div className="space-y-2 md:col-span-2">

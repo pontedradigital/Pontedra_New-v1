@@ -48,7 +48,7 @@ interface Appointment {
   master_id: string;
   start_time: string; // TIMESTAMP WITH TIME ZONE
   end_time:   string;   // TIMESTAMP WITH TIME ZONE
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Manter o tipo para compatibilidade com DB
   notes: string | null;
   created_at: string;
   client_profile?: { // Alias para o perfil do cliente
@@ -193,7 +193,7 @@ export default function AppointmentsPage() {
     master_id: string;
     start_time: Date;
     end_time: Date;
-    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Status é opcional aqui, será 'confirmed'
     notes: string;
     existingClientId?: string;
     newClientDetails?: { name: string; email: string; phone?: string };
@@ -244,7 +244,7 @@ export default function AppointmentsPage() {
           master_id: appointmentData.master_id,
           start_time: appointmentData.start_time.toISOString(),
           end_time: appointmentData.end_time.toISOString(),
-          status: appointmentData.status,
+          status: 'confirmed', // Sempre 'confirmed'
           notes: appointmentData.notes,
         }).eq('id', appointmentData.id);
         if (error) throw error;
@@ -255,7 +255,7 @@ export default function AppointmentsPage() {
           master_id: appointmentData.master_id,
           start_time: appointmentData.start_time.toISOString(),
           end_time: appointmentData.end_time.toISOString(),
-          status: appointmentData.status,
+          status: 'confirmed', // Sempre 'confirmed'
           notes: appointmentData.notes,
         });
         if (error) throw error;
@@ -293,21 +293,22 @@ export default function AppointmentsPage() {
 
   // Filtra agendamentos para "Agendamentos do Dia"
   const todayAppointments = useMemo(() => {
-    if (!appointments || !selectedDate) return [];
-    return appointments.filter(app =>
-      isSameDay(parseISO(app.start_time), selectedDate)
-    ).sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
+    if (!appointments || !selectedDate) {
+      console.log("todayAppointments: No appointments or no selectedDate.");
+      return [];
+    }
+    console.log("todayAppointments: Filtering for selectedDate:", selectedDate);
+    const filtered = appointments.filter(app => {
+      const appStartTime = parseISO(app.start_time);
+      const isSame = isSameDay(appStartTime, selectedDate);
+      console.log(`  App: ${app.start_time} (${appStartTime}), Selected: ${selectedDate}, isSameDay: ${isSame}`);
+      return isSame;
+    });
+    console.log("todayAppointments: Filtered results:", filtered);
+    return filtered.sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
   }, [appointments, selectedDate]);
 
-  const getStatusBadgeVariant = (status: Appointment['status']) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
-      case 'confirmed': return 'bg-green-500 hover:bg-green-600 text-white';
-      case 'cancelled': return 'bg-red-500 hover:bg-red-600 text-white';
-      case 'completed': return 'bg-blue-500 hover:bg-blue-600 text-white';
-      default: return 'bg-gray-500 hover:bg-gray-600 text-white';
-    }
-  };
+  // Removido getStatusBadgeVariant pois o status não será mais exibido
 
   const handleDateSelectedFromList = (date: Date) => {
     setSelectedDate(date);
@@ -324,7 +325,7 @@ export default function AppointmentsPage() {
       master_id: masterIdForBooking,
       start_time: startTime,
       end_time: endTime,
-      status: 'pending',
+      status: 'confirmed', // Sempre 'confirmed'
       notes: `Agendamento com ${profile?.first_name || 'Cliente'}`,
     });
   };
@@ -422,7 +423,7 @@ export default function AppointmentsPage() {
                     <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
                     <TableHead className="text-muted-foreground">CLIENTE</TableHead>
                     {isMaster && <TableHead className="text-muted-foreground">MASTER</TableHead>}
-                    <TableHead className="text-muted-foreground">STATUS</TableHead>
+                    {/* Removido <TableHead className="text-muted-foreground">STATUS</TableHead> */}
                     <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -443,11 +444,11 @@ export default function AppointmentsPage() {
                             {app.master_email && <p className="text-xs text-muted-foreground">{app.master_email}</p>}
                           </TableCell>
                         )}
-                        <TableCell className="py-3">
+                        {/* Removido <TableCell className="py-3">
                           <Badge className={getStatusBadgeVariant(app.status)}>
                             {app.status}
                           </Badge>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell className="text-right py-3">
                           <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
                             <Info className="h-4 w-4" />
@@ -467,7 +468,7 @@ export default function AppointmentsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-4">
+                      <TableCell colSpan={isMaster ? 4 : 3} className="text-center text-muted-foreground py-4">
                         Nenhum agendamento.
                       </TableCell>
                     </TableRow>
