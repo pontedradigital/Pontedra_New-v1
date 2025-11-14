@@ -387,7 +387,8 @@ export default function BudgetsPage() {
         }
         return [...prev, {
           id: itemToToggle.id,
-          type: itemToToggle.type,
+          type: itemToTo
+          gle.type,
           name: itemToToggle.name,
           description: itemToToggle.description,
           price: itemToToggle.price,
@@ -632,14 +633,59 @@ export default function BudgetsPage() {
     `;
   };
 
-  const handlePdfAction = async (budget: Budget, action: 'download' | 'view') => {
-    if (!budget || !budget.id) {
-      toast.error("Nenhum orçamento selecionado para gerar PDF.");
+  const handlePdfAction = async (action: 'download' | 'view') => {
+    let budgetToUse: Budget | null = null;
+
+    if (currentEditableBudget) {
+      // If already saved, use the saved budget
+      budgetToUse = currentEditableBudget;
+    } else {
+      // If not saved, create a temporary budget from form data
+      if (!formData.client_name || selectedItems.length === 0) {
+        toast.error("Preencha o nome do cliente e adicione pelo menos um item para gerar o PDF.");
+        return;
+      }
+
+      const tempBudgetItems: BudgetItem[] = selectedItems.map(item => ({
+        id: `temp-${item.id}`, // Placeholder ID
+        budget_id: 'temp-budget', // Placeholder ID
+        service_id: item.type === 'service' ? item.id : null,
+        package_id: item.type === 'package' ? item.id : null,
+        item_type: item.type,
+        item_name: item.name,
+        item_description: item.description,
+        item_price: item.price,
+        created_at: new Date().toISOString(),
+      }));
+
+      budgetToUse = {
+        id: 'temp-budget-id', // Placeholder ID
+        user_id: user?.id || 'anonymous', // Use current user ID or anonymous
+        proposal_number: 'PREVIEW', // Placeholder for unsaved budget
+        client_name: formData.client_name || 'Cliente Desconhecido',
+        client_phone: formData.client_phone || null,
+        client_email: formData.client_email || null,
+        client_street: formData.client_street || null,
+        client_number: formData.client_number || null,
+        client_complement: formData.client_complement || null,
+        client_neighborhood: formData.client_neighborhood || null,
+        client_city: formData.client_city || null,
+        client_state: formData.client_state || null,
+        client_cep: formData.client_cep || null,
+        valid_until: calculateValidUntil(), // Use current calculation
+        total_amount: totalAmount, // Use current calculated total
+        created_at: new Date().toISOString(),
+        budget_items: tempBudgetItems,
+      };
+    }
+
+    if (!budgetToUse) {
+      toast.error("Não foi possível preparar o orçamento para o PDF.");
       return;
     }
 
-    // Pass annualDiscountSetting to generatePdfContent
-    const htmlContent = await generatePdfContent(budget, annualDiscountSetting);
+    // Now call generatePdfContent with budgetToUse and annualDiscountSetting
+    const htmlContent = await generatePdfContent(budgetToUse, annualDiscountSetting);
 
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
@@ -668,7 +714,7 @@ export default function BudgetsPage() {
         heightLeft -= pageHeight;
       }
 
-      const filename = `Orcamento_${budget.client_name.replace(/\s/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+      const filename = `Orcamento_${budgetToUse.client_name.replace(/\s/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
 
       if (action === 'download') {
         pdf.save(filename);
@@ -694,7 +740,7 @@ export default function BudgetsPage() {
   };
 
   const isSaveDisabled = saveBudgetMutation.isPending || !formData.client_name || selectedItems.length === 0;
-  const isPdfActionDisabled = !currentEditableBudget || saveBudgetMutation.isPending;
+  const isPdfActionDisabled = !formData.client_name || selectedItems.length === 0; // Updated condition
 
   if (isLoadingBudgets || isLoadingServices || isLoadingPackages || isLoadingCashDiscount || isLoadingRates || isLoadingAnnualDiscount) {
     return (
@@ -1035,7 +1081,7 @@ export default function BudgetsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handlePdfAction(currentEditableBudget!, 'download')}
+                  onClick={() => handlePdfAction('download')}
                   disabled={isPdfActionDisabled}
                   className="bg-green-500 hover:bg-green-600 text-white"
                 >
@@ -1043,7 +1089,7 @@ export default function BudgetsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handlePdfAction(currentEditableBudget!, 'view')}
+                  onClick={() => handlePdfAction('view')}
                   disabled={isPdfActionDisabled}
                   className="bg-blue-500 hover:bg-blue-600 text-white"
                 >
