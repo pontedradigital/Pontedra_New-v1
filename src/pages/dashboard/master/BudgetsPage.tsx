@@ -717,6 +717,11 @@ export default function BudgetsPage() {
 
       return newBudgetResult as Budget;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast.success('Orçamento salvo com sucesso!');
+      handleCloseDialog(); // FECHA O DIÁLOGO AQUI
+    },
     onError: (err: any) => { // Usar 'any' para inspecionar a estrutura do erro
       console.error("Erro completo da mutação:", err);
 
@@ -1632,7 +1637,7 @@ export default function BudgetsPage() {
                 Cancelar
               </Button>
               <Button onClick={() => budgetToRevert && revertBudgetMutation.mutate(budgetToRevert.id)} disabled={revertBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {revertBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
+                {revertRevertMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-2 h-4 w-4" />}
                 Reverter Aprovação
               </Button>
             </DialogFooter>
@@ -1653,8 +1658,8 @@ export default function BudgetsPage() {
               <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} className="bg-background border-border text-foreground hover:bg-muted">
                 Cancelar
               </Button>
-              <Button onClick={() => budgetToDelete && deleteBudgetMutation.mutate(budgetToDelete.id)} disabled={deleteBudgetMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                {deleteBudgetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              <Button onClick={() => budgetToDelete && deleteBudgetMutation.mutate(budgetToDelete.id)} disabled={deleteDeleteMutation.isPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {deleteDeleteMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                 Excluir Orçamento
               </Button>
             </DialogFooter>
