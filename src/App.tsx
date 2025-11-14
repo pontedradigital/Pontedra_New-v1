@@ -19,6 +19,7 @@ import ClientHome from "./pages/dashboard/client/Home";
 import ProspectHome from "./pages/dashboard/prospect/Home";
 import ResourcesPage from "./pages/dashboard/common/ResourcesPage";
 import AppointmentsPage from "./pages/dashboard/client/AppointmentsPage";
+import ProjectsPage from "./pages/dashboard/client/ProjectsPage"; // Importando ProjectsPage
 
 // Nova página de configurações combinada
 import SettingsPage from "./pages/dashboard/common/SettingsPage";
@@ -38,7 +39,7 @@ import FacebookPage from "./pages/dashboard/master/FacebookPage";
 import BlogPage from "./pages/dashboard/master/BlogPage";
 import LeadsPage from "./pages/dashboard/master/LeadsPage";
 import ManageUsersPage from "./pages/dashboard/master/ManageUsersPage";
-import ReportsPage from "./pages/dashboard/master/ReportsPage"; // NOVO: Importando ReportsPage
+import ReportsPage from "./pages/dashboard/master/ReportsPage"; 
 // import AvailabilityPage from "./pages/dashboard/master/AvailabilityPage"; // Removido
 
 
@@ -69,6 +70,7 @@ function App() {
         <Route path="/dashboard/resources" element={<ProtectedRoute allowedRoles={['prospect', 'client', 'master']}><ResourcesPage /></ProtectedRoute>} />
         
         <Route path="/dashboard/appointments" element={<ProtectedRoute allowedRoles={['client', 'master']}><AppointmentsPage /></ProtectedRoute>} />
+        <Route path="/dashboard/projects" element={<ProtectedRoute allowedRoles={['client', 'master']}><ProjectsPage /></ProtectedRoute>} /> {/* CORRIGIDO: Agora renderiza ProjectsPage */}
 
         {/* Novas Rotas para o Master */}
         <Route path="/dashboard/clients" element={<ProtectedRoute allowedRoles={['master']}><ClientsPage /></ProtectedRoute>} />
