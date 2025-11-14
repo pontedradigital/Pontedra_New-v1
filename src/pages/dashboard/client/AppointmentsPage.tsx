@@ -394,6 +394,14 @@ export default function AppointmentsPage() {
     return dates;
   }, [selectedDate, getAvailableSlotsForDate]);
 
+  // NOVO: Filtrar agendamentos para a "Agenda do Dia"
+  const dailyAppointments = useMemo(() => {
+    if (!appointments || !selectedDate) return [];
+    return appointments.filter(app =>
+      isSameDay(parseISO(app.start_time), selectedDate)
+    ).sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
+  }, [appointments, selectedDate]);
+
   // Mutation to create a new appointment (modified to accept clientId and status)
   const createAppointmentMutation = useMutation<void, Error, { clientId: string; masterId: string; startTime: Date; endTime: Date; notes: string; status: Appointment['status'] }>({
     mutationFn: async ({ clientId, masterId, startTime, endTime, notes, status }) => {
@@ -743,6 +751,78 @@ export default function AppointmentsPage() {
             </div>
           </div>
         </div>
+
+        {/* NOVO: Tabela de Agenda do Dia */}
+        <div className="bg-card border border-border rounded-xl shadow-lg p-6 mt-8">
+          <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6 text-green-500" /> Agenda do Dia: {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione uma data'}
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Todos os agendamentos para a data selecionada.
+          </p>
+
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/20">
+                  <TableHead className="text-muted-foreground">HORÁRIO</TableHead>
+                  {isMaster && <TableHead className="text-muted-foreground">CLIENTE</TableHead>}
+                  <TableHead className="text-muted-foreground">NOTAS</TableHead>
+                  <TableHead className="text-muted-foreground">STATUS</TableHead>
+                  <TableHead className="text-muted-foreground text-right">AÇÕES</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dailyAppointments.length > 0 ? (
+                  dailyAppointments.map((app) => (
+                    <TableRow key={app.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/10">
+                      <TableCell className="font-medium text-foreground py-4">
+                        {format(parseISO(app.start_time), 'HH:mm', { locale: ptBR })} - {format(parseISO(app.end_time), 'HH:mm', { locale: ptBR })}
+                      </TableCell>
+                      {isMaster && (
+                        <TableCell className="text-muted-foreground py-4">
+                          {app.profiles?.first_name} {app.profiles?.last_name}
+                          {app.client_email && <p className="text-xs">{app.client_email}</p>}
+                        </TableCell>
+                      )}
+                      <TableCell className="text-muted-foreground py-4 max-w-[200px] truncate">
+                        {app.notes || 'N/A'}
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Badge className={getStatusBadgeVariant(app.status)}>
+                          {app.status === 'pending' ? 'Pendente' :
+                           app.status === 'confirmed' ? 'Confirmado' :
+                           app.status === 'cancelled' ? 'Cancelado' :
+                           app.status === 'completed' ? 'Concluído' : 'Desconhecido'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(app)} className="text-blue-500 hover:text-blue-600">
+                          <Info className="h-4 w-4" />
+                        </Button>
+                        {!isMaster && app.status === 'pending' && (
+                          <Button variant="ghost" size="sm" onClick={() => handleCancelAppointment(app)} className="text-destructive hover:text-destructive/80">
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {isMaster && (
+                          <Button variant="ghost" size="sm" onClick={() => handleMasterStatusChange(app)} className="text-primary hover:text-primary/80">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={isMaster ? 5 : 4} className="text-center text-muted-foreground py-8">
+                      Nenhum agendamento para esta data.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
         {/* Dialog de Agendamento (Cliente) */}
         <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
