@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, LayoutDashboard, Database, Calendar, BookOpen, Megaphone, Palette, Zap, Shield } from "lucide-react";
+ 
 
 // Tipos de categorias
-type Category = "Todas" | "Web" | "Sistemas" | "Marketing" | "Design" | "Completo";
+type Category = "Todas" | "Web" | "Sistemas" | "Marketing" | "Design" | "Completo" | "Pacotes Mensais";
 
-// Dados dos serviços
 const services = [
   {
     id: 1,
@@ -109,6 +109,9 @@ const services = [
   }
 ];
 
+type IconType = React.ComponentType<{ className?: string; strokeWidth?: number | string }>;
+type ServiceData = { id: string; title: string; category: Category | "Outros"; icon: IconType; shortDesc: string; fullDesc: string; badge: string };
+
 // Componente de Badge de Categoria
 const CategoryBadge = ({ category }: { category: string }) => {
   const colors: Record<string, string> = {
@@ -126,8 +129,7 @@ const CategoryBadge = ({ category }: { category: string }) => {
   );
 };
 
-// Componente de Card de Serviço
-const ServiceCard = ({ service, isExpanded, onToggle }: { service: typeof services[0], isExpanded: boolean, onToggle: () => void }) => {
+const ServiceCard = ({ service, isExpanded, onToggle }: { service: ServiceData, isExpanded: boolean, onToggle: () => void }) => {
   const Icon = service.icon;
 
   return (
@@ -208,15 +210,50 @@ const ServiceCard = ({ service, isExpanded, onToggle }: { service: typeof servic
   );
 };
 
-export default function NossasSolucoes() {
+export default function NossasSolucoes({ onPacotesMensaisClick }: { onPacotesMensaisClick?: () => void }) {
   const [activeCategory, setActiveCategory] = useState<Category>("Todas");
-  const [expandedCard, setExpandedCard] = useState<number | null>(null);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
-  const categories: Category[] = ["Todas", "Web", "Sistemas", "Marketing", "Design", "Completo"];
+  const categories: Category[] = ["Todas", "Web", "Sistemas", "Marketing", "Design", "Completo", "Pacotes Mensais"];
 
-  const filteredServices = activeCategory === "Todas" 
-    ? services 
-    : services.filter(s => s.category === activeCategory);
+  const sourceServices: ServiceData[] = services.map(s => ({
+    id: String(s.id),
+    title: s.title,
+    category: s.category as Category,
+    icon: s.icon,
+    shortDesc: s.shortDesc,
+    fullDesc: s.fullDesc,
+    badge: s.badge,
+  }));
+
+  const filteredServices = activeCategory === "Todas"
+    ? sourceServices
+    : sourceServices.filter(s => s.category === activeCategory);
+
+  const PacotesCTA = () => (
+    <motion.article
+      layout
+      className="relative group bg-[#0b1420] border border-[#1d2c3f] rounded-2xl p-6 overflow-hidden flex flex-col"
+      whileHover={{ scale: 1.03, y: -6 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div className="absolute -inset-0.5 bg-gradient-to-r from-[#00ffae] via-[#57e389] to-[#00b4ff] rounded-2xl opacity-0 blur-xl group-hover:opacity-20" animate={{ opacity: [0, 0.2, 0] }} transition={{ duration: 2, repeat: Infinity }} />
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-2xl md:text-3xl font-extrabold text-[#e1e8f0] mb-1">Pacotes Mensais</h3>
+            <div className="text-xs text-[#57e389] font-semibold">Consultoria contínua e acompanhamento</div>
+          </div>
+        </div>
+        <div className="text-[#9ba8b5] text-sm leading-relaxed break-words mb-4">
+          Tenha suporte mensal para manter seu digital sempre evoluindo: conteúdo, ajustes no site, campanhas, análise de métricas e reuniões de alinhamento.
+        </div>
+        <div className="mt-2 pt-3 border-t border-[#1d2c3f]/50 flex items-center gap-2">
+          <button type="button" className="px-5 py-2.5 rounded-full font-bold bg-[#57e389] text-[#0D1B2A] shadow-lg shadow-[#57e389]/30 hover:bg-[#4bd37c] transition" onClick={() => { if (typeof onPacotesMensaisClick === 'function') onPacotesMensaisClick(); else try { window.open('https://wa.me/5511978777308', '_blank'); } catch { void 0 } }}>Fale conosco</button>
+        </div>
+      </div>
+    </motion.article>
+  )
 
   return (
     <section id="solucoes" className="relative w-full py-20 md:py-32 bg-[#0D1B2A] overflow-hidden">
@@ -256,6 +293,7 @@ export default function NossasSolucoes() {
               onClick={() => {
                 setActiveCategory(cat);
                 setExpandedCard(null);
+                if (cat === "Pacotes Mensais" && typeof onPacotesMensaisClick === 'function') onPacotesMensaisClick()
               }}
               className={`px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${
                 activeCategory === cat
@@ -273,32 +311,46 @@ export default function NossasSolucoes() {
           ))}
         </motion.div>
 
-        {/* Grid de Serviços */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeCategory}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-          >
-            {filteredServices.map((service, idx) => (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <ServiceCard
-                  service={service}
-                  isExpanded={expandedCard === service.id}
-                  onToggle={() => setExpandedCard(expandedCard === service.id ? null : service.id)}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+        {activeCategory === "Pacotes Mensais" ? (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key="pacotes"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <PacotesCTA />
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategory}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              {filteredServices.map((service, idx) => (
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <ServiceCard
+                    service={service}
+                    isExpanded={expandedCard === service.id}
+                    onToggle={() => setExpandedCard(expandedCard === service.id ? null : service.id)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
     </section>
   );

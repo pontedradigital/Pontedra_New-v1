@@ -7,15 +7,13 @@ import { useLocation } from "react-router-dom";
  */
 
 export default function ScrollToTopSpecific(): null {
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
 
   useEffect(() => {
-    // Rola para o topo em qualquer mudança de pathname
-    // Um pequeno delay pode ser útil para garantir que a nova página já esteja renderizada
-    setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    }, 50); 
-  }, [pathname]);
+    window.scrollTo({ top: 0, left: 0 });
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }, [pathname, search, hash]);
 
   return null;
 }

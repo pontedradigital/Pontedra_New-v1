@@ -1,307 +1,177 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Phone, Mail, MapPin, Instagram, Facebook, Send } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import React, { useEffect, useState } from "react";
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase' // Import supabase client
+ 
+import { Phone, Mail, MapPin, Instagram, Facebook } from "lucide-react";
 
-export function Contato() {
-  const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
-  const [telefone, setTelefone] = useState('')
-  const [assunto, setAssunto] = useState('')
-  const [mensagem, setMensagem] = useState('')
-  
-  const [loading, setLoading] = useState(false)
-  const [ipAddress, setIpAddress] = useState<string | null>(null); // State for IP address
+export const Contato: React.FC = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [utm, setUtm] = useState<{ source: string; medium: string; campaign: string; content: string; term: string }>({ source: '', medium: '', campaign: '', content: '', term: '' })
+  const [referrer, setReferrer] = useState<string>('')
+
+  const formatPhone = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length <= 2) return cleaned;
+    if (cleaned.length <= 6) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+    if (cleaned.length <= 10) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+  };
 
   useEffect(() => {
-    // Tenta obter o endereço IP do cliente.
-    // Nota: Para maior precisão, o IP deve ser obtido no lado do servidor/Edge Function,
-    // mas esta é uma tentativa client-side.
-    fetch('https://api.ipify.org?format=json')
-      .then(response => response.json())
-      .then(data => setIpAddress(data.ip))
-      .catch(error => console.error("Falha ao buscar endereço IP:", error));
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const formData = {
-      nome,
-      email,
-      telefone,
-      assunto,
-      mensagem,
-      origem: 'Formulário de Contato do Site',
-      url_captura: window.location.href,
-      ip_address: ipAddress, // Passa o IP do cliente se disponível
-    };
-
-    console.log('Enviando dados para a Edge Function:', formData);
-
     try {
-      const { data, error } = await supabase.functions.invoke('send-lead-emails', {
-        body: formData,
-      });
-
-      if (error) {
-        throw error;
+      const sp = new URLSearchParams(window.location.search)
+      const next = {
+        source: sp.get('utm_source') || '',
+        medium: sp.get('utm_medium') || '',
+        campaign: sp.get('utm_campaign') || '',
+        content: sp.get('utm_content') || '',
+        term: sp.get('utm_term') || '',
       }
+      setUtm(next)
+      setReferrer(document.referrer || '')
+    } catch { /* ignore */ }
+  }, [])
 
-      if (data && data.success) {
-        console.log('Resposta da Edge Function:', data);
-        toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.')
-        // Limpar formulário
-        setNome('')
-        setEmail('')
-        setTelefone('')
-        setAssunto('')
-        setMensagem('')
+  const [submitting, setSubmitting] = useState(false)
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const nome = name.trim()
+    const emailVal = email.trim()
+    const tel = phone.trim()
+    const assunto = subject.trim()
+    const mensagem = message.trim()
+    if (!nome || !emailVal || !mensagem) { toast.error('Preencha nome, e‑mail e mensagem'); return }
+    if (!isValidEmail(emailVal)) { toast.error('E‑mail inválido'); return }
+    setSubmitting(true)
+    try {
+      const payload = {
+        nome,
+        email: emailVal,
+        telefone: tel || null,
+        assunto: assunto || null,
+        mensagem,
+        origem: 'landing_contato',
+        page: 'landing',
+        utm_source: utm.source || null,
+        utm_medium: utm.medium || null,
+        utm_campaign: utm.campaign || null,
+        utm_content: utm.content || null,
+        utm_term: utm.term || null,
+        referrer: referrer || null,
+        page_url: window.location.href,
+        user_agent: navigator.userAgent,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        created_at: new Date().toISOString()
+      }
+      const endpoint = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_CONTACT_ENDPOINT || ''
+      if (endpoint) {
+        const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        toast.success('Mensagem enviada! Em breve retornaremos.')
       } else {
-        toast.error('Ocorreu um erro ao enviar a mensagem. Tente novamente.')
-        console.error('Erro na resposta da Edge Function:', data);
+        const subjectLine = assunto || 'Contato pelo site'
+        const body = `${mensagem}\n\nNome: ${nome}\nE-mail: ${emailVal}${tel ? `\nTelefone: ${tel}` : ''}`
+        window.location.href = `mailto:contato@pontedra.com?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(body)}`
+        toast.success('Abrimos seu e-mail para concluir o envio.')
       }
-    } catch (error: any) {
-      toast.error(`Não foi possível enviar sua mensagem. Tente novamente em instantes.`);
-      console.error('Erro ao invocar a Edge Function:', error);
+      setName('')
+      setEmail('')
+      setPhone('')
+      setSubject('')
+      setMessage('')
+    } catch (err) {
+      const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: string }).message || '') : ''
+      toast.warning(msg ? `Falha ao enviar: ${msg}` : 'Não foi possível enviar agora. Tente novamente mais tarde.')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
-  }
-
-  const formatarTelefone = (value: string) => {
-    const numero = value.replace(/\D/g, '')
-    if (numero.length <= 11) {
-      return numero
-        .replace(/(\d{2})(\d)/, '($1) $2')
-        .replace(/(\d{5})(\d)/, '$1-$2')
-    }
-    return telefone
   }
 
   return (
-    <section id="contato" className="py-20 bg-[#0D1B2A] relative overflow-hidden">
-      {/* Efeitos de fundo */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pontedra-green/5 via-transparent to-transparent" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-pontedra-green mb-4">
-            CONTATO
-          </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+    <section className="relative w-full py-20 md:py-28 bg-[#0D1B2A]">
+      <div className="container mx-auto px-4 md:px-8">
+        <div className="text-center mb-10 md:mb-14">
+          <h2 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[#00ffae] via-[#57e389] to-[#00b4ff] bg-clip-text text-transparent">CONTATO</h2>
+          <p className="text-[#9ba8b5] text-base md:text-lg max-w-2xl mx-auto mt-4">
             Tem um projeto em mente ou quer saber mais sobre como podemos ajudar sua empresa a crescer? Entre em contato!
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-          {/* Informações de Contato */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-8"
-          >
-            <div>
-              <h3 className="text-3xl font-bold text-pontedra-green mb-6">
-                Nossos Contatos
-              </h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-start gap-4 group">
-                  <div className="w-12 h-12 rounded-xl bg-pontedra-green/10 flex items-center justify-center group-hover:bg-pontedra-green/20 transition-colors">
-                    <Phone className="text-pontedra-green" size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Telefone</p>
-                    <a href="tel:+5511978777308" className="text-lg text-white hover:text-pontedra-green transition-colors">
-                      +55 11 97877-7308
-                    </a>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-[#57e389]">Nossos Contatos</h3>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-[#57e389] flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-[#9ba8b5]">Telefone</p>
+                  <a href="tel:+5511978777308" className="text-white font-medium">+55 11 97877-7308</a>
                 </div>
-
-                <div className="flex items-start gap-4 group">
-                  <div className="w-12 h-12 rounded-xl bg-pontedra-green/10 flex items-center justify-center group-hover:bg-pontedra-green/20 transition-colors">
-                    <Mail className="text-pontedra-green" size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">E-mail</p>
-                    <a href="mailto:contato@pontedra.com" className="text-lg text-white hover:text-pontedra-green transition-colors">
-                      contato@pontedra.com
-                    </a>
-                  </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-[#57e389] flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-[#9ba8b5]">E-mail</p>
+                  <a href="mailto:contato@pontedra.com" className="text-white font-medium">contato@pontedra.com</a>
                 </div>
-
-                <div className="flex items-start gap-4 group">
-                  <div className="w-12 h-12 rounded-xl bg-pontedra-green/10 flex items-center justify-center group-hover:bg-pontedra-green/20 transition-colors">
-                    <MapPin className="text-pontedra-green" size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Endereço</p>
-                    <p className="text-lg text-white">
-                      Avenida Vila Ema 4191 - Vila Ema - São Paulo/SP
-                    </p>
-                  </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-[#57e389] flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-[#9ba8b5]">Endereço</p>
+                  <p className="text-white font-medium">Avenida Vila Ema 4191 - Vila Ema - São Paulo/SP</p>
                 </div>
               </div>
             </div>
-
-            <div>
-              <h4 className="text-xl font-semibold text-white mb-4">
-                Siga-nos nas redes sociais
-              </h4>
-              <div className="flex gap-4">
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-xl bg-pontedra-green/10 flex items-center justify-center hover:bg-pontedra-green hover:scale-110 transition-all"
-                >
-                  <Instagram className="text-pontedra-green hover:text-white" size={24} />
+            <div className="mt-6">
+              <p className="text-sm text-[#9ba8b5] mb-3">Siga-nos nas redes sociais</p>
+              <div className="flex items-center gap-3">
+                <a href="https://www.instagram.com/pontedradigital/#" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="p-2 rounded-lg border border-[#1d2c3f] text-[#57e389] hover:bg-[#57e389]/10 transition">
+                  <Instagram className="w-5 h-5" />
                 </a>
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-xl bg-pontedra-green/10 flex items-center justify-center hover:bg-pontedra-green hover:scale-110 transition-all"
-                >
-                  <Facebook className="text-pontedra-green hover:text-white" size={24} />
+                <a href="https://www.facebook.com/pontedradigital/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="p-2 rounded-lg border border-[#1d2c3f] text-[#57e389] hover:bg-[#57e389]/10 transition">
+                  <Facebook className="w-5 h-5" />
                 </a>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Formulário de Contato */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <div className="bg-gradient-to-br from-[#111d2e] to-[#0a1420] rounded-2xl p-8 border border-pontedra-border-light">
-              <h3 className="text-2xl font-bold text-pontedra-green mb-6">
-                Envie sua Mensagem
-              </h3>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome" className="text-white">
-                      Nome *
-                    </Label>
-                    <Input
-                      id="nome"
-                      name="nome" // Adicionado atributo name
-                      type="text"
-                      value={nome}
-                      onChange={(e) => setNome(e.target.value)}
-                      required
-                      placeholder="Seu nome completo"
-                      className="bg-[#0B1420] border-pontedra-border-light text-white placeholder:text-gray-500"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white">
-                      E-mail *
-                    </Label>
-                    <Input
-                      id="email"
-                      name="email" // Adicionado atributo name
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="seu@email.com"
-                      className="bg-[#0B1420] border-pontedra-border-light text-white placeholder:text-gray-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone" className="text-white">
-                      Telefone
-                    </Label>
-                    <Input
-                      id="telefone"
-                      name="telefone" // Adicionado atributo name
-                      type="tel"
-                      value={telefone}
-                      onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
-                      placeholder="(11) 99999-9999"
-                      className="bg-[#0B1420] border-pontedra-border-light text-white placeholder:text-gray-500"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="assunto" className="text-white">
-                      Assunto
-                    </Label>
-                    <Input
-                      id="assunto"
-                      name="assunto" // Adicionado atributo name
-                      type="text"
-                      value={assunto}
-                      onChange={(e) => setAssunto(e.target.value)}
-                      placeholder="Assunto da mensagem"
-                      className="bg-[#0B1420] border-pontedra-border-light text-white placeholder:text-gray-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="mensagem" className="text-white">
-                    Mensagem *
-                  </Label>
-                  <Textarea
-                    id="mensagem"
-                    name="mensagem" // Adicionado atributo name
-                    value={mensagem}
-                    onChange={(e) => setMensagem(e.target.value)}
-                    required
-                    placeholder="Conte-nos sobre seu projeto ou dúvida..."
-                    rows={5}
-                    className="bg-[#0B1420] border-pontedra-border-light text-white placeholder:text-gray-500 resize-none"
-                  />
-                </div>
-
-                <p className="text-sm text-gray-400">
-                  * Campos obrigatórios. Seu e-mail será usado apenas para resposta.
-                </p>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-pontedra-green hover:bg-pontedra-green-hover text-pontedra-dark-text font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2 group"
-                >
-                  {loading ? (
-                    'Enviando...'
-                  ) : (
-                    <>
-                      <Send size={20} className="group-hover:translate-x-1 transition-transform" />
-                      Enviar Mensagem
-                    </>
-                  )}
-                </Button>
-              </form>
-            </div>
-          </motion.div>
+          <div className="bg-[#0c1624] border border-[#1d2c3f] rounded-2xl p-6 md:p-8 shadow-xl">
+            <h3 className="text-xl md:text-2xl font-bold text-[#57e389] mb-6">Envie sua Mensagem</h3>
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={onSubmit}>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="contato-nome" className="text-white">Nome*</label>
+                <input id="contato-nome" value={name} onChange={(e) => setName(e.target.value)} type="text" className="bg-[#0a1520] border border-[#1d2c3f] rounded-md px-4 py-3 text-white placeholder:text-[#4a5a6a]" placeholder="Seu nome completo" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="contato-email" className="text-white">E‑mail*</label>
+                <input id="contato-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="bg-[#0a1520] border border-[#1d2c3f] rounded-md px-4 py-3 text-white placeholder:text-[#4a5a6a]" placeholder="seu@email.com" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="contato-telefone" className="text-white">Telefone</label>
+                <input id="contato-telefone" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} type="tel" className="bg-[#0a1520] border border-[#1d2c3f] rounded-md px-4 py-3 text-white placeholder:text-[#4a5a6a]" placeholder="(11) 99999-9999" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="contato-assunto" className="text-white">Assunto</label>
+                <input id="contato-assunto" value={subject} onChange={(e) => setSubject(e.target.value)} type="text" className="bg-[#0a1520] border border-[#1d2c3f] rounded-md px-4 py-3 text-white placeholder:text-[#4a5a6a]" placeholder="Assunto da mensagem" />
+              </div>
+              <div className="md:col-span-2 flex flex-col gap-2">
+                <label htmlFor="contato-mensagem" className="text-white">Mensagem*</label>
+                <textarea id="contato-mensagem" value={message} onChange={(e) => setMessage(e.target.value)} rows={6} className="bg-[#0a1520] border border-[#1d2c3f] rounded-md px-4 py-3 text-white placeholder:text-[#4a5a6a]" placeholder="Conte-nos sobre seu projeto ou dúvida..." />
+              </div>
+              <p className="md:col-span-2 text-xs text-[#9ba8b5]">* Campos obrigatórios. Seu e‑mail será usado apenas para resposta.</p>
+              <div className="md:col-span-2 mt-2">
+                <button type="submit" disabled={submitting} className="w-full px-6 py-3 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#4bc979] disabled:opacity-70 transition-all duration-300">{submitting ? 'Enviando...' : 'Enviar Mensagem'}</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

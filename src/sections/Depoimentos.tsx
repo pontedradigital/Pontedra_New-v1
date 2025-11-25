@@ -1,6 +1,7 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
 import { Star } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
 
 // Dados dos depoimentos
 const testimonials = [
@@ -37,10 +38,12 @@ const testimonials = [
 ];
 
 // Componente de Card de Depoimento
-const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] }) => {
+const TestimonialCard = ({ testimonial, active }: { testimonial: typeof testimonials[0]; active: boolean }) => {
   return (
-    <div className="flex-shrink-0 w-[400px] mx-4">
-      <div className="relative group bg-[#0f2a3f]/80 backdrop-blur-xl border border-[#1d3a4f]/50 rounded-2xl p-8 h-full">
+    <div className="flex-shrink-0 w-[320px] sm:w-[360px] lg:w-[420px] mx-4">
+      <div className={`relative group bg-[#0f2a3f]/80 backdrop-blur-xl rounded-2xl p-8 h-full border ${active ? 'border-[#57e389] shadow-[0_0_20px_rgba(87,227,137,0.25)]' : 'border-[#1d3a4f]/50'}`}
+        role="group" aria-label={`${testimonial.name} - ${testimonial.role}`} aria-current={active || undefined}
+      >
         {/* Glow effect */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-[#57e389] to-[#00b4ff] rounded-2xl opacity-0 blur-xl group-hover:opacity-20 transition-opacity duration-500" />
 
@@ -72,17 +75,44 @@ const TestimonialCard = ({ testimonial }: { testimonial: typeof testimonials[0] 
 };
 
 export default function Depoimentos() {
-  // Duplicar os depoimentos para criar loop infinito
-  const duplicatedTestimonials = [...testimonials, ...testimonials, ...testimonials];
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const isInView = useInView(sectionRef, { amount: 0.6 });
+  const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "center", dragFree: false, duration: 16 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const total = testimonials.length;
+
+  const onSelect = useCallback(() => {
+    if (!embla) return;
+    setSelectedIndex(embla.selectedScrollSnap());
+  }, [embla]);
+
+  useEffect(() => {
+    if (!embla) return;
+    onSelect();
+    embla.on("select", onSelect);
+  }, [embla, onSelect]);
+
+  useEffect(() => {
+    if (!embla) return;
+    let id: number | undefined;
+    const shouldAutoplay = !(isHovered || isInView);
+    if (shouldAutoplay) {
+      id = window.setInterval(() => embla.scrollNext(), 4500);
+    }
+    return () => { if (id) window.clearInterval(id); };
+  }, [embla, isHovered, isInView]);
+
+  
 
   return (
-    <section id="depoimentos" className="relative w-full py-20 md:py-32 bg-[#0a1628] overflow-hidden">
+    <section id="depoimentos" className="relative w-full py-20 md:py-32 bg-[#0a1628] overflow-hidden" aria-label="Depoimentos" tabIndex={0} onKeyDown={(e) => { if (e.key === 'ArrowLeft') embla?.scrollPrev(); if (e.key === 'ArrowRight') embla?.scrollNext(); }}>
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#57e389]/5 via-transparent to-transparent" />
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10" ref={sectionRef}>
         {/* Cabeçalho */}
         <motion.div
           className="text-center mb-16 px-4"
@@ -108,34 +138,28 @@ export default function Depoimentos() {
           </p>
         </motion.div>
 
-        {/* Carrossel */}
         <div className="relative">
-          {/* Gradientes laterais para fade effect */}
           <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0a1628] to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0a1628] to-transparent z-10 pointer-events-none" />
 
-          {/* Container do carrossel */}
-          <div className="overflow-hidden">
-            <motion.div
-              className="flex"
-              animate={{
-                x: [0, -400 * testimonials.length],
-              }}
-              transition={{
-                x: {
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: 30,
-                  ease: "linear",
-                },
-              }}
-              style={{ width: `${400 * duplicatedTestimonials.length}px` }}
-            >
-              {duplicatedTestimonials.map((testimonial, index) => (
-                <TestimonialCard key={`${testimonial.id}-${index}`} testimonial={testimonial} />
+          <div className="overflow-hidden" ref={emblaRef} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+            <div className="flex transition-transform duration-200 ease-out">
+              {testimonials.map((t, i) => (
+                <TestimonialCard key={t.id} testimonial={t} active={selectedIndex === i} />
               ))}
-            </motion.div>
+            </div>
           </div>
+
+          <div className="mt-6 flex items-center justify-center gap-4" aria-label="Navegação de depoimentos">
+            <button aria-label="Anterior" className="w-12 h-12 rounded-lg border border-[#1d2c3f] text-[#57e389] hover:bg-[#57e389]/10 transition flex items-center justify-center" onClick={() => embla?.scrollPrev()} tabIndex={0}>
+              ‹
+            </button>
+            <span className="text-sm md:text-base text-[#9ba8b5]" aria-live="polite">{selectedIndex + 1}/{total}</span>
+            <button aria-label="Próximo" className="w-12 h-12 rounded-lg border border-[#1d2c3f] text-[#57e389] hover:bg-[#57e389]/10 transition flex items-center justify-center" onClick={() => embla?.scrollNext()} tabIndex={0}>
+              ›
+            </button>
+          </div>
+          {/* Menu inferior simplificado: apenas setas e contador */}
         </div>
       </div>
     </section>

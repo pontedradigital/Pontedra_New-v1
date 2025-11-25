@@ -1,32 +1,44 @@
-import React, { ReactNode } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { ReactNode, useEffect, useState } from 'react'
 
 interface ProtectedRouteProps {
-  children: ReactNode;
-  allowedRoles?: ('prospect' | 'client' | 'master')[];
+  children: ReactNode
+  allowedRoles?: ('master' | 'client' | 'prospect' | 'colaborador')[]
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, profile, loading } = useAuth();
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { user, loading, profile } = useAuth()
+  const navigate = useNavigate()
+  const [timedOut, setTimedOut] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setTimedOut(true), 9000)
+    return () => clearTimeout(t)
+  }, [])
 
   if (loading) {
-    // Pode renderizar um spinner de carregamento aqui
-    return <div className="min-h-screen flex items-center justify-center bg-[#0D1B2A] text-white">Carregando...</div>;
+    if (timedOut) {
+      navigate('/login', { replace: true })
+      return null
+    }
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-white">Verificando autenticação...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!user) {
-    // Não autenticado, redireciona para a página de login
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />
   }
 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    // Autenticado, mas sem o papel permitido, redireciona para uma página de acesso negado ou home
-    toast.error("Você não tem permissão para acessar esta página.");
-    return <Navigate to="/" replace />; // Ou para uma página de erro de permissão
+    return <Navigate to="/perfil" replace />
   }
 
-  return <>{children}</>;
-};
-
-export default ProtectedRoute;
+  return <>{children}</>
+}

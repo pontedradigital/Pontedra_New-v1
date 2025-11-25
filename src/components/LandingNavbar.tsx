@@ -3,7 +3,9 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Menu } from "lucide-react";
 
-export default function LandingNavbar() {
+type LandingNavbarProps = { showCTA?: boolean; mode?: 'default' | 'backOnly' }
+
+export default function LandingNavbar({ showCTA = true, mode = 'default' }: LandingNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -11,13 +13,19 @@ export default function LandingNavbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 50);
+      const qs = document.getElementById("quem-somos");
+      if (qs) {
+        const navbarHeight = 80;
+        const threshold = qs.getBoundingClientRect().top + window.scrollY - navbarHeight;
+        setIsScrolled(window.scrollY >= threshold);
+      } else {
+        setIsScrolled(false);
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll as EventListener);
   }, []);
 
   useEffect(() => {
@@ -34,8 +42,8 @@ export default function LandingNavbar() {
       behavior: "smooth",
     });
     setIsMobileMenuOpen(false);
-    if (location.pathname !== "/landing") {
-      navigate("/landing");
+    if (location.pathname !== "/") {
+      navigate("/");
     }
   };
 
@@ -56,10 +64,10 @@ export default function LandingNavbar() {
 
   const handleNavigation = (target: string) => {
     if (target.startsWith("#")) {
-      if (location.pathname === "/landing") {
+      if (location.pathname === "/") {
         scrollToSection(target.substring(1));
       } else {
-        navigate(`/landing${target}`);
+        navigate(`/${target}`);
       }
     } else {
       navigate(target);
@@ -68,11 +76,10 @@ export default function LandingNavbar() {
   };
 
   const menuItems = [
-    { label: "Quem Somos", target: "#quem-somos" },
-    { label: "Soluções", target: "#solucoes" },
-    { label: "Depoimentos", target: "#depoimentos" },
-    { label: "Blog", target: "/blog" },
-    { label: "Contato", target: "#contato" },
+    { label: "Quem Somos", target: "#quem-somos", aria: "Ir para seção Quem Somos" },
+    { label: "Soluções", target: "#solucoes", aria: "Ir para seção Soluções" },
+    { label: "Depoimentos", target: "#depoimentos", aria: "Ir para seção Depoimentos" },
+    { label: "Contato", target: "#contato", aria: "Ir para seção Contato" },
   ];
 
   return (
@@ -82,9 +89,7 @@ export default function LandingNavbar() {
         animate={{ y: 0 }}
         transition={{ duration: 0.6 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-[#0c1624]/95 backdrop-blur-xl shadow-lg border-b border-[#1d2c3f]/50"
-            : "bg-transparent"
+          isScrolled ? "bg-[#0c1624]/95 backdrop-blur-xl border-b border-[#1d2c3f]" : "bg-transparent"
         }`}
       >
         <div className="container mx-auto px-4 md:px-8">
@@ -96,53 +101,55 @@ export default function LandingNavbar() {
               whileTap={{ scale: 0.95 }}
               className="relative group cursor-pointer z-50"
             >
-              <motion.div
-                className="absolute inset-0 bg-[#57e389]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              {/* Glow suave sem borda */}
+              <div
+                className="absolute -inset-6 blur-xl opacity-40"
+                style={{
+                  background:
+                    "radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 60%)",
+                }}
               />
-              
-              <div className="relative z-10 flex items-center gap-3">
+
+              <div className="relative z-10 flex items-center">
                 <img
-                  src="https://qtuctrqomfwvantainjc.supabase.co/storage/v1/object/public/images/pontedra-logo.webp"
+                  src="/pontedra-logo.webp"
                   alt="Pontedra Logo"
-                  className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-[0_0_20px_rgba(87,227,137,0.6)] transition-all duration-300"
+                  className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-[0_0_18px_rgba(255,255,255,0.45)] brightness-150 contrast-125 saturate-125 scale-125 md:scale-150 lg:scale-[1.6] origin-center"
                 />
               </div>
             </motion.button>
 
             {/* Desktop Menu */}
-            <div className="hidden lg:flex items-center gap-8">
-              {menuItems.map((item, index) => (
-                <motion.button
-                  key={item.target}
-                  onClick={() => handleNavigation(item.target)}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 relative group"
-                >
-                  {item.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#57e389] group-hover:w-full transition-all duration-300" />
-                </motion.button>
-              ))}
-            </div>
+            {mode !== 'backOnly' && (
+              <div className="hidden lg:flex items-center gap-8">
+                {menuItems.map((item, index) => (
+                  <motion.button
+                    key={item.target}
+                    onClick={() => handleNavigation(item.target)}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300 relative group"
+                    aria-label={item.aria}
+                  >
+                    {item.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#57e389] group-hover:w-full transition-all duration-300" />
+                  </motion.button>
+                ))}
+              </div>
+            )}
 
             {/* Desktop CTA Buttons */}
-            <div className="hidden lg:flex items-center gap-4">
-              <button
-                onClick={() => handleNavigation("/login")}
-                className="text-[#e1e8f0] hover:text-[#57e389] font-medium transition-colors duration-300"
-              >
-                Entrar
-              </button>
-              <button
-                onClick={() => handleNavigation("/login")}
-                className="px-6 py-2.5 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 hover:scale-105 shadow-lg shadow-[#57e389]/30"
-              >
-                Acessar Plataforma
-            </button>
-            </div>
+            {mode === 'backOnly' ? (
+              <div className="hidden lg:flex items-center gap-4">
+                <button
+                  onClick={scrollToTop}
+                  className="px-6 py-2.5 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
+                >
+                  Voltar ao Site
+                </button>
+              </div>
+            ) : null}
 
             {/* Mobile Menu Button */}
             <button
@@ -179,41 +186,40 @@ export default function LandingNavbar() {
             >
               <div className="flex flex-col h-full pt-24 px-8">
                 {/* Mobile Menu Items */}
-                <div className="flex flex-col gap-6 mb-8">
-                  {menuItems.map((item, index) => (
-                    <motion.button
-                      key={item.target}
-                      onClick={() => handleNavigation(item.target)}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="text-left text-[#e1e8f0] hover:text-[#57e389] font-medium text-xl transition-colors duration-300 py-3 border-b border-[#1d2c3f]/50"
-                    >
-                      {item.label}
-                    </motion.button>
-                  ))}
-                </div>
+                {mode !== 'backOnly' && (
+                  <div className="flex flex-col gap-6 mb-8">
+                    {menuItems.map((item, index) => (
+                      <motion.button
+                        key={item.target}
+                        onClick={() => handleNavigation(item.target)}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="text-left text-[#e1e8f0] hover:text-[#57e389] font-medium text-xl transition-colors duration-300 py-3 border-b border-[#1d2c3f]/50"
+                        aria-label={item.aria}
+                      >
+                        {item.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Mobile CTA Buttons */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex flex-col gap-4 mt-auto mb-8"
-                >
-                  <button
-                    onClick={() => handleNavigation("/login")}
-                    className="w-full text-center px-6 py-3 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
+                {mode === 'backOnly' ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="flex flex-col gap-4 mt-auto mb-8"
                   >
-                    Entrar
-                  </button>
-                  <button
-                    onClick={() => handleNavigation("/login")}
-                    className="w-full text-center px-6 py-3 bg-[#57e389] text-[#0D1B2A] font-bold rounded-full hover:bg-[#00ffae] transition-all duration-300 shadow-lg shadow-[#57e389]/30"
-                  >
-                    Acessar Plataforma
-                  </button>
-                </motion.div>
+                    <button
+                      onClick={scrollToTop}
+                      className="w-full text-center px-6 py-3 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
+                    >
+                      Voltar ao Site
+                    </button>
+                  </motion.div>
+                ) : null}
               </div>
             </motion.div>
           </motion.div>
