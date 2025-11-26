@@ -36,6 +36,21 @@ async function main() {
   await genIcoFromSvg(svg, path.join(faviconsDir, 'favicon-16.ico'), 16)
   await genIcoFromSvg(svg, path.join(faviconsDir, 'favicon-32.ico'), 32)
   await genIcoFromSvg(svg, path.join(faviconsDir, 'favicon-48.ico'), 48)
+  // multi-size favicon.ico at public root
+  const tmpDir = path.resolve('public', '.tmp-icons')
+  await ensureDir(tmpDir)
+  const sizes = [16, 32, 48, 64]
+  const pngs = []
+  for (const s of sizes) {
+    const p = path.join(tmpDir, `favicon-${s}.png`)
+    await genPngFromSvg(svg, p, s)
+    pngs.push(p)
+  }
+  const multiIco = await pngToIco(pngs)
+  await fs.writeFile(path.resolve('public', 'favicon.ico'), multiIco)
+  // cleanup
+  for (const p of pngs) await fs.rm(p)
+  await fs.rm(tmpDir, { recursive: true, force: true })
 
   await genPngFromSvg(svg, path.join(iosDir, 'apple-touch-icon-60x60.png'), 60)
   await genPngFromSvg(svg, path.join(iosDir, 'apple-touch-icon-76x76.png'), 76)
