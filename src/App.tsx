@@ -2,6 +2,8 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'sonner';
 import LandingPage from "./pages/LandingPage";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import TermosDeUso from "./pages/TermosDeUso";
 import NotFound from "./pages/NotFound";
 import ScrollToTopSpecific from "./components/ScrollToTopSpecific";
 import LoginPage from "./pages/LoginPage";
@@ -40,6 +42,8 @@ function App() {
         >
           <Routes location={location}>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/termos-de-uso" element={<TermosDeUso />} />
             
             <Route path="/login" element={<LoginPage />} />
             <Route path="/loading" element={<LoadingPage />} />

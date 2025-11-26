@@ -15,7 +15,11 @@ export default function Footer() {
             <img 
               src="/pontedra-logo.webp" 
               alt="Logotipo da Pontedra" 
-              className="h-40 w-auto mb-6 drop-shadow-[0_0_20px_rgba(87,227,137,0.6)]" // Adicionado mb-6 para espaçamento e drop-shadow para brilho
+              className="h-40 w-auto mb-6"
+              style={{
+                filter:
+                  "invert(77%) sepia(11%) saturate(582%) hue-rotate(170deg) brightness(103%) contrast(94%) drop-shadow(0 0 20px rgba(87,227,137,0.6))",
+              }}
             />
             <p className="text-[#9ba8b5] text-sm leading-relaxed">
               Conectando sua empresa a pessoas por meio do marketing digital.

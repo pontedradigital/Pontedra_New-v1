@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react"; // Updated imports
 
@@ -133,6 +133,22 @@ export default function Hero() {
     return Boolean(rm || hc || dm);
   }, []);
 
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(max-width: 768px)").matches
+      : false
+  })
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      const mq = window.matchMedia("(max-width: 768px)")
+      const handler = () => setIsMobile(mq.matches)
+      mq.addEventListener?.("change", handler)
+      handler()
+      return () => mq.removeEventListener?.("change", handler)
+    }
+  }, [])
+
   const scrollToSection = (id: string) => {
     const section = document.getElementById(id);
     if (section) {
@@ -166,20 +182,20 @@ export default function Hero() {
       {/* Gradient Orbs */}
       <motion.div
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#57e389]/10 rounded-full"
-        style={{ filter: `blur(${perfMode ? 60 : 120}px)` }}
-        animate={perfMode ? { opacity: 0.3 } : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: perfMode ? 0.01 : 8, repeat: Infinity, ease: "easeInOut" }}
+        style={{ filter: `blur(${perfMode ? 40 : 100}px)` }}
+        animate={perfMode || isMobile ? { opacity: 0.25 } : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: perfMode || isMobile ? 0.01 : 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00b4ff]/10 rounded-full"
-        style={{ filter: `blur(${perfMode ? 60 : 120}px)` }}
-        animate={perfMode ? { opacity: 0.3 } : { scale: [1.2, 1, 1.2], opacity: [0.5, 0.3, 0.5] }}
-        transition={{ duration: perfMode ? 0.01 : 10, repeat: Infinity, ease: "easeInOut" }}
+        style={{ filter: `blur(${perfMode ? 40 : 100}px)` }}
+        animate={perfMode || isMobile ? { opacity: 0.25 } : { scale: [1.2, 1, 1.2], opacity: [0.5, 0.3, 0.5] }}
+        transition={{ duration: perfMode || isMobile ? 0.01 : 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Content Container */}
       <motion.div
-        style={{ y, opacity }}
+        style={{ y, opacity: isMobile ? undefined : opacity }}
         className="container mx-auto px-4 md:px-8 relative z-10 pb-24 md:pb-0"
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
@@ -190,7 +206,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 bg-[#57e389]/10 border border-[#57e389]/30 rounded-full px-4 py-2 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 bg-[#57e389]/10 border border-[#57e389]/30 rounded-full px-4 py-2 backdrop-blur-sm supports-[backdrop-filter:blur(2px)]:backdrop-blur-sm"
             >
               <Sparkles className="w-4 h-4 text-[#57e389]" />
               <span className="text-[#57e389] text-sm font-medium uppercase tracking-wider">

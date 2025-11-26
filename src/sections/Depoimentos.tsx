@@ -40,9 +40,13 @@ const testimonials = [
 // Componente de Card de Depoimento
 const TestimonialCard = ({ testimonial, active }: { testimonial: typeof testimonials[0]; active: boolean }) => {
   return (
-    <div className="flex-shrink-0 w-[320px] sm:w-[360px] lg:w-[420px] mx-4">
-      <div className={`relative group bg-[#0f2a3f]/80 backdrop-blur-xl rounded-2xl p-8 h-full border ${active ? 'border-[#57e389] shadow-[0_0_20px_rgba(87,227,137,0.25)]' : 'border-[#1d3a4f]/50'}`}
-        role="group" aria-label={`${testimonial.name} - ${testimonial.role}`} aria-current={active || undefined}
+    <div className="flex-shrink-0 w-[320px] sm:w-[360px] lg:w-[420px] mx-4" data-testid="testimonial-slide">
+      <div
+        className={`relative group bg-[#0f2a3f]/80 backdrop-blur-xl rounded-2xl p-8 h-full border overflow-hidden ${active ? 'border-[#57e389] shadow-[0_0_20px_rgba(87,227,137,0.25)]' : 'border-[#1d3a4f]/50'}`}
+        role="group"
+        aria-label={`${testimonial.name} - ${testimonial.role}`}
+        aria-current={active || undefined}
+        style={{ backfaceVisibility: 'hidden' }}
       >
         {/* Glow effect */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-[#57e389] to-[#00b4ff] rounded-2xl opacity-0 blur-xl group-hover:opacity-20 transition-opacity duration-500" />
@@ -59,7 +63,7 @@ const TestimonialCard = ({ testimonial, active }: { testimonial: typeof testimon
           <div className="text-[#2d5a4f] text-7xl font-serif leading-none mb-4 opacity-30">"</div>
 
           {/* Texto do depoimento */}
-          <p className="text-[#e1e8f0] text-base leading-relaxed italic mb-8">
+          <p className="text-[#e1e8f0] text-base leading-relaxed italic mb-8 min-h-[100px]">
             {testimonial.text}
           </p>
 
@@ -77,7 +81,7 @@ const TestimonialCard = ({ testimonial, active }: { testimonial: typeof testimon
 export default function Depoimentos() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(sectionRef, { amount: 0.6 });
-  const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "center", dragFree: false, duration: 16 });
+  const [emblaRef, embla] = useEmblaCarousel({ loop: true, align: "center", dragFree: false, duration: 16, containScroll: 'trimSnaps' });
   const [isHovered, setIsHovered] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const total = testimonials.length;
@@ -96,7 +100,7 @@ export default function Depoimentos() {
   useEffect(() => {
     if (!embla) return;
     let id: number | undefined;
-    const shouldAutoplay = !(isHovered || isInView);
+    const shouldAutoplay = isInView && !isHovered;
     if (shouldAutoplay) {
       id = window.setInterval(() => embla.scrollNext(), 4500);
     }
@@ -143,7 +147,7 @@ export default function Depoimentos() {
           <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0a1628] to-transparent z-10 pointer-events-none" />
 
           <div className="overflow-hidden" ref={emblaRef} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-            <div className="flex transition-transform duration-200 ease-out">
+            <div className="flex will-change-transform transform-gpu">
               {testimonials.map((t, i) => (
                 <TestimonialCard key={t.id} testimonial={t} active={selectedIndex === i} />
               ))}

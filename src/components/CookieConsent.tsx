@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +16,7 @@ type Consent = {
 };
 
 const STORAGE_KEY = "pontedra_cookie_consent_v1";
+const COOKIE_KEY = "PONTEDRA_CONSENT";
 const VERSION = "1.0";
 
 export default function CookieConsent() {
@@ -27,14 +29,22 @@ export default function CookieConsent() {
   const existing = useMemo(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as Consent) : null;
-    } catch {
-      return null;
-    }
+      if (raw) return JSON.parse(raw) as Consent;
+    } catch { /* ignore */ }
+    try {
+      const c = document.cookie.split("; ").find((v) => v.startsWith(`${COOKIE_KEY}=`));
+      if (c) {
+        const val = decodeURIComponent(c.split("=")[1]);
+        const parsed = JSON.parse(val) as Consent;
+        return parsed;
+      }
+    } catch { /* ignore */ }
+    return null;
   }, []);
 
   useEffect(() => {
-    setShowBanner(true);
+    const hasValid = Boolean(existing && existing.version === VERSION);
+    setShowBanner(!hasValid);
     if (existing) {
       setAnalytics(Boolean(existing.analytics));
       setMarketing(Boolean(existing.marketing));
@@ -57,7 +67,8 @@ export default function CookieConsent() {
       timestamp: Date.now(),
       version: VERSION,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* ignore */ }
+    try { document.cookie = `${COOKIE_KEY}=${encodeURIComponent(JSON.stringify(data))}; max-age=31536000; path=/`; } catch { /* ignore */ }
   };
 
   const onAcceptAll = () => {
@@ -86,21 +97,32 @@ export default function CookieConsent() {
 
   return (
     <>
+      <AnimatePresence>
       {showBanner && (
-        <div className="fixed right-6 bottom-6 md:right-10 md:bottom-10 z-50 w-[calc(100%-3rem)] sm:w-auto">
-          <div className="bg-[#0c1624] text-[#e1e8f0] border border-[#1d2c3f] rounded-2xl shadow-2xl p-6 md:p-7 max-w-md">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="fixed inset-x-4 bottom-[env(safe-area-inset-bottom,1rem)] md:inset-auto md:right-10 md:bottom-10 z-[100] w-auto"
+          style={{ pointerEvents: "auto" }}
+          role="dialog"
+          aria-label="Aviso de cookies"
+        >
+          <div className="bg-[#0c1624] text-[#e1e8f0] border border-[#1d2c3f] rounded-2xl shadow-2xl p-4 md:p-7 max-w-md mx-auto supports-[backdrop-filter:blur(2px)]:backdrop-blur-sm">
             <div className="space-y-3 text-left">
               <p className="text-xl font-extrabold text-white">Sua privacidade e escolhas valem muito para gente</p>
               <p className="text-sm md:text-base text-[#9ba8b5]">Nosso compromisso é com o bom uso dos seus dados. Usamos apenas para contato, atendimento e análises, garantindo a melhor experiência para nossos clientes. Seus direitos como titular são respeitados conforme a LGPD. Para detalhes, acesse nossa <Link to="/politica-privacidade" className="text-[#57e389] hover:text-[#4bc979] font-semibold">Política de Privacidade</Link>.</p>
             </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button onClick={() => setOpen(true)} className="px-4 py-2 rounded-md border border-[#1d2c3f] text-[#e1e8f0] bg-transparent">Customizar</button>
-              <button onClick={onRejectAll} className="px-4 py-2 rounded-md border border-[#1d2c3f] text-[#e1e8f0] bg-transparent">Rejeitar todos</button>
-              <button onClick={onAcceptAll} className="px-4 py-2 rounded-md bg-[#57e389] text-[#0D1B2A] hover:bg-[#4bc979]">Aceitar todos</button>
+            <div className="mt-4 md:mt-5 flex flex-wrap gap-2 md:gap-3">
+              <button onClick={() => setOpen(true)} className="flex-1 md:flex-none px-4 py-2 rounded-md border border-[#1d2c3f] text-[#e1e8f0] bg-transparent">Customizar</button>
+              <button onClick={onRejectAll} className="flex-1 md:flex-none px-4 py-2 rounded-md border border-[#1d2c3f] text-[#e1e8f0] bg-transparent">Rejeitar todos</button>
+              <button onClick={onAcceptAll} className="flex-1 md:flex-none px-4 py-2 rounded-md bg-[#57e389] text-[#0D1B2A] hover:bg-[#4bc979]">Aceitar todos</button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[640px] bg-[#0c1624] border-[#1d2c3f] text-[#e1e8f0] rounded-2xl">
           <DialogHeader>

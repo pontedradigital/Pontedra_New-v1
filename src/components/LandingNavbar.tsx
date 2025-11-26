@@ -99,11 +99,11 @@ export default function LandingNavbar({ showCTA = true, mode = 'default' }: Land
               onClick={scrollToTop}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative group cursor-pointer z-50"
+              className="relative group cursor-pointer z-50 px-1 md:px-0"
             >
               {/* Glow suave sem borda */}
               <div
-                className="absolute -inset-6 blur-xl opacity-40"
+                className="absolute -inset-3 md:-inset-5 lg:-inset-6 blur-lg md:blur-xl opacity-40"
                 style={{
                   background:
                     "radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 60%)",
@@ -114,7 +114,7 @@ export default function LandingNavbar({ showCTA = true, mode = 'default' }: Land
                 <img
                   src="/pontedra-logo.webp"
                   alt="Pontedra Logo"
-                  className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-[0_0_18px_rgba(255,255,255,0.45)] brightness-150 contrast-125 saturate-125 scale-125 md:scale-150 lg:scale-[1.6] origin-center"
+                  className="h-14 sm:h-16 md:h-20 lg:h-24 w-auto object-contain drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] brightness-150 contrast-125 saturate-125 scale-100 md:scale-125 lg:scale-[1.35] origin-center z-30"
                 />
               </div>
             </motion.button>
@@ -143,10 +143,11 @@ export default function LandingNavbar({ showCTA = true, mode = 'default' }: Land
             {mode === 'backOnly' ? (
               <div className="hidden lg:flex items-center gap-4">
                 <button
-                  onClick={scrollToTop}
+                  onClick={() => handleNavigation('#hero')}
                   className="px-6 py-2.5 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
+                  aria-label="Voltar à Página Inicial"
                 >
-                  Voltar ao Site
+                  Voltar à Página Inicial
                 </button>
               </div>
             ) : null}
@@ -213,10 +214,11 @@ export default function LandingNavbar({ showCTA = true, mode = 'default' }: Land
                     className="flex flex-col gap-4 mt-auto mb-8"
                   >
                     <button
-                      onClick={scrollToTop}
+                      onClick={() => handleNavigation('#hero')}
                       className="w-full text-center px-6 py-3 border-2 border-[#57e389] text-[#57e389] font-bold rounded-full hover:bg-[#57e389]/10 transition-all duration-300"
+                      aria-label="Voltar à Página Inicial"
                     >
-                      Voltar ao Site
+                      Voltar à Página Inicial
                     </button>
                   </motion.div>
                 ) : null}
