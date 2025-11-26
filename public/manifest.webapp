@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "name": "Pontedra",
+  "launch_path": "/",
+  "icons": {
+    "128": "/android/android-chrome-192x192.png",
+    "512": "/android/android-chrome-512x512.png"
+  },
+  "developer": {
+    "name": "Pontedra",
+    "url": "https://pontedra.com/"
+  }
+}

@@ -84,9 +84,14 @@ const BenefitCard = ({
       transition={{ duration: 0.7, delay, ease: "easeInOut", layout: { duration: 0.7, ease: "easeInOut" } }}
       onPointerEnter={() => setActive(index)}
       onClick={() => setActive(isActive ? null : index)}
+      onTouchEnd={() => setActive(isActive ? null : index)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(isActive ? null : index); } }}
+      role="button"
+      tabIndex={0}
       aria-expanded={isActive}
-      className="bg-[#0f1f1a]/60 backdrop-blur-sm border border-[#57e389]/20 rounded-2xl overflow-hidden"
-      style={{ willChange: "transform, opacity" }}
+      aria-controls={`benefit-desc-${index}`}
+      className="bg-[#0f1f1a]/60 backdrop-blur-sm border border-[#57e389]/20 rounded-2xl overflow-hidden cursor-pointer"
+      style={{ willChange: "transform, opacity", backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
     >
       <div className="flex items-center gap-4 p-4 cursor-pointer">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#57e389] to-[#00b4ff] flex items-center justify-center text-[#0D1B2A] font-bold text-lg flex-shrink-0">
@@ -104,6 +109,7 @@ const BenefitCard = ({
             exit={{ height: 0, opacity: 0, transition: { delay: 0.05, duration: 0.7, ease: "easeInOut" } }}
             transition={{ duration: 0.7, ease: "easeInOut" }}
             className="px-4 pb-4"
+            id={`benefit-desc-${index}`}
           >
             <p className="text-sm text-[#9ba8b5] leading-relaxed" aria-live="polite">
               {desc}
@@ -173,30 +179,34 @@ export default function Hero() {
       ref={sectionRef}
       id="hero"
       className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#0c1624] via-[#0c1624] to-[#0a1520]"
+      style={{ contain: 'layout paint', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
     >
       {/* Background Effects */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0c1624] to-transparent pointer-events-none z-[5]" />
-      <Grid3D />
-      <FloatingParticles count={perfMode ? 12 : 30} />
+      {!isMobile && <Grid3D />}
+      <FloatingParticles count={isMobile ? 0 : (perfMode ? 12 : 30)} />
 
       {/* Gradient Orbs */}
+      {!isMobile && (
       <motion.div
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#57e389]/10 rounded-full"
-        style={{ filter: `blur(${perfMode ? 40 : 100}px)` }}
+        style={{ filter: `blur(${perfMode ? 40 : 100}px)`, willChange: 'opacity, transform', transform: 'translateZ(0)' }}
         animate={perfMode || isMobile ? { opacity: 0.25 } : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: perfMode || isMobile ? 0.01 : 8, repeat: Infinity, ease: "easeInOut" }}
-      />
+      />)}
+      {!isMobile && (
       <motion.div
         className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00b4ff]/10 rounded-full"
-        style={{ filter: `blur(${perfMode ? 40 : 100}px)` }}
+        style={{ filter: `blur(${perfMode ? 40 : 100}px)`, willChange: 'opacity, transform', transform: 'translateZ(0)' }}
         animate={perfMode || isMobile ? { opacity: 0.25 } : { scale: [1.2, 1, 1.2], opacity: [0.5, 0.3, 0.5] }}
         transition={{ duration: perfMode || isMobile ? 0.01 : 10, repeat: Infinity, ease: "easeInOut" }}
-      />
+      />)}
 
       {/* Content Container */}
       <motion.div
         style={{ y, opacity: isMobile ? undefined : opacity }}
         className="container mx-auto px-4 md:px-8 relative z-10 pb-24 md:pb-0"
+        aria-live="polite"
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
           {/* Left Side - Content */}
